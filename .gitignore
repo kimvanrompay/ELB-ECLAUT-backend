@@ -36,6 +36,8 @@ test-report.xml
 !.yarn/sdks
 !.yarn/versions
 
+build
+
 .turbo
 *.tsbuildinfo
 *.DS_Store
