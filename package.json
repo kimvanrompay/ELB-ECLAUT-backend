@@ -1,0 +1,43 @@
+{
+  "name": "untitled5",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "type-check": "tsc --noEmit",
+    "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
+    "test": "turbo test",
+    "db": "docker compose -f ./libraries/db/docker-compose.local.yml up --build -d",
+    "db:down": "docker compose -f ./libraries/db/docker-compose.local.yml down --volumes",
+    "dev-server": "npx tsx watch api/server/src/server.ts",
+    "dev-server:docker": "docker compose -f docker-compose.dev.yml up --build",
+    "dev-server:docker:down": "docker compose -f docker-compose.dev.yml down --volumes",
+    "build-server": "node api/server/scripts/build.js",
+    "build-server:docker-image": "docker build -t elaut-api-server -f ./api/server/Dockerfile .",
+    "prepare": "husky"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": true,
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^5.2.2",
+    "@types/node": "^22.12.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "eslint": "^9.19.0",
+    "eslint-config-prettier": "^10.0.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-prettier": "^5.2.3",
+    "prettier": "^3.4.2",
+    "turbo": "^2.4.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.1.0",
+    "vitest": "^3.0.5"
+  },
+  "workspaces": [
+    "api/*",
+    "libraries/*",
+    "infrastructure/"
+  ],
+  "packageManager": "yarn@4.6.0"
+}

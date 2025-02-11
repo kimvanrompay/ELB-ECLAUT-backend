@@ -1,0 +1,3 @@
+yarn pretty
+yarn type-check
+yarn test
