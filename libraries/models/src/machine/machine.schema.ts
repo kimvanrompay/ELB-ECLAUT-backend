@@ -68,6 +68,9 @@ export {
 	MachineInsertDBSchema,
 	MachineUpdateDTOSchema,
 	MachineUpdateDBSchema,
+};
+
+export type {
 	MachineDTOType,
 	MachineCreateDTOType,
 	MachineUpdateDTOType,

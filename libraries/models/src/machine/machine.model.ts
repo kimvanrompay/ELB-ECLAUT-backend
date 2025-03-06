@@ -5,16 +5,15 @@ import {
 	MachineCreateDTOSchema,
 	MachineDBSchema,
 	MachineDTOSchema,
-	MachineDTOType,
+	type MachineDTOType,
 	MachineInsertDBSchema,
-	MachineInsertDBType,
+	type MachineInsertDBType,
 	MachineUpdateDBSchema,
-	MachineUpdateDBType,
+	type MachineUpdateDBType,
 	MachineUpdateDTOSchema,
-	MachineUpdateDTOType,
+	type MachineUpdateDTOType,
 } from './machine.schema';
 
-// TODO: create interface/abstract class for all models
 class Machine {
 	id: string;
 	serialNumber: string;
@@ -137,8 +136,9 @@ class Machine {
 	}
 }
 
-export {
-	Machine,
+export {Machine};
+
+export type {
 	MachineDTOType,
 	MachineDBType,
 	MachineCreateDTOType,

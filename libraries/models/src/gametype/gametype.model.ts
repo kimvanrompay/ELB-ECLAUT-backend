@@ -1,9 +1,9 @@
 import {
 	GametypeCreateDTOSchema,
 	GametypeDBSchema,
-	GametypeDBType,
+	type GametypeDBType,
 	GametypeDTOSchema,
-	GametypeDTOType,
+	type GametypeDTOType,
 	GametypeInsertDBSchema,
 	GametypeUpdateDTOSchema,
 } from './gametype.schema';

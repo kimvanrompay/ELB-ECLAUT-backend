@@ -3,7 +3,6 @@ import {
 	SecretsManagerClient,
 } from '@aws-sdk/client-secrets-manager';
 
-
 const AWS_REGION = process.env.AWS_REGION ?? 'eu-west-1';
 const AWS_PROFILE = process.env.AWS_PROFILE ?? 'elaut';
 
@@ -21,11 +20,9 @@ const getAwsSecretClient = () => {
 
 const getAwsSecret = async <T>(secretKey: string): Promise<T> => {
 	const secretManagerResponse = await getAwsSecretClient().send(
-		new GetSecretValueCommand({SecretId: secretKey}),
+		new GetSecretValueCommand({SecretId: secretKey})
 	);
-	return JSON.parse(<string>secretManagerResponse.SecretString);
+	return JSON.parse(secretManagerResponse.SecretString as string);
 };
 
 export {getAwsSecret};
-
-

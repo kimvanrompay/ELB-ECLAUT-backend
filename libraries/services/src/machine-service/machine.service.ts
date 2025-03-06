@@ -1,8 +1,8 @@
 import {NotFoundError} from '@lib/errors';
-import {Machine, MachineUpdateDTOType} from '@lib/models/machine';
-import {IMachineRepository} from '@lib/repositories/types';
+import {Machine, type MachineUpdateDTOType} from '@lib/models/machine';
+import type {IMachineRepository} from '@lib/repositories/types';
 
-import {IMachineService} from './machine.service.types';
+import type {IMachineService} from './machine.service.types';
 
 class MachineService implements IMachineService {
 	private machineRepository: IMachineRepository;

@@ -41,6 +41,9 @@ export {
 	GametypeCreateDTOSchema,
 	GametypeInsertDBSchema,
 	GametypeUpdateDTOSchema,
+};
+
+export type {
 	GametypeDTOType,
 	GametypeCreateDTOType,
 	GametypeUpdateDTOType,

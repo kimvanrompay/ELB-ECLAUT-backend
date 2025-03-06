@@ -1,9 +1,13 @@
 import {Knex} from 'knex';
 
 import {DatabaseRetrieveError} from '@lib/errors';
-import {Machine, MachineDBType, MachineUpdateDBType} from '@lib/models/machine';
+import {
+	Machine,
+	type MachineDBType,
+	type MachineUpdateDBType,
+} from '@lib/models/machine';
 
-import {IMachineRepository} from './machine.repository.types';
+import {type IMachineRepository} from './machine.repository.types';
 
 class MachineRepository implements IMachineRepository {
 	private db: Knex;

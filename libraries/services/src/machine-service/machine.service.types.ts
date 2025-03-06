@@ -1,4 +1,4 @@
-import {Machine, MachineUpdateDTOType} from '@lib/models/machine';
+import type {Machine, MachineUpdateDTOType} from '@lib/models/machine';
 
 interface IMachineService {
 	getAllMachines(): Promise<Machine[]>;
@@ -11,4 +11,4 @@ interface IMachineService {
 	): Promise<Machine>;
 }
 
-export {IMachineService};
+export type {IMachineService};
