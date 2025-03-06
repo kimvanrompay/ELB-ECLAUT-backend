@@ -4,3 +4,8 @@ export * from './database-delete-error';
 export * from './database-insert-error';
 export * from './database-update-error';
 export * from './not-found-error';
+export * from './bad-request-error';
+export * from './forbidden-error';
+export * from './internal-server-error';
+export * from './unauthorized-error';
+export * from './refresh-token-multi-usage-error';

@@ -1,6 +1,11 @@
+import './load-env-variables';
+
 import {serve} from '@hono/node-server';
 
-import app from './app';
+import {app} from './app';
+import './app-routes';
+
+console.log(process.env.POSTGRES_PASSWORD);
 
 serve(
 	{

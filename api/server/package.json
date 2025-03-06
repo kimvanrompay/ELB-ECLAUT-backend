@@ -2,9 +2,10 @@
   "name": "api-server",
   "version": "1.0.0",
   "description": "",
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 0",
-    "dev": "npx tsx watch src/server.ts",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "npx tsx watch src/server.ts --config ./../../tsconfig.json",
     "build": "node scripts/build.js"
   },
   "dependencies": {
@@ -19,7 +20,9 @@
     "@lib/repositories": "workspace:^",
     "@lib/services": "workspace:^",
     "@lib/utils": "workspace:^",
+    "dayjs": "^1.11.13",
     "hono": "^4.6.19",
+    "jose": "^6.0.8",
     "jsonwebtoken": "^9.0.2",
     "otplib": "^12.0.1",
     "pino": "^9.6.0",
@@ -29,6 +32,7 @@
   "devDependencies": {
     "@types/jsonwebtoken": "^9",
     "@types/node": "^22.12.0",
+    "dotenv": "^16.4.7",
     "esbuild": "^0.24.2",
     "typescript": "^5.7.3"
   }

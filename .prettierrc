@@ -12,6 +12,7 @@
 	"importOrderSortSpecifiers": true,
 	"trailingComma": "es5",
 	"importOrder": [
+		"^./load-env.*$",
 		"<THIRD_PARTY_MODULES>",
 		"^@__data__/(.*)$",
 		"^@__mock__/(.*)$",
