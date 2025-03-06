@@ -1,0 +1,15 @@
+insert into app_user (id, email, tenant_id, username, role, is_blocked, last_login, last_seen)
+values
+-- ELAUT_ADMIN
+('00000000-0000-0000-0000-000000000001', 'admin@example.com', '191e84db-b52f-46f9-bd53-b0b68241b0d2', 'admin',
+ 'ELAUT_ADMIN', false,
+ null, null),
+-- ELAUT_DEVELOPER
+('00000000-0000-0000-0000-000000000002', 'developer@example.com', '191e84db-b52f-46f9-bd53-b0b68241b0d2', 'developer',
+ 'ELAUT_DEVELOPER',
+ false,
+ null, null);
+
+insert into app_user_tenant_location (user_id, tenant_location_id)
+values ('00000000-0000-0000-0000-000000000001', 'e5a0ec4e-e27f-4e41-9955-8d6e169c58f6'),
+       ('00000000-0000-0000-0000-000000000002', 'e5a0ec4e-e27f-4e41-9955-8d6e169c58f6');

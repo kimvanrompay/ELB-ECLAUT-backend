@@ -1,9 +1,9 @@
 import {z} from '@hono/zod-openapi';
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import {StatusCode} from 'hono/dist/types/utils/http-status';
 
+import {DatabaseDeleteError} from './database-delete-error';
+import {DatabaseInsertError} from './database-insert-error';
 import {DatabaseRetrieveError} from './database-retrieve-error';
+import {DatabaseUpdateError} from './database-update-error';
 import {NotFoundError} from './not-found-error';
 
 const ApiErrorSchema = z.object({
@@ -51,12 +51,12 @@ class ValidationError {
 }
 
 class ApiError extends Error {
-	public statusCode: StatusCode;
+	public statusCode: number;
 	public validationErrors: ValidationError[] = [];
 	public key: string;
 
 	constructor(
-		statusCode: StatusCode,
+		statusCode: number,
 		message: string,
 		key: string,
 		validationErrors: ValidationError[] = []
@@ -80,10 +80,21 @@ class ApiError extends Error {
 		};
 	}
 
+	/**
+	 * Create an ApiError from any error within the application. This functions is used in the error middleware to
+	 * ensure that all errors are returned as an ApiError.
+	 * @param error
+	 */
 	static fromError(error: Error) {
 		if (error instanceof ApiError) {
 			return error;
 		}
+
+		/**
+		 * Any error below this are UNHANDLED errors! If an error is caught and it is not an instance of ApiError, it
+		 * should be handled and converted to an ApiError before it reaches this point. This is to ensure that all
+		 * errors are returned as an ApiError as a last resort.
+		 */
 
 		if (error instanceof NotFoundError) {
 			return new ApiError(404, error.message, 'NOT_FOUND');
@@ -92,15 +103,35 @@ class ApiError extends Error {
 		if (error instanceof DatabaseRetrieveError) {
 			return new ApiError(
 				500,
-				'Could not find the requested resource',
-				'RESOURCE_NOT_FOUND'
+				'Something went wrong retrieving the resource',
+				'INTERNAL_SERVER_ERROR'
 			);
 		}
 
-		return new ApiError(200, 'Internal Server Error', 'INTERNAL_SERVER_ERROR');
-	}
+		if (error instanceof DatabaseInsertError) {
+			return new ApiError(
+				500,
+				'Something went wrong creating the resource',
+				'INTERNAL_SERVER_ERROR'
+			);
+		}
 
-	static defaultInternalServerError() {
+		if (error instanceof DatabaseUpdateError) {
+			return new ApiError(
+				500,
+				'Something went wrong updating the resource',
+				'INTERNAL_SERVER_ERROR'
+			);
+		}
+
+		if (error instanceof DatabaseDeleteError) {
+			return new ApiError(
+				500,
+				'Something went wrong removing the resource',
+				'INTERNAL_SERVER_ERROR'
+			);
+		}
+
 		return new ApiError(500, 'Internal Server Error', 'INTERNAL_SERVER_ERROR');
 	}
 }

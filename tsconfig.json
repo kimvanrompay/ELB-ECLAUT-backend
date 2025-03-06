@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "es2020",
-    "module": "es2020",
+    "target": "esnext",
+    "module": "esnext",
     "moduleResolution": "bundler",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
@@ -15,8 +15,7 @@
     "composite": true,
     "strictPropertyInitialization": false,
     "useUnknownInCatchVariables": false,
-    "importsNotUsedAsValues": "remove",
-    "verbatimModuleSyntax": false,
+    "verbatimModuleSyntax": true,
     "noEmit": true,
     "lib": [
       "ES2020"
@@ -33,8 +32,8 @@
     "api/**/*.ts",
     "infrastructure/**/*.ts",
     "libraries/**/*.ts"
-  ]
-  //  "exclude": [
-  //    "node_modules",
-  //  ]
+  ],
+    "exclude": [
+      "node_modules",
+    ]
 }

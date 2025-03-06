@@ -6,14 +6,18 @@
     "type-check": "tsc --noEmit",
     "pretty": "prettier --write \"./**/*.{js,jsx,mjs,cjs,ts,tsx,json}\"",
     "test": "turbo test",
-    "db": "docker compose -f ./libraries/db/docker-compose.local.yml up --build -d",
+    "test:unit": "turbo test:unit",
+    "test:integration": "turbo test:unit",
+    "db": "docker compose -f ./libraries/db/docker-compose.local.yml up -d --build",
     "db:down": "docker compose -f ./libraries/db/docker-compose.local.yml down --volumes",
-    "dev-server": "npx tsx watch api/server/src/server.ts",
+    "dev-server": "NODE_ENV=development && npx tsx watch api/server/src/server.ts --config ./tsconfig.json",
     "dev-server:docker": "docker compose -f docker-compose.dev.yml up --build",
     "dev-server:docker:down": "docker compose -f docker-compose.dev.yml down --volumes",
     "build-server": "node api/server/scripts/build.js",
     "build-server:docker-image": "docker build -t elaut-api-server -f ./api/server/Dockerfile .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "esbuild": "esbuild --tree-shaking=true --bundle=true --target=node22 --format=esm",
+    "db:dev:ssh": "exit 0"
   },
   "keywords": [],
   "author": "",
@@ -38,7 +42,8 @@
   "workspaces": [
     "api/*",
     "libraries/*",
-    "infrastructure/"
+    "infrastructure/",
+    "api/functions/*"
   ],
   "packageManager": "yarn@4.6.0"
 }

@@ -4,37 +4,42 @@
 -- create user if not exists app with password 'example';
 --
 
-create table if not exists gametype (
-    id uuid primary key,
-    name varchar(255) not null,
+SET TIME ZONE 'UTC';
 
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+create table if not exists gametype
+(
+    id         uuid primary key,
+    name       varchar(255) not null,
+
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp
 );
 
-create table if not exists tenant (
-    id uuid primary key,
-    name varchar(255) not null,
-    is_active boolean not null default true,
+create table if not exists tenant
+(
+    id         uuid primary key,
+    name       varchar(255) not null,
+    is_active  boolean      not null default true,
 
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp
 );
 
-create table if not exists tenant_location (
-    id uuid primary key,
-    tenant_id uuid not null references tenant(id),
-    name varchar(255) not null,
-    address varchar(255) not null,
-    city varchar(255) not null,
-    state varchar(255) not null,
-    zip varchar(255) not null,
-    country varchar(255) not null,
-    phone varchar(255) not null,
-    email varchar(255) not null,
+create table if not exists tenant_location
+(
+    id         uuid primary key,
+    tenant_id  uuid         not null references tenant (id),
+    name       varchar(255) not null,
+    address    varchar(255) not null,
+    city       varchar(255) not null,
+    state      varchar(255) not null,
+    zip        varchar(255) not null,
+    country    varchar(255) not null,
+    phone      varchar(255),
+    email      varchar(255) not null,
 
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp
 );
 
 create table if not exists machine (
@@ -97,56 +102,69 @@ create type user_role as enum (
     'ELAUT_ADMIN',
     'ELAUT_DEVELOPER',
     'ELAUT_SERVICE',
-    'ELAUT_QA',
+    'ELAUT_QC',
     'ELAUT_USER'
     'TENANT_ADMIN',
     'TENANT_GLOBAL_ARCADE_MANAGER',
     'TENANT_ARCADE_MANAGER',
     'TENANT_EMPLOYEE',
     'TENANT_TECHNICIAN'
+    );
+
+create table if not exists app_user
+(
+    id         uuid primary key,
+    username   varchar(255) not null,
+    email      varchar(255) not null,
+    is_active  boolean      not null default true,
+    is_blocked boolean      not null default false,
+
+    tenant_id  uuid references tenant (id),
+    role       user_role    not null,
+
+    last_login timestamp,
+    last_seen  timestamp,
+
+    created_at timestamp    not null default current_timestamp,
+    updated_at timestamp    not null default current_timestamp,
+
+    unique (email),
+    unique (username)
 );
 
-create table if not exists app_user (
-    id uuid primary key,
-    username varchar(255) not null,
-    email varchar(255) not null,
-    is_active boolean not null default true,
-    is_blocked boolean not null default false,
+create table if not exists app_user_tenant_location
+(
+    user_id            uuid      not null references app_user (id),
+    tenant_location_id uuid      not null references tenant_location (id),
 
-    tenant_id uuid references tenant(id),
-    role user_role not null,
-
-    last_login timestamp not null default current_timestamp,
-    last_seen timestamp not null default current_timestamp,
-
-
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+    created_at         timestamp not null default current_timestamp,
+    primary key (user_id, tenant_location_id)
 );
 
-create table if not exists verification_codes (
-    user_id uuid not null references app_user(id),
-    token varchar(12) not null,
-    expires_at timestamp not null,
+create table if not exists login_verification_code
+(
+    email      varchar(255) not null,
+    code       varchar(6)   not null,
+    expires_at timestamp    not null,
 
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp,
-    primary key (user_id, token)
+    created_at timestamp    not null default current_timestamp,
+    primary key (email, code)
 );
 
 
 -- SOFTWARE
 create type software_status as enum ('ACTIVE', 'TESTING', 'INACTIVE', 'DEPRECATED');
 
-create table if not exists software_release (
-    id uuid primary key,
-    gametype_id uuid not null references gametype(id),
-    version varchar(255) not null,
-    source varchar(255) not null,
-    status software_status not null default 'TESTING',
+create table if not exists software_release
+(
+    id          uuid primary key,
+    gametype_id uuid            not null references gametype (id),
+    version     varchar(255)    not null,
+    source      varchar(255)    not null,
+    status      software_status not null default 'TESTING',
 
-    created_at timestamp not null default current_timestamp,
-    updated_at timestamp not null default current_timestamp
+    created_at  timestamp       not null default current_timestamp,
+    updated_at  timestamp       not null default current_timestamp
 );
 
 create type software_update_status as enum ('PENDING', 'IN_PROGRESS', 'COMPLETED', 'FAILED', 'CANCELLED', 'ROLLED_BACK');
@@ -164,3 +182,11 @@ create table if not exists machine_sofware_version (
     updated_at timestamp not null default current_timestamp
 );
 
+create table if not exists refresh_token
+(
+    id       varchar(36) not null primary key ,
+    user_id     uuid         not null references app_user (id),
+    usage_count smallint      not null default 0,
+
+    created_at  timestamp    not null default current_timestamp
+);

@@ -6,6 +6,13 @@
   "exports": {
     "./types": "./src/types.ts",
     "./machine": "./src/machine/machine.repository.ts"
+    "./app-user": "./src/app-user/app-user.repository.ts",
+    "./machine": "./src/machine/machine.repository.ts",
+  "scripts": {
+    "test": "yarn test:integration",
+    "pretest:integration": "yarn workspace @lib/db run db:test:down && yarn workspace @lib/db run db:test:up",
+    "test:integration": "vitest run --no-isolate",
+    "posttest:integration": "yarn workspace @lib/db run db:test:down"
   },
   "dependencies": {
     "@lib/errors": "workspace:^",
