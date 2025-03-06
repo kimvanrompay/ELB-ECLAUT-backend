@@ -3,14 +3,24 @@
   "version": "1.0.0",
   "main": "src/index.ts",
   "type": "module",
+  "exports": {
     ".": "./src/index.ts",
     "./env": "./src/env.utils.ts",
     "./array": "./src/array.utils.ts",
     "./aws-secret-manager": "./src/aws-secret-manager.ts",
     "./db": "./src/database/database.utils.ts",
     "./db/filters": "./src/database/database-filters.ts",
+    "./jwt": "./src/jwt.utils.ts",
+    "./logger": "./src/logger/logger.ts",
+    "./sqs": "./src/sqs/sqs.utils.ts"
+  },
+  "scripts": {
     "test": "yarn test:unit",
     "test:unit": "vitest run --dir test/unit",
+    "mock-sqs": "docker compose -f src/sqs/docker-compose.dev.yml up --build -d",
+    "mock-sqs:down": "docker compose -f src/sqs/docker-compose.dev.yml down --volumes",
+    "mock-sqs-messages": "npx tsx scripts/generate-mock-messages.ts"
+  },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
     "@aws-sdk/client-secrets-manager": "^3.744.0",

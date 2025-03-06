@@ -5,9 +5,12 @@
   "type": "module",
   "exports": {
     "./types": "./src/types.ts",
-    "./machine": "./src/machine/machine.repository.ts"
     "./app-user": "./src/app-user/app-user.repository.ts",
+    "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
+    "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
     "./machine": "./src/machine/machine.repository.ts",
+    "./machine-message": "./src/machine-message/machine-message.repository.ts"
+  },
   "scripts": {
     "test": "yarn test:integration",
     "pretest:integration": "yarn workspace @lib/db run db:test:down && yarn workspace @lib/db run db:test:up",

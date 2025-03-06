@@ -5,12 +5,16 @@
   "type": "module",
   "packageManager": "yarn@4.6.0",
   "scripts": {
-    "test": "vitest run"
+    "test": "yarn test:unit",
+    "test:unit": "vitest run --dir test/unit"
   },
   "exports": {
     "./schema": "./src/machine/machine.schema.ts",
     "./machine": "./src/machine/machine.model.ts",
     "./gametype": "./src/gametype/gametype.model.ts"
+    "./app-user": "./src/app-user/app-user.model.ts",
+    "./login-verification-code": "./src/login-verification-code/login-verification-code.model.ts",
+    "./refresh-token": "./src/refresh-token/refresh-token.model.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
