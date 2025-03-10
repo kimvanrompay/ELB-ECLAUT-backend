@@ -7,6 +7,7 @@ import {
 
 class LoginVerificationCode {
 	code: string;
+	hashedCode: string;
 	email: string;
 	createdAt: Date;
 	expiresAt: Date;
@@ -16,8 +17,15 @@ class LoginVerificationCode {
 		LoginVerificationCodeDBSchema,
 	};
 
-	constructor(code: string, email: string, createdAt: Date, expiresAt: Date) {
+	constructor(
+		code: string,
+		hashedCode: string,
+		email: string,
+		createdAt: Date,
+		expiresAt: Date
+	) {
 		this.code = code;
+		this.hashedCode = hashedCode;
 		this.email = email;
 		this.createdAt = createdAt;
 		this.expiresAt = expiresAt;
@@ -29,6 +37,7 @@ class LoginVerificationCode {
 
 	static fromDBType(data: LoginVerificationCodeDBType): LoginVerificationCode {
 		return new LoginVerificationCode(
+			data.code,
 			data.code,
 			data.email,
 			new Date(data.created_at),
@@ -47,7 +56,7 @@ class LoginVerificationCode {
 
 	toDBType(): LoginVerificationCodeDBType {
 		return {
-			code: this.code,
+			code: this.hashedCode,
 			email: this.email,
 			created_at: this.createdAt.toISOString(),
 			expires_at: this.expiresAt.toISOString(),

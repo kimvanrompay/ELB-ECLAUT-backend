@@ -1,4 +1,4 @@
-import {Machine} from '../src/machine/machine.model';
+import {Machine} from '../../src/machine/machine.model';
 
 describe('Machine Model', () => {
 	it('should return a Machine object', () => {

@@ -32,15 +32,15 @@ TODO: add link to deployed api documentation
 
 ```bash
   corepack enable
- ```
+```
 
 ```bash
   yarn set version 4.1.0
- ```
+```
 
 ```bash
   yarn install
- ```
+```
 
 Install Docker
 
@@ -51,7 +51,7 @@ Alternative for MacOS via Brew:
 
 ```bash
  brew install docker
- ```
+```
 
 ## Packages
 

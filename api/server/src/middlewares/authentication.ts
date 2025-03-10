@@ -9,64 +9,107 @@ import {AppUserRepository} from '@lib/repositories/app-user';
 import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
 import {AppUserService} from '@lib/services/app-user';
 import {AuthService} from '@lib/services/auth';
-import {JwtAuthService} from '@lib/services/jwt';
 
 import type {Environment} from '../types';
 
 const db = await getKnexInstance();
 
-const appUserService = new AppUserService(new AppUserRepository(db));
-
-const refreshTokenRepository = new RefreshTokenRepository(db);
-
-const authService = new AuthService(
-	'SOME_SUPER_DUPER_UNIQUE_SECRET',
-	refreshTokenRepository,
-	appUserService
-);
-
 type AuthenticationMiddlewareOptions = {
 	passThrough?: boolean;
 };
 
-const authenticationMiddleware = (options?: AuthenticationMiddlewareOptions) =>
+const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 	createMiddleware<Environment>(async (ctx, next) => {
+		const appContext = ctx.get('appContext');
+
+		/**
+		 * When creating a private route on an already authenticated api, we dont want to re-authenticate
+		 */
+		const isAlreadyAuthenticated = appContext.isAuthenticated !== undefined;
+		if (isAlreadyAuthenticated) {
+			return next();
+		}
+
 		const accessTokenJwt = getCookie(ctx, 'eclaut-access-token');
 		const refreshTokenJwt = getCookie(ctx, 'eclaut-refresh-token');
 
-		console.log('Access token:', accessTokenJwt);
-		console.log('Refresh token:', refreshTokenJwt);
+		const logger = ctx.get('logger').getChildLogger(
+			{
+				name: 'authenticationMiddleware',
+			},
+			{}
+		);
+
+		logger.debug('Access token:', accessTokenJwt);
+		logger.debug('Refresh token:', refreshTokenJwt);
+
+		const appUserService = new AppUserService(
+			new AppUserRepository(db, {
+				logger,
+			}),
+			{
+				...appContext,
+				logger,
+			}
+		);
+		const refreshTokenRepository = new RefreshTokenRepository(db, {
+			logger,
+		});
+
+		const authService = new AuthService(
+			'SOME_SUPER_DUPER_UNIQUE_SECRET',
+			refreshTokenRepository,
+			appUserService,
+			appContext
+		);
 
 		if (accessTokenJwt) {
 			try {
 				const decodedAccessToken =
 					await authService.authenticateJwtAccessToken(accessTokenJwt);
 
-				console.log('Decoded access token:', decodedAccessToken);
-
 				const validatedTokenUser = z
 					.object({
 						userId: z.string(),
 						email: z.string(),
 						role: z.nativeEnum(AppUserRole),
+						tenantId: z.string(),
+						locationIds: z.array(z.string()),
 					})
 					.parse({
 						userId: decodedAccessToken.userId,
 						email: decodedAccessToken.email,
 						role: decodedAccessToken.role,
+						tenantId: decodedAccessToken.tenantId,
+						locationIds: decodedAccessToken.locationIds,
 					});
 
-				ctx.set('tokenUser', {
-					userId: validatedTokenUser.userId,
-					email: validatedTokenUser.email,
-					role: validatedTokenUser.role,
+				ctx.set('appContext', {
+					...appContext,
+					isAuthenticated: true,
+					auth: {
+						userId: validatedTokenUser.userId,
+						email: validatedTokenUser.email,
+						role: validatedTokenUser.role,
+						tenantId: validatedTokenUser.tenantId,
+						locationIds: validatedTokenUser.locationIds,
+						isElaut: validatedTokenUser.role
+							.toLocaleLowerCase()
+							.startsWith('elaut'),
+					},
 				});
 
 				return next();
 			} catch (error) {
-				console.error('Access token error:', error);
+				logger.error(`Access token error: ${error}`);
 
 				if (options?.passThrough) {
+					ctx.set('appContext', {
+						...appContext,
+						auth: undefined,
+						isAuthenticated: false,
+					});
+
 					return next();
 				}
 
@@ -77,4 +120,6 @@ const authenticationMiddleware = (options?: AuthenticationMiddlewareOptions) =>
 		await next();
 	});
 
-export {authenticationMiddleware};
+export {Authenticate};
+
+export type {AuthenticationMiddlewareOptions};

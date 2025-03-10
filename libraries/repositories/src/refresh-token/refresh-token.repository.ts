@@ -6,11 +6,28 @@ import {
 	DatabaseUpdateError,
 } from '@lib/errors';
 import {RefreshToken, type RefreshTokenDBType} from '@lib/models/refresh-token';
+import {PinoLogger} from '@lib/utils';
 
 import type {IRefreshTokenRepository} from './refresh-token.repository.types';
 
 class RefreshTokenRepository implements IRefreshTokenRepository {
-	constructor(private db: Knex) {}
+	private readonly db: Knex;
+	private readonly logger: PinoLogger;
+
+	constructor(
+		db: Knex,
+		context: {
+			logger: PinoLogger;
+		}
+	) {
+		this.db = db;
+		this.logger = context.logger.getChildLogger(
+			{
+				name: 'refresh-token-repository',
+			},
+			{}
+		);
+	}
 
 	async getRefreshTokenById(id: string) {
 		try {

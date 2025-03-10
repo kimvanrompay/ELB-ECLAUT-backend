@@ -9,3 +9,7 @@ export * from './forbidden-error';
 export * from './internal-server-error';
 export * from './unauthorized-error';
 export * from './refresh-token-multi-usage-error';
+export * from './location-not-allowed-error';
+export * from './tenant-not-allowed-error';
+export * from './create-user-tenant-not-allowed-error';
+export * from './create-user-location-not-allowed-error';

@@ -21,7 +21,7 @@ services:
     volumes:
       - pgdatatest:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./scripts/sqs-test.sql:/docker-entrypoint-initdb.d/sqs-test.sql
+#      - ./scripts/sqs-test.sql:/docker-entrypoint-initdb.d/sqs-test.sql
 
 volumes:
   pgdatatest:

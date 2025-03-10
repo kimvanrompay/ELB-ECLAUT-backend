@@ -67,7 +67,7 @@ type NotInWhereFilter = {
 type NotEqualOrNullWhereFilter = {
 	type: 'neqOrNull';
 	columnName: string;
-	value: number | string;
+	value: number | string | boolean;
 };
 
 type ContainsWhereFilter = {

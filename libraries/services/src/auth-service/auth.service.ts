@@ -11,23 +11,19 @@ import {PinoLogger} from '@lib/utils';
 import type {IAppUserService} from '../app-user-service/app-user.service.types';
 import {JwtAuthService} from '../jwt-service/jwt.service';
 import type {IJwtService} from '../jwt-service/jwt.service.types';
+import type {AppContext} from '../types';
 import type {IAuthService} from './auth.service.types';
-
-const LOGGER = new PinoLogger(
-	{
-		name: 'auth-service',
-	},
-	{}
-);
 
 class AuthService implements IAuthService {
 	private appUserService: IAppUserService;
 	private jwtService: IJwtService;
+	private logger: PinoLogger;
 
 	constructor(
 		jwtSeed: string,
 		refreshTokenRepository: IRefreshTokenRepository,
-		appUserService: IAppUserService
+		appUserService: IAppUserService,
+		appContext: AppContext
 	) {
 		this.appUserService = appUserService;
 
@@ -38,18 +34,26 @@ class AuthService implements IAuthService {
 			issuer: 'elaut',
 			audience: 'eclaut-api',
 		});
+
+		this.logger = appContext.logger.getChildLogger(
+			{
+				name: 'auth-service',
+			},
+			{}
+		);
 	}
 
 	async authenticateJwtAccessToken(token: string) {
-		console.log('Token', token);
 		try {
 			return await this.jwtService.authenticate<{
 				userId: string;
 				email: string;
 				role: string;
+				tenantId: string;
+				locationIds: string[];
 			}>(token);
 		} catch (e) {
-			LOGGER.error(e);
+			this.logger.error(e);
 			throw new UnauthorizedError('Invalid token');
 		}
 	}
@@ -62,6 +66,8 @@ class AuthService implements IAuthService {
 					userId: string;
 					email: string;
 					role: string;
+					tenantId: string;
+					locationIds: string[];
 				}>
 			>
 		>;
@@ -76,10 +82,13 @@ class AuthService implements IAuthService {
 		const {dbToken, verifiedToken} = parsedRefreshToken;
 
 		if (dbToken.usageCount > 0) {
-			await this.appUserService.blockUser(dbToken.userId);
-			await this.jwtService.invalidateAllRefreshTokensForUser(dbToken.userId);
-			// TODO: notify user and/or tenant admin that the user is possibly compromised.
-
+			try {
+				await this.appUserService.blockUser(dbToken.userId);
+				await this.jwtService.invalidateAllRefreshTokensForUser(dbToken.userId);
+				// TODO: notify user and/or tenant admin that the user is possibly compromised.
+			} catch {
+				// Do nothing
+			}
 			throw new RefreshTokenMultiUsageError(dbToken);
 		}
 
@@ -105,6 +114,8 @@ class AuthService implements IAuthService {
 				userId: user.id,
 				email: user.email,
 				role: user.role,
+				tenantId: user.tenant.id,
+				locationIds: [], // TODO: get location ids for user
 			});
 
 			return {
@@ -115,6 +126,19 @@ class AuthService implements IAuthService {
 			};
 		} catch {
 			throw new UnauthorizedError('Failed to create new tokens');
+		}
+	}
+
+	async logoutOnAllDevices(userId: string) {
+		await this.jwtService.invalidateAllRefreshTokensForUser(userId);
+	}
+
+	async logoutOnDevice(refreshToken: string) {
+		try {
+			await this.jwtService.invalidateRefreshToken(refreshToken);
+		} catch (e) {
+			this.logger.error(e);
+			throw new UnauthorizedError('Invalid refresh token');
 		}
 	}
 }

@@ -20,6 +20,8 @@ interface IJwtService {
 
 	invalidateAllRefreshTokensForUser(userId: string): Promise<void>;
 
+	invalidateRefreshToken(refreshToken: string): Promise<void>;
+
 	authenticateRefreshToken<Data extends {userId: string; id: string}>(
 		token: string
 	): Promise<{

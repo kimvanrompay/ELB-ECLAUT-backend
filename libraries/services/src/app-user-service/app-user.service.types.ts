@@ -1,4 +1,8 @@
-import type {AppUser} from '@lib/models/app-user';
+import type {
+	AppUser,
+	AppUserCreateDTOType,
+	AppUserUpdateDTOType,
+} from '@lib/models/app-user';
 import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
 interface IAppUserService {
@@ -13,6 +17,10 @@ interface IAppUserService {
 	updateUserLastLogin(id: string): Promise<AppUser>;
 
 	blockUser(id: string): Promise<AppUser>;
+
+	createUser(user: AppUserCreateDTOType): Promise<AppUser>;
+
+	updateUser(id: string, user: AppUserUpdateDTOType): Promise<AppUser>;
 }
 
 export type {IAppUserService};

@@ -1,42 +1,67 @@
 import {OpenAPIHono} from '@hono/zod-openapi';
 import {getCookie, setCookie} from 'hono/cookie';
 
-import {getKnexInstance} from '@lib/db';
 import {BadRequestError, UnauthorizedError} from '@lib/errors';
 import {AppUserRepository} from '@lib/repositories/app-user';
 import {LoginVerificationCodeRepository} from '@lib/repositories/login-verification-code';
 import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
 import {AppUserService} from '@lib/services/app-user';
 import {AuthService} from '@lib/services/auth';
+import {EmailService} from '@lib/services/email';
 import {LoginVerificationCodeService} from '@lib/services/login-verification-code';
+import type {AppContext} from '@lib/services/types';
 import {defaultValidationHook} from '@lib/utils';
 import {isDevelopmentBuild} from '@lib/utils/env';
 
+import {db} from '../database';
+import type {Environment} from '../types';
 import {
 	authorizeCodeRoute,
+	logoutAllDevicesRoute,
+	logoutRoute,
 	refreshTokenRoute,
 	startAuthenticationWithCodeRoute,
 } from './auth.openapi';
 
-const db = await getKnexInstance();
-const appUserCodeRepository = new AppUserRepository(db);
-const appUserService = new AppUserService(appUserCodeRepository);
-const loginVerificationCodeRepository = new LoginVerificationCodeRepository(db);
-const loginVerificationCodeService = new LoginVerificationCodeService(
-	appUserService,
-	loginVerificationCodeRepository
-);
+const createServices = (appContext: AppContext) => {
+	// TODO: implement the email service
+	const emailService = new EmailService(appContext);
 
-const refreshTokenRepository = new RefreshTokenRepository(db);
+	const appUserCodeRepository = new AppUserRepository(db, {
+		logger: appContext.logger,
+	});
+	const appUserService = new AppUserService(appUserCodeRepository, appContext);
 
-const authService = new AuthService(
-	'SOME_SUPER_DUPER_UNIQUE_SECRET',
-	refreshTokenRepository,
-	appUserService
-);
+	const loginVerificationCodeRepository = new LoginVerificationCodeRepository(
+		db
+	);
+	const loginVerificationCodeService = new LoginVerificationCodeService(
+		appUserService,
+		loginVerificationCodeRepository,
+		emailService,
+		appContext
+	);
+
+	const refreshTokenRepository = new RefreshTokenRepository(db, {
+		logger: appContext.logger,
+	});
+
+	const authService = new AuthService(
+		'SOME_SUPER_DUPER_UNIQUE_SECRET',
+		refreshTokenRepository,
+		appUserService,
+		appContext
+	);
+
+	return {
+		appUserService,
+		loginVerificationCodeService,
+		authService,
+	};
+};
 
 const createAuthApi = () => {
-	const authApp = new OpenAPIHono({
+	const authApp = new OpenAPIHono<Environment>({
 		strict: true,
 		defaultHook: defaultValidationHook,
 	});
@@ -48,6 +73,10 @@ const createAuthApi = () => {
 			throw new BadRequestError('Email is required');
 		}
 
+		const {loginVerificationCodeService} = createServices(
+			ctx.get('appContext')
+		);
+
 		const code =
 			await loginVerificationCodeService.getNewLoginVerificationCode(email);
 
@@ -56,6 +85,10 @@ const createAuthApi = () => {
 
 	authApp.openapi(authorizeCodeRoute, async (ctx) => {
 		const {code, email} = ctx.req.valid('json');
+
+		const {loginVerificationCodeService, authService} = createServices(
+			ctx.get('appContext')
+		);
 
 		try {
 			const isValid =
@@ -75,9 +108,8 @@ const createAuthApi = () => {
 				refreshTokenExpiration,
 			} = await authService.getJwtTokens(email);
 
-			await loginVerificationCodeService.deleteLoginVerificationCode(
-				email,
-				code
+			await loginVerificationCodeService.deleteUserLoginVerificationCodes(
+				email
 			);
 
 			setCookie(ctx, 'eclaut-access-token', accessToken, {
@@ -93,7 +125,8 @@ const createAuthApi = () => {
 			});
 
 			return ctx.newResponse(null, 204);
-		} catch {
+		} catch (e) {
+			ctx.get('logger').error(e);
 			throw new UnauthorizedError('Invalid code');
 		}
 	});
@@ -104,6 +137,8 @@ const createAuthApi = () => {
 		if (!refreshToken) {
 			throw new UnauthorizedError('No refresh token');
 		}
+
+		const {authService} = createServices(ctx.get('appContext'));
 
 		try {
 			const {
@@ -129,6 +164,61 @@ const createAuthApi = () => {
 		} catch {
 			throw new UnauthorizedError('Invalid refresh token');
 		}
+	});
+
+	authApp.openapi(logoutRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const {authService} = createServices(appContext);
+
+		const tokenUser = appContext.auth;
+		const refreshToken = getCookie(ctx, 'eclaut-refresh-token');
+
+		if (!tokenUser || !refreshToken) {
+			throw new UnauthorizedError('No user');
+		}
+
+		setCookie(ctx, 'eclaut-access-token', '', {
+			secure: !isDevelopmentBuild(),
+			httpOnly: true,
+			expires: new Date(0),
+		});
+
+		setCookie(ctx, 'eclaut-refresh-token', '', {
+			secure: !isDevelopmentBuild(),
+			httpOnly: true,
+			expires: new Date(0),
+		});
+
+		await authService.logoutOnDevice(refreshToken);
+
+		return ctx.newResponse(null, 204);
+	});
+
+	authApp.openapi(logoutAllDevicesRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const {authService} = createServices(appContext);
+
+		const tokenUser = appContext.auth;
+
+		if (!tokenUser) {
+			throw new UnauthorizedError('No user');
+		}
+
+		setCookie(ctx, 'eclaut-access-token', '', {
+			secure: !isDevelopmentBuild(),
+			httpOnly: true,
+			expires: new Date(0),
+		});
+
+		setCookie(ctx, 'eclaut-refresh-token', '', {
+			secure: !isDevelopmentBuild(),
+			httpOnly: true,
+			expires: new Date(0),
+		});
+
+		await authService.logoutOnAllDevices(tokenUser.userId);
+
+		return ctx.newResponse(null, 204);
 	});
 
 	return authApp;

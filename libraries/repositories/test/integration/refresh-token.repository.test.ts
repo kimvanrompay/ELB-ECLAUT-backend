@@ -1,11 +1,22 @@
 import type {Knex} from 'knex';
 
 import {DatabaseRetrieveError, DatabaseUpdateError} from '@lib/errors';
+import {PinoLogger} from '@lib/utils';
 
 import {RefreshTokenRepository} from '../../src/refresh-token/refresh-token.repository';
 import {runSQLFiles} from '../test-utils';
 
 const db = global.knex;
+
+const context = {
+	requestId: 'test-request-id',
+	logger: new PinoLogger(
+		{
+			requestId: 'test-request-id',
+		},
+		{}
+	),
+};
 
 beforeEach(async () => {
 	await runSQLFiles(db, [
@@ -26,7 +37,7 @@ afterEach(async () => {
 describe('RefreshTokenRepository', () => {
 	describe('getRefreshTokenByToken', () => {
 		it('should return a RefreshToken object', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 			const refreshToken = await repo.getRefreshTokenById(
 				'test-jwt-token-string'
 			);
@@ -36,7 +47,7 @@ describe('RefreshTokenRepository', () => {
 		});
 
 		it('should return undefined if no RefreshToken is found', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 			const refreshToken = await repo.getRefreshTokenById(
 				'invalid-jwt-token-string'
 			);
@@ -45,7 +56,7 @@ describe('RefreshTokenRepository', () => {
 		});
 
 		it('should throw an error if the database query fails', async () => {
-			const repo = new RefreshTokenRepository({} as unknown as Knex);
+			const repo = new RefreshTokenRepository({} as unknown as Knex, context);
 
 			await expect(
 				repo.getRefreshTokenById('test-jwt-token-string')
@@ -55,7 +66,7 @@ describe('RefreshTokenRepository', () => {
 
 	describe('deleteRefreshTokenByToken', () => {
 		it('should delete a RefreshToken', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 			const refreshToken = await repo.getRefreshTokenById(
 				'test-jwt-token-string'
 			);
@@ -74,7 +85,7 @@ describe('RefreshTokenRepository', () => {
 
 	describe('updateRefreshTokenUsageCount', () => {
 		it('should increment the usage count of a RefreshToken', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 			const refreshToken = await repo.getRefreshTokenById(
 				'test-jwt-token-string'
 			);
@@ -93,7 +104,7 @@ describe('RefreshTokenRepository', () => {
 		});
 
 		it('should throw an error if token is not found', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 
 			await expect(
 				repo.updateRefreshTokenUsageCount('invalid-jwt-token-string')
@@ -101,7 +112,7 @@ describe('RefreshTokenRepository', () => {
 		});
 
 		it('should throw an error if the database query fails', async () => {
-			const repo = new RefreshTokenRepository({} as unknown as Knex);
+			const repo = new RefreshTokenRepository({} as unknown as Knex, context);
 
 			await expect(
 				repo.updateRefreshTokenUsageCount('test-jwt-token-string')
@@ -111,7 +122,7 @@ describe('RefreshTokenRepository', () => {
 
 	describe('createRefreshToken', () => {
 		it('should create a new RefreshToken', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 			const refreshToken = await repo.getRefreshTokenById(
 				'new-jwt-token-string'
 			);
@@ -136,7 +147,7 @@ describe('RefreshTokenRepository', () => {
 
 	describe('invalidateAllRefreshTokensForUser', () => {
 		it('should invalidate all RefreshTokens for a user', async () => {
-			const repo = new RefreshTokenRepository(db);
+			const repo = new RefreshTokenRepository(db, context);
 
 			await repo.createRefreshToken({
 				id: 'new-jwt-token-string',

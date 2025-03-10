@@ -7,6 +7,8 @@ import {
 	DatabaseUpdateError,
 } from '@lib/errors';
 import {AppUser, AppUserRole} from '@lib/models/app-user';
+import {PinoLogger} from '@lib/utils';
+import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
 import {AppUserRepository} from '../../src/app-user/app-user.repository';
 import {runSQLFiles} from '../test-utils';
@@ -38,6 +40,7 @@ const ADMIN_TEST_USER = AppUser.fromJSON({
 		name: 'Elaut Group',
 	},
 	username: 'admin',
+	locationIds: [],
 });
 
 const DEVELOPER_TEST_USER = AppUser.fromJSON({
@@ -52,12 +55,23 @@ const DEVELOPER_TEST_USER = AppUser.fromJSON({
 		name: 'Elaut Group',
 	},
 	username: 'developer',
+	locationIds: [],
 });
+
+const context = {
+	requestId: 'test-request-id',
+	logger: new PinoLogger(
+		{
+			requestId: 'test-request-id',
+		},
+		{}
+	),
+};
 
 describe('AppUserRepository', () => {
 	describe('findUsersByFilters', () => {
 		it('should return an array of AppUser objects', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters();
 
@@ -80,7 +94,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should return an empty array if no users are found', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				where: [
@@ -97,7 +111,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should be able to apply EQUALS filters', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				where: [
@@ -120,7 +134,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should be able to apply NOT EQUALS filters', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				where: [
@@ -141,7 +155,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should be able to apply LIKE filters', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				where: [
@@ -192,7 +206,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should be able to apply NOT LIKE filters', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				where: [
@@ -243,7 +257,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should be able to limit the number of results returned', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				limit: 1,
@@ -268,7 +282,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should be able to order the results returned', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const users = await repo.findUsersByFilters({
 				orderBy: [
@@ -301,11 +315,129 @@ describe('AppUserRepository', () => {
 			expect(users[0]!.email).toBe(array[0]);
 			expect(users2[0]!.email).toBe(array[1]);
 		});
+
+		it('should be able to apply multiple filters', async () => {
+			const repo = new AppUserRepository(db, context);
+
+			const users = await repo.findUsersByFilters({
+				where: [
+					{
+						type: 'eq',
+						columnName: 'role',
+						value: AppUserRole.ELAUT_ADMIN,
+					},
+					{
+						type: 'like',
+						columnName: 'username',
+						value: 'ad',
+					},
+				],
+			});
+
+			expect(users).toBeDefined();
+			expect(users.length).toBe(1);
+
+			expect(users[0]).toBeDefined();
+			expect(users[0] instanceof AppUser).toBe(true);
+			expect(users[0]?.username).toBe('admin');
+		});
+
+		it('should only return users from the specified tenant', async () => {
+			const repo = new AppUserRepository(db, context);
+
+			const filters: DatabaseQueryFilters = {
+				where: [
+					{
+						type: 'eq',
+						columnName: 'role',
+						value: AppUserRole.ELAUT_ADMIN,
+					},
+				],
+			};
+
+			const users = await repo.findUsersByFilters(filters);
+
+			expect(users).toBeDefined();
+			expect(users.length).toBeGreaterThan(0);
+
+			const usersFromTenant = await repo.findUsersByFilters(
+				filters,
+				'191e84db-b52f-46f9-bd53-b0b68241b0d2'
+			);
+
+			expect(usersFromTenant).toBeDefined();
+			expect(usersFromTenant.length).toBe(users.length);
+
+			const usersFromDifferentTenant = await repo.findUsersByFilters(
+				filters,
+				'191e84db-9999-9999-9999-b0b68241b0d2'
+			);
+
+			expect(usersFromDifferentTenant).toBeDefined();
+			expect(usersFromDifferentTenant.length).toBe(0);
+		});
+
+		it('should only return users from the parameter specified tenant when combined with query filter', async () => {
+			const repo = new AppUserRepository(db, context);
+
+			const filtersWithCorrectTenant: DatabaseQueryFilters = {
+				where: [
+					{
+						type: 'eq',
+						columnName: 'role',
+						value: AppUserRole.ELAUT_ADMIN,
+					},
+					{
+						type: 'eq',
+						columnName: 'tenant_id',
+						value: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
+					},
+				],
+			};
+
+			const filtersWithWrongTenant: DatabaseQueryFilters = {
+				where: [
+					{
+						type: 'eq',
+						columnName: 'role',
+						value: AppUserRole.ELAUT_ADMIN,
+					},
+					{
+						type: 'eq',
+						columnName: 'tenant_id',
+						value: '191e84db-9999-9999-9999-b0b68241b0d2',
+					},
+				],
+			};
+
+			const users = await repo.findUsersByFilters(filtersWithCorrectTenant);
+
+			expect(users).toBeDefined();
+			expect(users.length).toBeGreaterThan(0);
+
+			const usersFromTenant = await repo.findUsersByFilters(
+				filtersWithCorrectTenant,
+				'191e84db-9999-9999-9999-b0b68241b0d2'
+			);
+
+			expect(usersFromTenant).toBeDefined();
+			expect(usersFromTenant.length).toBe(0);
+
+			const usersFromDifferentTenant = await repo.findUsersByFilters(
+				filtersWithWrongTenant,
+				'191e84db-b52f-46f9-bd53-b0b68241b0d2'
+			);
+
+			expect(usersFromDifferentTenant).toBeDefined();
+			expect(usersFromDifferentTenant.length).toBe(0);
+		});
+
+		// TODO: add test for locationIds
 	});
 
 	describe('getUserById', () => {
 		it('should return an AppUser object', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const user = await repo.getUserById(ADMIN_TEST_USER.id);
 
@@ -315,7 +447,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should return undefined if no user is found', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const user = await repo.getUserById(
 				'00000000-0000-0000-0000-000000000003'
@@ -325,17 +457,45 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should throw a DatabaseRetrieveError if an error occurs', async () => {
-			const repo = new AppUserRepository({} as unknown as Knex);
+			const repo = new AppUserRepository({} as unknown as Knex, context);
 
 			await expect(repo.getUserById(ADMIN_TEST_USER.id)).rejects.toThrowError(
 				DatabaseRetrieveError
 			);
 		});
+
+		it('should only return users from the specified tenant', async () => {
+			const repo = new AppUserRepository(db, context);
+
+			const user = await repo.getUserById(ADMIN_TEST_USER.id);
+
+			expect(user).toBeDefined();
+			expect(user instanceof AppUser).toBe(true);
+			expect(user?.tenant?.id).toBe(ADMIN_TEST_USER.tenant.id);
+
+			const userFromTenant = await repo.getUserById(
+				ADMIN_TEST_USER.id,
+				'191e84db-b52f-46f9-bd53-b0b68241b0d2'
+			);
+
+			expect(userFromTenant).toBeDefined();
+			expect(userFromTenant instanceof AppUser).toBe(true);
+			expect(userFromTenant?.tenant?.id).toBe(ADMIN_TEST_USER.tenant.id);
+
+			const userFromDifferentTenant = await repo.getUserById(
+				ADMIN_TEST_USER.id,
+				'191e84db-9999-9999-9999-b0b68241b0d2'
+			);
+
+			expect(userFromDifferentTenant).toBeUndefined();
+		});
+
+		// TODO: add test for locationIds
 	});
 
 	describe('getUserByEmail', () => {
 		it('should return an AppUser object', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const user = await repo.getUserByEmail(ADMIN_TEST_USER.email);
 
@@ -345,7 +505,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should return undefined if no user is found', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const user = await repo.getUserByEmail('notfound@example.com');
 
@@ -353,17 +513,45 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should throw a DatabaseRetrieveError if an error occurs', async () => {
-			const repo = new AppUserRepository({} as unknown as Knex);
+			const repo = new AppUserRepository({} as unknown as Knex, context);
 
 			await expect(
 				repo.getUserByEmail(ADMIN_TEST_USER.email)
 			).rejects.toThrowError(DatabaseRetrieveError);
 		});
+
+		it('should only return users from the specified tenant', async () => {
+			const repo = new AppUserRepository(db, context);
+
+			const user = await repo.getUserByEmail(ADMIN_TEST_USER.email);
+
+			expect(user).toBeDefined();
+			expect(user instanceof AppUser).toBe(true);
+			expect(user?.tenant?.id).toBe(ADMIN_TEST_USER.tenant.id);
+
+			const userFromTenant = await repo.getUserByEmail(
+				ADMIN_TEST_USER.email,
+				'191e84db-b52f-46f9-bd53-b0b68241b0d2'
+			);
+
+			expect(userFromTenant).toBeDefined();
+			expect(userFromTenant instanceof AppUser).toBe(true);
+			expect(userFromTenant?.tenant?.id).toBe(ADMIN_TEST_USER.tenant.id);
+
+			const userFromDifferentTenant = await repo.getUserByEmail(
+				ADMIN_TEST_USER.email,
+				'191e84db-9999-9999-9999-b0b68241b0d2'
+			);
+
+			expect(userFromDifferentTenant).toBeUndefined();
+		});
+
+		// TODO: add test for locationIds
 	});
 
 	describe('updateUser', () => {
 		it('should update the user and return the updated user', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const updatedUser = await repo.updateUser(ADMIN_TEST_USER.id, {
 				is_blocked: true,
@@ -375,7 +563,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should throw an error if the user is not found', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			await expect(
 				repo.updateUser('00000000-0000-0000-0000-000000000003', {
@@ -383,11 +571,47 @@ describe('AppUserRepository', () => {
 				})
 			).rejects.toThrowError(DatabaseUpdateError);
 		});
+
+		it('should only update users from the specified tenant', async () => {
+			const repo = new AppUserRepository(db, context);
+
+			const updatedUser = await repo.updateUser(ADMIN_TEST_USER.id, {
+				is_blocked: true,
+			});
+
+			expect(updatedUser).toBeDefined();
+			expect(updatedUser instanceof AppUser).toBe(true);
+			expect(updatedUser?.isBlocked).toBe(true);
+
+			const updatedUserFromTenant = await repo.updateUser(
+				ADMIN_TEST_USER.id,
+				{
+					is_blocked: false,
+				},
+				'191e84db-b52f-46f9-bd53-b0b68241b0d2'
+			);
+
+			expect(updatedUserFromTenant).toBeDefined();
+			expect(updatedUserFromTenant instanceof AppUser).toBe(true);
+			expect(updatedUserFromTenant?.isBlocked).toBe(false);
+
+			await expect(
+				repo.updateUser(
+					ADMIN_TEST_USER.id,
+					{
+						is_blocked: true,
+					},
+					'191e84db-9999-9999-9999-b0b68241b0d2'
+				)
+			).rejects.toThrowError(DatabaseUpdateError);
+		});
+
+		// TODO: add test for locationIds
 	});
 
 	describe('createUser', () => {
 		it('should create a new user and return the created user', async () => {
-			const repo = new AppUserRepository(db);
+			const repo = new AppUserRepository(db, context);
 
 			const newUser = await repo.createUser({
 				email: 'new@example.com',
@@ -411,7 +635,7 @@ describe('AppUserRepository', () => {
 		});
 
 		it('should throw an error if the user cannot be created', async () => {
-			const repo = new AppUserRepository({} as unknown as Knex);
+			const repo = new AppUserRepository({} as unknown as Knex, context);
 
 			await expect(
 				repo.createUser({

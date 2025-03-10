@@ -19,63 +19,133 @@ import {
 
 import type {IAppUserRepository} from './app-user.repository.types';
 
-const LOGGER = new PinoLogger(
-	{
-		name: 'AppUserRepository',
-	},
-	{}
-);
-
 class AppUserRepository implements IAppUserRepository {
 	private readonly db: Knex;
+	private readonly logger: PinoLogger;
 
-	constructor(db: Knex) {
+	constructor(
+		db: Knex,
+		context: {
+			logger: PinoLogger;
+		}
+	) {
 		this.db = db;
+		this.logger = context.logger.getChildLogger(
+			{
+				name: 'app-user-repository',
+			},
+			{}
+		);
+	}
+
+	public withTransaction(trx: Knex.Transaction) {
+		return new AppUserRepository(trx, {logger: this.logger});
+	}
+
+	public transaction<T>(
+		transactionScope: (trx: Knex.Transaction) => Promise<T> | void,
+		config?: Knex.TransactionConfig
+	) {
+		return this.db.transaction<T>(transactionScope, config);
+	}
+
+	private withTenantAndLocations<T = AppUserDBType>(
+		query: Knex.QueryBuilder<any, T>
+	): Knex.QueryBuilder<any, T> {
+		return query
+			.select(
+				'app_user.*',
+				'tenant.name as tenant_name',
+				this.db.raw(
+					"coalesce(json_agg(app_user_tenant_location.tenant_location_id) filter ( where app_user_tenant_location.tenant_location_id is not null ), '[]') as location_ids"
+				)
+			)
+			.join('tenant', 'app_user.tenant_id', 'tenant.id')
+			.leftJoin(
+				'app_user_tenant_location',
+				'app_user.id',
+				'app_user_tenant_location.user_id'
+			)
+			.groupBy('app_user.id', 'tenant.name');
 	}
 
 	private selectUserWithTenant<T = AppUserDBType>() {
-		return this.db('app_user')
-			.select<T>('app_user.*', 'tenant.name as tenant_name')
-			.join('tenant', 'app_user.tenant_id', 'tenant.id');
+		return this.withTenantAndLocations<T>(this.db('app_user'));
 	}
 
-	async findUsersByFilters(filters?: DatabaseQueryFilters) {
+	private applyTenantAndLocationFilters<Query extends Knex.QueryBuilder>(
+		query: Query,
+		tenantId?: string,
+		locationIds?: string[]
+	): Query {
+		if (tenantId) {
+			query.where('app_user.tenant_id', tenantId);
+		}
+
+		if (locationIds) {
+			query
+				.join(
+					'app_user_location',
+					'app_user.id',
+					'app_user_location.app_user_id'
+				)
+				.whereIn('app_user_location.location_id', locationIds);
+		}
+
+		return query;
+	}
+
+	async findUsersByFilters(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<AppUser[]> {
+		this.logger.trace(
+			`Finding users by filters: ${JSON.stringify(
+				filters
+			)}, tenantId: ${tenantId}, locationIds: ${locationIds?.join(',')}`
+		);
+
 		try {
-			const result = await KnexFilterAdapter.applyFilters(
+			const query = KnexFilterAdapter.applyFilters(
 				this.selectUserWithTenant<AppUserDBType[]>(),
 				filters
 			);
 
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			);
+
 			return AppUser.fromDB(result);
 		} catch (error) {
-			LOGGER.error(error);
+			this.logger.error(error);
 			throw new DatabaseRetrieveError('Error retrieving users');
 		}
 	}
 
-	async getUserById(id: string): Promise<AppUser | undefined> {
-		console.log('getUserById', id);
+	async getUserById(
+		id: string,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<AppUser | undefined> {
+		this.logger.trace(
+			`Getting user with id: ${id}, tenantId: ${tenantId}, locationIds: ${locationIds?.join(',')}`
+		);
+
 		try {
-			const result = await this.selectUserWithTenant()
+			const query = this.selectUserWithTenant()
 				.where({
 					'app_user.id': id,
 				})
 				.first();
 
-			if (!result) {
-				return undefined;
-			}
-
-			return AppUser.fromDB(result);
-		} catch (error) {
-			LOGGER.error(error);
-			throw new DatabaseRetrieveError('Error retrieving user');
-		}
-	}
-
-	async getUserByEmail(email: string): Promise<AppUser | undefined> {
-		try {
-			const result = await this.selectUserWithTenant().where({email}).first();
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			);
 
 			if (!result) {
 				return undefined;
@@ -83,16 +153,56 @@ class AppUserRepository implements IAppUserRepository {
 
 			return AppUser.fromDB(result);
 		} catch (error) {
-			LOGGER.error(error);
+			this.logger.error(error);
 			throw new DatabaseRetrieveError('Error retrieving user');
 		}
 	}
 
-	async updateUser(id: string, user: AppUserUpdateDBType): Promise<AppUser> {
+	async getUserByEmail(
+		email: string,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<AppUser | undefined> {
+		this.logger.trace(
+			`Getting user with email: ${email}, tenantId: ${tenantId}, locationIds: ${locationIds?.join(',')}`
+		);
+
 		try {
-			const result = await this.db<AppUserDBType>('app_user')
-				.where({id})
-				.update(user);
+			const query = this.selectUserWithTenant().where({email}).first();
+
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			);
+
+			if (!result) {
+				return undefined;
+			}
+
+			return AppUser.fromDB(result);
+		} catch (error) {
+			this.logger.error(error);
+			throw new DatabaseRetrieveError('Error retrieving user');
+		}
+	}
+
+	async updateUser(
+		id: string,
+		user: AppUserUpdateDBType,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<AppUser> {
+		this.logger.trace(`Updating user with id: ${id}`);
+
+		try {
+			const query = this.db<AppUserDBType>('app_user').where({id}).update(user);
+
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			);
 
 			if (result === 0) {
 				throw new Error('Could not find user to update');
@@ -106,7 +216,7 @@ class AppUserRepository implements IAppUserRepository {
 
 			return updatedUser;
 		} catch (error) {
-			LOGGER.error(
+			this.logger.error(
 				`Error updating user with id: ${id}, error: ${error?.message}`
 			);
 			throw new DatabaseUpdateError('Error updating user');
@@ -130,8 +240,29 @@ class AppUserRepository implements IAppUserRepository {
 
 			return createdUser;
 		} catch (error) {
-			LOGGER.error(error);
+			this.logger.error(error);
 			throw new DatabaseInsertError('Error creating user');
+		}
+	}
+
+	async getUserByIdForUpdate(
+		id: string,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Omit<AppUserDBType, 'location_ids' | 'tenant_name'> | undefined> {
+		try {
+			return await this.applyTenantAndLocationFilters(
+				this.db<Omit<AppUserDBType, 'location_ids' | 'tenant_name'>>(
+					'app_user'
+				).where({id}),
+				tenantId,
+				locationIds
+			)
+				.first()
+				.forUpdate();
+		} catch (error) {
+			this.logger.error(error);
+			throw new DatabaseRetrieveError('Error retrieving user');
 		}
 	}
 }

@@ -24,6 +24,7 @@ class AppUser {
 		id: string;
 		name: string;
 	};
+	locationIds: string[];
 	role: AppUserRole;
 	isBlocked: boolean;
 	lastLogin: Date | undefined;
@@ -47,6 +48,7 @@ class AppUser {
 			name: string;
 		},
 		role: AppUserRole,
+		locationIds: string[] = [],
 		isBlocked = false,
 		lastSeen: Date | undefined = undefined,
 		lastLogin: Date | undefined = undefined
@@ -55,6 +57,7 @@ class AppUser {
 		this.email = email;
 		this.tenant = tenant;
 		this.role = role;
+		this.locationIds = locationIds;
 		this.username = username;
 		this.isBlocked = isBlocked;
 		this.lastSeen = lastSeen;
@@ -68,6 +71,7 @@ class AppUser {
 			username: this.username,
 			tenant: this.tenant,
 			role: this.role,
+			locationIds: this.locationIds,
 			isBlocked: this.isBlocked,
 			lastLogin: this.lastLogin?.toISOString(),
 			lastSeen: this.lastSeen?.toISOString(),
@@ -85,6 +89,7 @@ class AppUser {
 			is_blocked: this.isBlocked,
 			last_login: this.lastLogin?.toISOString(),
 			last_seen: this.lastSeen?.toISOString(),
+			location_ids: JSON.stringify(this.locationIds),
 		};
 	}
 
@@ -103,6 +108,7 @@ class AppUser {
 				isBlocked,
 				lastSeen,
 				lastLogin,
+				locationIds,
 			} = item;
 			return new AppUser(
 				id,
@@ -110,6 +116,7 @@ class AppUser {
 				username,
 				tenant,
 				role,
+				locationIds,
 				isBlocked,
 				lastSeen ? new Date(lastSeen) : undefined,
 				lastLogin ? new Date(lastLogin) : undefined
@@ -131,6 +138,7 @@ class AppUser {
 				is_blocked,
 				last_seen,
 				last_login,
+				location_ids,
 			} = item;
 
 			return new AppUser(
@@ -139,6 +147,7 @@ class AppUser {
 				username,
 				{id: tenant_id, name: tenant_name},
 				role,
+				typeof location_ids === 'string' ? JSON.parse(location_ids) : [],
 				is_blocked,
 				last_seen ? new Date(last_seen) : undefined,
 				last_login ? new Date(last_login) : undefined

@@ -25,6 +25,19 @@ class PinoLogger {
 		this._childLogger = _rootLogger.child(bindings, options);
 	}
 
+	getChildLogger(
+		bindings: pino.Bindings,
+		options: pino.ChildLoggerOptions
+	): PinoLogger {
+		return new PinoLogger(
+			{
+				...this._childLogger.bindings(),
+				...bindings,
+			},
+			options
+		);
+	}
+
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	trace<T extends object>(bindings: T, msg?: string, ...args: any[]): void;
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any

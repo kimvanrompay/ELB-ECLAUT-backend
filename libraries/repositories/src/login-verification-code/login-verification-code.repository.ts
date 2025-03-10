@@ -43,10 +43,6 @@ class LoginVerificationCodeRepository
 		}
 	}
 
-	async removeLoginVerificationCode(code: string): Promise<void> {
-		await this.db('login_verification_code').where({code}).delete();
-	}
-
 	async getLoginVerificationCode(
 		email: string,
 		code: string
@@ -69,14 +65,33 @@ class LoginVerificationCodeRepository
 		}
 	}
 
+	async findValidLoginVerificationCodes(
+		email: string
+	): Promise<LoginVerificationCode[]> {
+		try {
+			const results = await this.db<LoginVerificationCodeDBType>(
+				'login_verification_code'
+			)
+				.where('email', email)
+				.where('expires_at', '>', new Date().toISOString());
+
+			return results.map(LoginVerificationCode.fromDBType);
+		} catch (e) {
+			LOGGER.error(e);
+			throw new DatabaseRetrieveError(
+				'Error getting valid login verification codes'
+			);
+		}
+	}
+
 	async removeExpiredLoginVerificationCodes(): Promise<void> {
 		await this.db('login_verification_code')
 			.where('expires_at', '<', new Date().toISOString())
 			.delete();
 	}
 
-	deleteLoginVerificationCode(email: string, code: string): Promise<void> {
-		return this.db('login_verification_code').where({email, code}).delete();
+	async deleteUserLoginVerificationCodes(email: string): Promise<void> {
+		await this.db('login_verification_code').where({email}).delete();
 	}
 }
 

@@ -4,22 +4,26 @@ import {DatabaseDeleteError} from './database-delete-error';
 import {DatabaseInsertError} from './database-insert-error';
 import {DatabaseRetrieveError} from './database-retrieve-error';
 import {DatabaseUpdateError} from './database-update-error';
+import {LocationNotAllowedError} from './location-not-allowed-error';
 import {NotFoundError} from './not-found-error';
+import {TenantNotAllowedError} from './tenant-not-allowed-error';
 
-const ApiErrorSchema = z.object({
-	statusCode: z.number(),
-	message: z.string(),
-	key: z.string(),
-	validationErrors: z
-		.array(
-			z.object({
-				type: z.string(),
-				message: z.string(),
-				property: z.string(),
-			})
-		)
-		.optional(),
-});
+const ApiErrorSchema = z
+	.object({
+		statusCode: z.number(),
+		message: z.string(),
+		key: z.string(),
+		validationErrors: z
+			.array(
+				z.object({
+					type: z.string(),
+					message: z.string(),
+					property: z.string(),
+				})
+			)
+			.optional(),
+	})
+	.openapi('ApiError');
 
 type ApiErrorDTOType = z.infer<typeof ApiErrorSchema>;
 
@@ -90,11 +94,16 @@ class ApiError extends Error {
 			return error;
 		}
 
-		/**
-		 * Any error below this are UNHANDLED errors! If an error is caught and it is not an instance of ApiError, it
-		 * should be handled and converted to an ApiError before it reaches this point. This is to ensure that all
-		 * errors are returned as an ApiError as a last resort.
-		 */
+		if (
+			error instanceof TenantNotAllowedError ||
+			error instanceof LocationNotAllowedError
+		) {
+			return new ApiError(
+				403,
+				'You are not allowed to perform this action',
+				'FORBIDDEN'
+			);
+		}
 
 		if (error instanceof NotFoundError) {
 			return new ApiError(404, error.message, 'NOT_FOUND');

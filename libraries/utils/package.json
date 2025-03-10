@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./env": "./src/env.utils.ts",
+    "./query-params": "./src/query-params.utils.ts",
     "./array": "./src/array.utils.ts",
     "./aws-secret-manager": "./src/aws-secret-manager.ts",
     "./db": "./src/database/database.utils.ts",

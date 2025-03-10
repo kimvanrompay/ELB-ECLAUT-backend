@@ -8,16 +8,13 @@ interface ILoginVerificationCodeRepository {
 		verificationCode: LoginVerificationCodeDBType
 	): Promise<LoginVerificationCode>;
 
-	removeLoginVerificationCode(code: string): Promise<void>;
-
-	getLoginVerificationCode(
-		email: string,
-		code: string
-	): Promise<LoginVerificationCode | undefined>;
+	findValidLoginVerificationCodes(
+		email: string
+	): Promise<LoginVerificationCode[]>;
 
 	removeExpiredLoginVerificationCodes(): Promise<void>;
 
-	deleteLoginVerificationCode(email: string, code: string): Promise<void>;
+	deleteUserLoginVerificationCodes(email: string): Promise<void>;
 }
 
 export type {ILoginVerificationCodeRepository};

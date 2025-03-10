@@ -74,9 +74,9 @@ class JwtAuthService implements IJwtService {
 		});
 	}
 
-	async getRefreshTokenById(token: string) {
+	async getRefreshTokenById(id: string) {
 		try {
-			return await this.refreshTokenRepository.getRefreshTokenById(token);
+			return await this.refreshTokenRepository.getRefreshTokenById(id);
 		} catch (e) {
 			console.error(e);
 			throw new NotFoundError('No refresh token found');
@@ -108,6 +108,12 @@ class JwtAuthService implements IJwtService {
 
 	async updateRefreshTokenUsageCount(id: string) {
 		return this.refreshTokenRepository.updateRefreshTokenUsageCount(id);
+	}
+
+	async invalidateRefreshToken(refreshToken: string) {
+		const parsedRefreshToken =
+			await this.authenticateRefreshToken(refreshToken);
+		await this.updateRefreshTokenUsageCount(parsedRefreshToken.dbToken.id);
 	}
 
 	async invalidateAllRefreshTokensForUser(userId: string) {

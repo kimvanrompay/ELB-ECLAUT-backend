@@ -1,19 +1,29 @@
-import {pino} from 'pino';
-
-import {AppUserRole} from '@lib/models/app-user';
+import type {AppContext, AuthenticatedAppContext} from '@lib/services/types';
+import {PinoLogger} from '@lib/utils';
 
 type Variables = {
 	requestId: string;
-	logger: pino.Logger;
-	tokenUser?: {
-		email: string;
-		userId: string;
-		role: AppUserRole;
-	};
+	logger: PinoLogger;
+	appContext: AppContext;
+};
+
+type AuthenticatedVariables = {
+	requestId: string;
+	logger: PinoLogger;
+	appContext: AuthenticatedAppContext;
 };
 
 type Environment = {
 	Variables: Variables;
 };
 
-export type {Environment, Variables};
+type AuthenticatedEnvironment = {
+	Variables: AuthenticatedVariables;
+};
+
+export type {
+	Environment,
+	Variables,
+	AuthenticatedEnvironment,
+	AuthenticatedVariables,
+};

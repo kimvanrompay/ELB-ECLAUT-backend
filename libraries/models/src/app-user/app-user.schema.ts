@@ -17,14 +17,15 @@ enum AppUserRole {
 
 const AppUserDTOSchema = z
 	.object({
-		id: z.string().uuid(),
+		id: z.string(),
 		email: z.string().email(),
-		username: z.string().uuid(),
+		username: z.string(),
 		tenant: z.object({
-			id: z.string().uuid(),
-			name: z.string().uuid(),
+			id: z.string(),
+			name: z.string(),
 		}),
 		role: z.nativeEnum(AppUserRole),
+		locationIds: z.array(z.string()),
 		isBlocked: z.boolean(),
 		lastLogin: z.string().optional(),
 		lastSeen: z.string().optional(),
@@ -32,28 +33,53 @@ const AppUserDTOSchema = z
 	.openapi('User');
 
 const AppUserDBSchema = z.object({
-	id: z.string().uuid(),
+	id: z.string(),
 	email: z.string().email(),
 	tenant_id: z.string(),
 	tenant_name: z.string(),
 	username: z.string(),
 	role: z.nativeEnum(AppUserRole),
+	location_ids: z.string(),
 	is_blocked: z.boolean(),
 	last_login: z.string().optional(),
 	last_seen: z.string().optional(),
 });
 
-const AppUserCreateDTOSchema = z.object({
-	email: z.string().email(),
-	username: z.string(),
-	tenantId: z.string().uuid(),
-	role: z.nativeEnum(AppUserRole),
-});
+const AppUserCreateDTOSchema = z
+	.object({
+		email: z.string().email(),
+		username: z.string(),
+		tenantId: z.string(),
+		role: z.nativeEnum(AppUserRole),
+		locationIds: z.array(z.string()),
+	})
+	.refine(
+		(data) => {
+			const rolesWithoutLocations = [
+				AppUserRole.ELAUT_ADMIN,
+				AppUserRole.ELAUT_SERVICE,
+				AppUserRole.ELAUT_DEVELOPER,
+				AppUserRole.ELAUT_QC,
+				AppUserRole.TENANT_ADMIN,
+				AppUserRole.TENANT_GLOBAL_MANAGER,
+				AppUserRole.DISTRIBUTOR,
+			];
+
+			if (!rolesWithoutLocations.includes(data.role)) {
+				return data.locationIds.length > 0;
+			}
+
+			return true;
+		},
+		{
+			message: 'Location IDs are required for the chosen user role',
+		}
+	);
 
 const AppUserInsertDBSchema = z.object({
-	id: z.string().uuid(),
+	id: z.string(),
 	email: z.string().email(),
-	tenant_id: z.string().uuid(),
+	tenant_id: z.string(),
 	username: z.string(),
 	role: z.nativeEnum(AppUserRole),
 });
@@ -63,6 +89,7 @@ const AppUserUpdateDTOSchema = z.object({
 	username: z.string().optional(),
 	role: z.nativeEnum(AppUserRole).optional(),
 	isBlocked: z.boolean().optional(),
+	locationIds: z.array(z.string()).optional(),
 });
 
 const AppUserUpdateDBSchema = z.object({

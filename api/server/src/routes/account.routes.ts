@@ -1,22 +1,31 @@
 import {OpenAPIHono} from '@hono/zod-openapi';
 
 import {UnauthorizedError} from '@lib/errors';
-import type {IAppUserService} from '@lib/services/types';
+import {AppUserRepository} from '@lib/repositories/app-user';
+import {AppUserService} from '@lib/services/app-user';
 import {defaultValidationHook} from '@lib/utils';
 
+import {db} from '../database';
+import {Authenticate} from '../middlewares/authentication';
 import type {Environment} from '../types';
 import {loggedInUserRoute} from './account.openapi';
 
-const createAccountApi = (appUserService: IAppUserService) => {
+const createAccountApi = () => {
 	const app = new OpenAPIHono<Environment>({
 		strict: true,
 		defaultHook: defaultValidationHook,
 	});
 
-	app.openapi(loggedInUserRoute, async (ctx) => {
-		const tokenuser = ctx.get('tokenUser');
+	app.use(Authenticate());
 
-		console.log('tokenuser', tokenuser);
+	app.openapi(loggedInUserRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const appUserRepository = new AppUserRepository(db, {
+			logger: appContext.logger,
+		});
+		const appUserService = new AppUserService(appUserRepository, appContext);
+
+		const tokenuser = appContext.auth;
 
 		if (!tokenuser) {
 			throw new UnauthorizedError('Cannot find user');
@@ -30,7 +39,7 @@ const createAccountApi = (appUserService: IAppUserService) => {
 			}
 
 			return ctx.json(user.toJSON(), 200);
-		} catch (e) {
+		} catch {
 			throw new UnauthorizedError('Cannot find user');
 		}
 	});
