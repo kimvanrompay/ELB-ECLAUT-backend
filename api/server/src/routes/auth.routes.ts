@@ -86,9 +86,8 @@ const createAuthApi = () => {
 	authApp.openapi(authorizeCodeRoute, async (ctx) => {
 		const {code, email} = ctx.req.valid('json');
 
-		const {loginVerificationCodeService, authService} = createServices(
-			ctx.get('appContext')
-		);
+		const {loginVerificationCodeService, appUserService, authService} =
+			createServices(ctx.get('appContext'));
 
 		try {
 			const isValid =
@@ -102,6 +101,7 @@ const createAuthApi = () => {
 			}
 
 			const {
+				user,
 				accessToken,
 				accessTokenExpiration,
 				refreshToken,
@@ -111,6 +111,8 @@ const createAuthApi = () => {
 			await loginVerificationCodeService.deleteUserLoginVerificationCodes(
 				email
 			);
+
+			await appUserService.updateUserLastLogin(user.id);
 
 			setCookie(ctx, 'eclaut-access-token', accessToken, {
 				secure: !isDevelopmentBuild(),

@@ -119,6 +119,7 @@ class AuthService implements IAuthService {
 			});
 
 			return {
+				user,
 				accessToken: newTokens.accessToken,
 				refreshToken: newTokens.refreshToken,
 				accessTokenExpiration: now.add(15, 'minute').toDate(),

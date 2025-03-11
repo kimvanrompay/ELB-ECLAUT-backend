@@ -1,3 +1,5 @@
+import type {AppUser} from '@lib/models/app-user';
+
 interface IAuthService {
 	authenticateJwtAccessToken(token: string): Promise<{
 		userId: string;
@@ -13,6 +15,7 @@ interface IAuthService {
 	}>;
 
 	getJwtTokens(email: string): Promise<{
+		user: AppUser;
 		accessToken: string;
 		refreshToken: string;
 		accessTokenExpiration: Date;
