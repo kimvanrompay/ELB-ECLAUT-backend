@@ -13,8 +13,8 @@
   },
   "scripts": {
     "test": "yarn test:integration",
-    "pretest:integration": "yarn workspace @lib/db run db:test:down && yarn workspace @lib/db run db:test:up",
-    "test:integration": "vitest run --no-isolate",
+    "pretest:integration": "yarn workspace @lib/db run db:test:down && yarn workspace @lib/db run db:test:up && yarn workspace @lib/db run db:test:migrate",
+    "test:integration": "yarn pretest:integration && vitest run && yarn posttest:integration",
     "posttest:integration": "yarn workspace @lib/db run db:test:down"
   },
   "dependencies": {

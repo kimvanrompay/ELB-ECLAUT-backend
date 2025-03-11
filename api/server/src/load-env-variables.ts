@@ -20,3 +20,14 @@ if (process.env.NODE_ENV === 'development') {
 		path,
 	});
 }
+
+if (process.env.NODE_ENV === 'test') {
+	const __dirname = import.meta.dirname;
+	const path = join(__dirname, '../../..', '.env.test');
+
+	LOGGER.info('Loading TEST env variables from .env.test file');
+
+	dotenv.config({
+		path,
+	});
+}
