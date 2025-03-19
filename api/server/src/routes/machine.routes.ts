@@ -1,78 +1,82 @@
-// import {OpenAPIHono} from '@hono/zod-openapi';
-//
-// import {type IMachineService} from '@lib/services/types';
-// import {
-// 	defaultValidationHook,
-// 	getLoggerFromContext,
-// 	validatedJSONResponse,
-// } from '@lib/utils';
-//
-// import type {Environment} from '../types';
-// import {
-// 	getMachineByIdRoute,
-// 	getMachinesRoute,
-// 	updateMachineRoute,
-// } from './machine.openapi';
-//
-// const createMachineApi = (machineService: IMachineService) => {
-// 	const machinesApp = new OpenAPIHono<Environment>({
-// 		strict: true,
-// 		defaultHook: defaultValidationHook,
-// 	});
-//
-// 	machinesApp.openapi(getMachinesRoute, async (ctx) => {
-// 		const machines = await machineService.getAllMachines();
-// 		const machineDTOs = machines.map((machine) => machine.toJSON());
-//
-// 		const validatedResponse = validatedJSONResponse(
-// 			getMachinesRoute,
-// 			ctx,
-// 			machineDTOs
-// 		);
-//
-// 		return ctx.json(validatedResponse, 200);
-// 	});
-//
-// 	machinesApp.openapi(getMachineByIdRoute, async (ctx) => {
-// 		const machineId = ctx.req.param('id');
-//
-// 		const machine = await machineService.getMachineById(machineId);
-//
-// 		const machineDTO = machine.toJSON();
-//
-// 		const httpLogger = getLoggerFromContext(ctx);
-//
-// 		httpLogger.debug({machineId}, 'Machine retrieved');
-//
-// 		const validatedResponse = validatedJSONResponse(
-// 			getMachineByIdRoute,
-// 			ctx,
-// 			machineDTO
-// 		);
-//
-// 		return ctx.json(validatedResponse, 200);
-// 	});
-//
-// 	machinesApp.openapi(updateMachineRoute, async (ctx) => {
-// 		const machineId = ctx.req.param('id');
-// 		const machine = ctx.req.valid('json');
-//
-// 		const updatedMachine = await machineService.updateMachine(
-// 			machineId,
-// 			machine
-// 		);
-//
-// 		const machineDTO = updatedMachine.toJSON();
-// 		const validatedResponse = validatedJSONResponse(
-// 			updateMachineRoute,
-// 			ctx,
-// 			machineDTO
-// 		);
-//
-// 		return ctx.json(validatedResponse, 200);
-// 	});
-//
-// 	return machinesApp;
-// };
-//
-// export {createMachineApi};
+import {OpenAPIHono} from '@hono/zod-openapi';
+
+import {CabinetRepository} from '@lib/repositories/cabinet';
+import {MachineRepository} from '@lib/repositories/machine';
+import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {MachineService} from '@lib/services/machine';
+import {type AuthenticatedAppContext} from '@lib/services/types';
+import {defaultValidationHook} from '@lib/utils';
+import {renameProperties} from '@lib/utils/object';
+import {parseQueryParamsToDatabaseFilters} from '@lib/utils/query-params';
+
+import {db} from '../database';
+import type {AuthenticatedEnvironment} from '../types';
+import {createMachineRoute, findMachinesRoute} from './machine.openapi';
+
+const createMachineApi = () => {
+	const machinesApp = new OpenAPIHono<AuthenticatedEnvironment>({
+		strict: true,
+		defaultHook: defaultValidationHook,
+	});
+
+	const createServices = (context: AuthenticatedAppContext) => {
+		const playfieldRepository = new PlayfieldRepository(db, context);
+		const cabinetRepository = new CabinetRepository(db, context);
+		const machineRepository = new MachineRepository(
+			db,
+			playfieldRepository,
+			context
+		);
+
+		const machineService = new MachineService(
+			machineRepository,
+			playfieldRepository,
+			cabinetRepository,
+			context
+		);
+
+		return {machineService};
+	};
+
+	machinesApp.openapi(findMachinesRoute, async (ctx) => {
+		const queryParams = ctx.req.valid('query');
+		const appContext = ctx.get('appContext');
+
+		const {machineService} = createServices(appContext);
+
+		// TODO: possibly rename some filters
+
+		const renamedQueryParams = renameProperties(queryParams, {
+			'location_id[eq]': 'cabinet.tenant_location_id[eq]',
+			'tenant_id[eq]': 'cabinet.tenant_id[eq]',
+			'gametype_id[eq]': 'playfield.gametype_id[eq]',
+			'machine_name[like]': 'playfield.name[like]', // TODO: this should also work for cabinets in the future
+			'status[eq]': 'playfield.status[eq]', // TODO: this should also work for cabinets in the future
+		}) as typeof queryParams;
+
+		const filters = parseQueryParamsToDatabaseFilters(renamedQueryParams);
+
+		const machines = await machineService.findMachines(filters);
+
+		const machineDTOs = machines.map((machine) => machine.toJSON());
+
+		return ctx.json(machineDTOs, 200);
+	});
+
+	machinesApp.openapi(createMachineRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const machineData = ctx.req.valid('json');
+
+		const {machineService} = createServices(appContext);
+
+		const machine = await machineService.createMachine(machineData);
+
+		const machineDTO = machine.toJSON();
+
+		return ctx.json(machineDTO, 201);
+	});
+
+	return machinesApp;
+};
+
+export {createMachineApi};

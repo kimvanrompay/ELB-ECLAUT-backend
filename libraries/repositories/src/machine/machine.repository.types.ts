@@ -1,13 +1,18 @@
-import type {Machine, MachineUpdateDBType} from '@lib/models/machine';
+import type {Knex} from 'knex';
 
-export interface IMachineRepository {
-	// TODO: Implement standard query parameter filters
-	getMachines(): Promise<Machine[]>;
+import type {Machine} from '@lib/models/machine';
+import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
-	getMachineById(id: string): Promise<Machine | undefined>;
+import type {IKnexRepository} from '../internal-types';
 
-	updateMachine(
-		machineId: string,
-		machine: MachineUpdateDBType
-	): Promise<Machine>;
+interface IMachineRepository extends IKnexRepository {
+	withTransaction(trx: Knex.Transaction): IMachineRepository;
+
+	findMachines(
+		filters: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Machine[]>;
 }
+
+export type {IMachineRepository};

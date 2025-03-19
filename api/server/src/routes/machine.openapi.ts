@@ -1,141 +1,75 @@
-// import {createRoute, z} from '@hono/zod-openapi';
-//
-// import {ApiErrorSchema} from '@lib/errors';
-// import {Playfield} from '@lib/models/playfield';
-//
-// const getMachinesRoute = createRoute({
-// 	summary: 'Get all machines',
-// 	method: 'get',
-// 	path: '/',
-// 	responses: {
-// 		200: {
-// 			summary: 'Successful response',
-// 			description: 'Returns a json body with a list of all machines',
-// 			content: {
-// 				'application/json': {
-// 					schema: z.array(Playfield.schemas.DTOSchema),
-// 				},
-// 			},
-// 		},
-// 		503: {
-// 			description: 'Request validation Error',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 		500: {
-// 			description: 'Internal Server Error',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 	},
-// });
-//
-// const getMachineByIdRoute = createRoute({
-// 	summary: 'Get a machine by id',
-// 	method: 'get',
-// 	path: '/{id}',
-// 	request: {
-// 		params: z.object({
-// 			id: z.string({
-// 				description:
-// 					'The id of the machine which often is the machine serial number',
-// 			}),
-// 		}),
-// 	},
-// 	responses: {
-// 		200: {
-// 			summary: 'Successful response',
-// 			description: 'Returns a json body with a machine',
-// 			content: {
-// 				'application/json': {
-// 					schema: Machine.schemas.DTOSchema,
-// 				},
-// 			},
-// 		},
-// 		404: {
-// 			description: 'Machine not found',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 		503: {
-// 			description: 'Request validation Error',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 		500: {
-// 			description: 'Internal Server Error',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 	},
-// });
-//
-// const updateMachineRoute = createRoute({
-// 	summary: 'Update a machine',
-// 	method: 'put',
-// 	path: '/{id}',
-// 	request: {
-// 		params: z.object({
-// 			id: z.string(),
-// 		}),
-// 		body: {
-// 			content: {
-// 				'application/json': {
-// 					schema: Machine.schemas.UpdateDTOSchema,
-// 				},
-// 			},
-// 		},
-// 	},
-// 	responses: {
-// 		200: {
-// 			summary: 'Successful response',
-// 			description: 'Returns a json body with the updated machine',
-// 			content: {
-// 				'application/json': {
-// 					schema: Machine.schemas.DTOSchema,
-// 				},
-// 			},
-// 		},
-// 		404: {
-// 			description: 'Machine not found',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 		503: {
-// 			description: 'Request validation Error',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 		500: {
-// 			description: 'Internal Server Error',
-// 			content: {
-// 				'application/json': {
-// 					schema: ApiErrorSchema,
-// 				},
-// 			},
-// 		},
-// 	},
-// });
-//
-// export {getMachinesRoute, getMachineByIdRoute, updateMachineRoute};
+import {z} from '@hono/zod-openapi';
+
+import {Machine} from '@lib/models/machine';
+import {AppSecurityScopes} from '@lib/services/authorization';
+
+import {createPrivateAppRoute} from '../utils/create-private-app-route';
+
+const findMachinesRoute = createPrivateAppRoute(
+	[AppSecurityScopes.READ_MACHINES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'get',
+	summary: 'Get all machines',
+	description:
+		'Returns a list of all machines. A machine can be either a playfield or a cabinet depending on the game type.',
+	path: '/',
+	tags: ['Machines'],
+	request: {
+		query: z.object({
+			'location_id[eq]': z.string().optional(),
+			'tenant_id[eq]': z.string().optional(),
+			'machine_name[like]': z.string().optional(),
+			'status[eq]': z.string().optional(),
+			'gametype_id[eq]': z.string().optional(),
+			limit: z.string().optional(),
+			offset: z.string().optional(),
+			order_by: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: z.array(Machine.schemas.DTOSchema),
+				},
+			},
+		},
+	},
+});
+
+const createMachineRoute = createPrivateAppRoute(
+	[AppSecurityScopes.CREATE_MACHINES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'post',
+	summary: 'Create a new machine',
+	tags: ['Machines'],
+	path: '/',
+	request: {
+		body: {
+			content: {
+				'application/json': {
+					schema: Machine.schemas.CreateDTOSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		201: {
+			description: 'Machine created',
+			content: {
+				'application/json': {
+					schema: Machine.schemas.DTOSchema,
+				},
+			},
+		},
+	},
+});
+
+export {findMachinesRoute, createMachineRoute};

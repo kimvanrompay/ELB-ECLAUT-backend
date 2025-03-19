@@ -9,6 +9,9 @@
     "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
     "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
     "./machine": "./src/machine/machine.repository.ts",
+    "./playfield": "./src/playfield/playfield.repository.ts",
+    "./cabinet": "./src/cabinet/cabinet.repository.ts",
+    "./gametype": "./src/gametype/gametype.repository.ts",
     "./machine-message": "./src/machine-message/machine-message.repository.ts",
     "./tenant-location": "./src/tenant-location/tenant-location.repository.ts"
   },

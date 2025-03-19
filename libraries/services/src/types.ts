@@ -6,6 +6,8 @@ export type {IAppUserService} from './app-user-service/app-user.service.types';
 export type {IAuthService} from './auth-service/auth.service.types';
 export type {IEmailService} from './email-service/email.service.types';
 export type {ILoginVerificationCodeService} from './login-verification-code-service/login-verification-code.service.types';
+export type {IPlayfieldService} from './playfield-service/playfield.service.types';
+export type {ICabinetService} from './cabinet-service/cabinet.service.types';
 
 export type AppContext = {
 	auth?: {

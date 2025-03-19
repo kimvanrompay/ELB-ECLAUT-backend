@@ -9,8 +9,9 @@
     "test:unit": "vitest run --dir test/unit"
   },
   "exports": {
-    "./schema": "./src/machine/machine.schema.ts",
     "./machine": "./src/machine/machine.model.ts",
+    "./playfield": "./src/playfield/playfield.model.ts",
+    "./cabinet": "./src/cabinet/cabinet.model.ts",
     "./gametype": "./src/gametype/gametype.model.ts",
     "./app-user": "./src/app-user/app-user.model.ts",
     "./login-verification-code": "./src/login-verification-code/login-verification-code.model.ts",

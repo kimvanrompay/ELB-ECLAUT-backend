@@ -1,35 +1,70 @@
-import {NotFoundError} from '@lib/errors';
-import {Machine, type MachineUpdateDTOType} from '@lib/models/machine';
-import type {IMachineRepository} from '@lib/repositories/types';
+import {UnauthorizedError} from '@lib/errors';
+import {Machine, type MachineCreateDTOType} from '@lib/models/machine';
+import type {
+	ICabinetRepository,
+	IMachineRepository,
+	IPlayfieldRepository,
+} from '@lib/repositories/types';
+import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {PinoLogger} from '@lib/utils/logger';
 
+import {AuthorizationService} from '../authorization-service/authorization.service';
+import {type AuthenticatedAppContext, isAuthenticatedContext} from '../types';
 import type {IMachineService} from './machine.service.types';
 
 class MachineService implements IMachineService {
 	private machineRepository: IMachineRepository;
+	private context: AuthenticatedAppContext;
+	private logger: PinoLogger;
 
-	constructor(machineRepository: IMachineRepository) {
+	constructor(
+		machineRepository: IMachineRepository,
+		playfieldRepository: IPlayfieldRepository,
+		cabinetRepository: ICabinetRepository,
+		context: AuthenticatedAppContext
+	) {
 		this.machineRepository = machineRepository;
+		this.context = context;
+		this.logger = context.logger.getChildLogger(
+			{
+				name: 'machine-service',
+			},
+			{}
+		);
 	}
 
-	public async getAllMachines(): Promise<Machine[]> {
-		return this.machineRepository.getMachines();
-	}
+	private getTenantAndLocationFromContext() {
+		const auth = this.context.auth;
 
-	public async getMachineById(id: string): Promise<Machine> {
-		const machine = await this.machineRepository.getMachineById(id);
-
-		if (!machine) {
-			throw new NotFoundError(`Machine with id ${id} not found`);
+		if (!auth) {
+			return [undefined, undefined] as const;
 		}
 
-		return machine;
+		return [
+			AuthorizationService.isTenantBound(auth.role) ? auth.tenantId : undefined,
+			AuthorizationService.isLocationBound(auth.role)
+				? auth.locationIds
+				: undefined,
+		] as const;
 	}
 
-	public async updateMachine(
-		machineId: string,
-		machine: MachineUpdateDTOType
-	): Promise<Machine> {
-		return this.machineRepository.updateMachine(machineId, machine);
+	async findMachines(filters?: DatabaseQueryFilters): Promise<Machine[]> {
+		return this.machineRepository.findMachines(
+			filters ?? {},
+			...this.getTenantAndLocationFromContext()
+		);
+	}
+
+	/**
+	 * The Machine returned by this method is always a Cabinet.
+	 * @param machine
+	 */
+	async createMachine(machine: MachineCreateDTOType): Promise<Machine> {
+		if (!this.context.auth || !isAuthenticatedContext(this.context)) {
+			throw new UnauthorizedError('Unauthorized');
+		}
+
+		throw new Error('Method not implemented.');
 	}
 }
 

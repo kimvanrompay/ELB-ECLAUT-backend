@@ -1,14 +1,14 @@
-import type {Machine, MachineUpdateDTOType} from '@lib/models/machine';
+import type {Machine, MachineCreateDTOType} from '@lib/models/machine';
+import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
 interface IMachineService {
-	getAllMachines(): Promise<Machine[]>;
+	findMachines(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Machine[]>;
 
-	getMachineById(id: string): Promise<Machine>;
-
-	updateMachine(
-		machineId: string,
-		machine: MachineUpdateDTOType
-	): Promise<Machine>;
+	createMachine(machine: MachineCreateDTOType): Promise<Machine>;
 }
 
 export type {IMachineService};

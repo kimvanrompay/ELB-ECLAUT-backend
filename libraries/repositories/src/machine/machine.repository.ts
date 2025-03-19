@@ -1,73 +1,53 @@
-import {Knex} from 'knex';
+import type {Knex} from 'knex';
 
 import {DatabaseRetrieveError} from '@lib/errors';
-import {
-	Machine,
-	type MachineDBType,
-	type MachineUpdateDBType,
-} from '@lib/models/machine';
+import {Machine} from '@lib/models/machine';
+import {PinoLogger} from '@lib/utils';
+import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
-import {type IMachineRepository} from './machine.repository.types';
+import {KnexRepository} from '../knex-repository';
+import type {IPlayfieldRepository} from '../playfield/playfield.repository.types';
+import type {IMachineRepository} from './machine.repository.types';
 
-class MachineRepository implements IMachineRepository {
-	private db: Knex;
-
-	constructor(db: Knex) {
-		this.db = db;
+class MachineRepository extends KnexRepository implements IMachineRepository {
+	constructor(
+		db: Knex,
+		private playfieldRepository: IPlayfieldRepository,
+		context: {logger: PinoLogger}
+	) {
+		super('machine-repository', db, context);
+		this.playfieldRepository = playfieldRepository;
 	}
 
-	async getMachines(): Promise<Machine[]> {
-		try {
-			const dbMachines = await this.db
-				.select<MachineDBType[]>('*')
-				.from('machine');
-
-			return Machine.fromDBType(dbMachines);
-		} catch (e) {
-			console.error(e);
-			throw new DatabaseRetrieveError(
-				`Error retrieving machines from the database`
-			);
-		}
+	withTransaction(trx: Knex.Transaction): MachineRepository {
+		return new MachineRepository(
+			trx,
+			this.playfieldRepository.withTransaction(trx),
+			{
+				logger: this.logger,
+			}
+		);
 	}
 
-	async getMachineById(id: string): Promise<Machine | undefined> {
+	async findMachines(
+		filters: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Machine[]> {
 		try {
-			const dbMachine = await this.db
-				.select<MachineDBType[]>('*')
-				.from('machine')
-				.where({id: id})
-				.first();
+			// TODO: gametypes that should return cabinet instead of the playfields (ex. GoT)
+			// Since it will be paginated, it needs to be done in one call
 
-			return dbMachine ? Machine.fromDBType(dbMachine) : undefined;
-		} catch (e) {
-			// TODO: Add logging
-			console.error(e);
-			throw new DatabaseRetrieveError(
-				`Error retrieving machine with id ${id} from the database`
+			const playfields = await this.playfieldRepository.findPlayfields(
+				filters,
+				tenantId,
+				locationIds
 			);
-		}
-	}
 
-	async updateMachine(
-		machineId: string,
-		machine: MachineUpdateDBType
-	): Promise<Machine> {
-		try {
-			const dbMachines = await this.db
-				.update(machine)
-				.from('machine')
-				.where({id: machineId})
-				.returning<MachineDBType[]>('*');
-
-			const dbMachine = dbMachines[0]!;
-
-			return Machine.fromDBType(dbMachine);
-		} catch (e) {
-			console.error(e);
-			throw new DatabaseRetrieveError(
-				`Error updating machine with id ${machineId} in the database`
-			);
+			return Machine.fromPlayfield(playfields);
+		} catch (error) {
+			this.logger.error(error);
+			throw new DatabaseRetrieveError('Error finding machines');
 		}
 	}
 }
