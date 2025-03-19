@@ -27,6 +27,7 @@ const AppUserDTOSchema = z
 		role: z.nativeEnum(AppUserRole),
 		locationIds: z.array(z.string()),
 		isBlocked: z.boolean(),
+		isActive: z.boolean(),
 		lastLogin: z.string().optional(),
 		lastSeen: z.string().optional(),
 	})
@@ -41,40 +42,40 @@ const AppUserDBSchema = z.object({
 	role: z.nativeEnum(AppUserRole),
 	location_ids: z.string(),
 	is_blocked: z.boolean(),
+	is_active: z.boolean(),
 	last_login: z.string().optional(),
 	last_seen: z.string().optional(),
 });
 
-const AppUserCreateDTOSchema = z
-	.object({
-		email: z.string().email(),
-		username: z.string(),
-		tenantId: z.string(),
-		role: z.nativeEnum(AppUserRole),
-		locationIds: z.array(z.string()),
-	})
-	.refine(
-		(data) => {
-			const rolesWithoutLocations = [
-				AppUserRole.ELAUT_ADMIN,
-				AppUserRole.ELAUT_SERVICE,
-				AppUserRole.ELAUT_DEVELOPER,
-				AppUserRole.ELAUT_QC,
-				AppUserRole.TENANT_ADMIN,
-				AppUserRole.TENANT_GLOBAL_MANAGER,
-				AppUserRole.DISTRIBUTOR,
-			];
-
-			if (!rolesWithoutLocations.includes(data.role)) {
-				return data.locationIds.length > 0;
-			}
-
-			return true;
-		},
-		{
-			message: 'Location IDs are required for the chosen user role',
-		}
-	);
+const AppUserCreateDTOSchema = z.object({
+	email: z.string().email(),
+	username: z.string(),
+	tenantId: z.string(),
+	role: z.nativeEnum(AppUserRole),
+	locationIds: z.array(z.string()).optional(),
+});
+// .refine(
+// 	(data) => {
+// 		const rolesWithoutLocations = [
+// 			AppUserRole.ELAUT_ADMIN,
+// 			AppUserRole.ELAUT_SERVICE,
+// 			AppUserRole.ELAUT_DEVELOPER,
+// 			AppUserRole.ELAUT_QC,
+// 			AppUserRole.TENANT_ADMIN,
+// 			AppUserRole.TENANT_GLOBAL_MANAGER,
+// 			AppUserRole.DISTRIBUTOR,
+// 		];
+//
+// 		if (!rolesWithoutLocations.includes(data.role)) {
+// 			return data.locationIds.length > 0;
+// 		}
+//
+// 		return true;
+// 	},
+// 	{
+// 		message: 'Location IDs are required for the chosen user role',
+// 	}
+// );
 
 const AppUserInsertDBSchema = z.object({
 	id: z.string(),
@@ -99,6 +100,7 @@ const AppUserUpdateDBSchema = z.object({
 	is_blocked: z.boolean().optional(),
 	last_login: z.string().optional(),
 	last_seen: z.string().optional(),
+	is_active: z.boolean().optional(),
 });
 
 type AppUserDTOType = z.infer<typeof AppUserDTOSchema>;

@@ -3,7 +3,7 @@ import {createRoute, z} from '@hono/zod-openapi';
 const healthCheckRoute = createRoute({
 	summary: 'Health check',
 	method: 'get',
-	path: '/health',
+	path: '/ping',
 	tags: ['General'],
 	responses: {
 		200: {

@@ -2,6 +2,7 @@ import {OpenAPIHono} from '@hono/zod-openapi';
 
 import {UnauthorizedError} from '@lib/errors';
 import {AppUserRepository} from '@lib/repositories/app-user';
+import {TenantLocationRepository} from '@lib/repositories/tenant-location';
 import {AppUserService} from '@lib/services/app-user';
 import {defaultValidationHook} from '@lib/utils';
 
@@ -23,7 +24,14 @@ const createAccountApi = () => {
 		const appUserRepository = new AppUserRepository(db, {
 			logger: appContext.logger,
 		});
-		const appUserService = new AppUserService(appUserRepository, appContext);
+		const tenantLocationRepository = new TenantLocationRepository(db, {
+			logger: appContext.logger,
+		});
+		const appUserService = new AppUserService(
+			appUserRepository,
+			tenantLocationRepository,
+			appContext
+		);
 
 		const tokenuser = appContext.auth;
 

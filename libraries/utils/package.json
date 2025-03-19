@@ -13,7 +13,8 @@
     "./db/filters": "./src/database/database-filters.ts",
     "./jwt": "./src/jwt.utils.ts",
     "./logger": "./src/logger/logger.ts",
-    "./sqs": "./src/sqs/sqs.utils.ts"
+    "./sqs": "./src/sqs/sqs.utils.ts",
+    "./object": "./src/object.utils.ts"
   },
   "scripts": {
     "test": "yarn test:unit",

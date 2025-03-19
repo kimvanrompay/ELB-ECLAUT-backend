@@ -17,36 +17,21 @@ import {
 	KnexFilterAdapter,
 } from '@lib/utils/db/filters';
 
+import {KnexRepository} from '../knex-repository';
 import type {IAppUserRepository} from './app-user.repository.types';
 
-class AppUserRepository implements IAppUserRepository {
-	private readonly db: Knex;
-	private readonly logger: PinoLogger;
-
+class AppUserRepository extends KnexRepository implements IAppUserRepository {
 	constructor(
 		db: Knex,
 		context: {
 			logger: PinoLogger;
 		}
 	) {
-		this.db = db;
-		this.logger = context.logger.getChildLogger(
-			{
-				name: 'app-user-repository',
-			},
-			{}
-		);
+		super('app-user-repository', db, context);
 	}
 
-	public withTransaction(trx: Knex.Transaction) {
+	public withTransaction(trx: Knex) {
 		return new AppUserRepository(trx, {logger: this.logger});
-	}
-
-	public transaction<T>(
-		transactionScope: (trx: Knex.Transaction) => Promise<T> | void,
-		config?: Knex.TransactionConfig
-	) {
-		return this.db.transaction<T>(transactionScope, config);
 	}
 
 	private withTenantAndLocations<T = AppUserDBType>(
@@ -151,6 +136,8 @@ class AppUserRepository implements IAppUserRepository {
 				return undefined;
 			}
 
+			console.log('result', result);
+
 			return AppUser.fromDB(result);
 		} catch (error) {
 			this.logger.error(error);
@@ -225,8 +212,13 @@ class AppUserRepository implements IAppUserRepository {
 
 	async createUser(user: AppUserInsertDBType): Promise<AppUser> {
 		try {
-			const result =
-				await this.db<AppUserInsertDBType>('app_user').insert(user);
+			console.log('creating user', user);
+
+			const result = await this.db<AppUserInsertDBType>('app_user')
+				.insert(user)
+				.returning('*');
+
+			console.log('result', result);
 
 			if (!result) {
 				throw new Error('Could not create user');

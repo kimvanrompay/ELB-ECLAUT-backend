@@ -1,3 +1,5 @@
+import {v4 as uuid} from 'uuid';
+
 import {mapArrayOrSingleItem} from '@lib/utils';
 
 import {
@@ -27,6 +29,7 @@ class AppUser {
 	locationIds: string[];
 	role: AppUserRole;
 	isBlocked: boolean;
+	isActive: boolean;
 	lastLogin: Date | undefined;
 	lastSeen: Date | undefined;
 
@@ -50,6 +53,7 @@ class AppUser {
 		role: AppUserRole,
 		locationIds: string[] = [],
 		isBlocked = false,
+		isActive = true,
 		lastSeen: Date | undefined = undefined,
 		lastLogin: Date | undefined = undefined
 	) {
@@ -62,6 +66,7 @@ class AppUser {
 		this.isBlocked = isBlocked;
 		this.lastSeen = lastSeen;
 		this.lastLogin = lastLogin;
+		this.isActive = isActive;
 	}
 
 	toJSON(): AppUserDTOType {
@@ -75,6 +80,7 @@ class AppUser {
 			isBlocked: this.isBlocked,
 			lastLogin: this.lastLogin?.toISOString(),
 			lastSeen: this.lastSeen?.toISOString(),
+			isActive: this.isActive,
 		};
 	}
 
@@ -90,6 +96,17 @@ class AppUser {
 			last_login: this.lastLogin?.toISOString(),
 			last_seen: this.lastSeen?.toISOString(),
 			location_ids: JSON.stringify(this.locationIds),
+			is_active: this.isActive,
+		};
+	}
+
+	toInsertDBType(): AppUserInsertDBType {
+		return {
+			id: this.id,
+			email: this.email,
+			tenant_id: this.tenant.id,
+			username: this.username,
+			role: this.role,
 		};
 	}
 
@@ -109,6 +126,7 @@ class AppUser {
 				lastSeen,
 				lastLogin,
 				locationIds,
+				isActive,
 			} = item;
 			return new AppUser(
 				id,
@@ -118,6 +136,7 @@ class AppUser {
 				role,
 				locationIds,
 				isBlocked,
+				isActive,
 				lastSeen ? new Date(lastSeen) : undefined,
 				lastLogin ? new Date(lastLogin) : undefined
 			);
@@ -136,10 +155,16 @@ class AppUser {
 				tenant_name,
 				role,
 				is_blocked,
+				is_active,
 				last_seen,
 				last_login,
 				location_ids,
 			} = item;
+
+			const parsed_location_ids =
+				typeof location_ids === 'string'
+					? JSON.parse(location_ids)
+					: location_ids;
 
 			return new AppUser(
 				id,
@@ -147,12 +172,52 @@ class AppUser {
 				username,
 				{id: tenant_id, name: tenant_name},
 				role,
-				typeof location_ids === 'string' ? JSON.parse(location_ids) : [],
+				parsed_location_ids,
 				is_blocked,
+				is_active,
 				last_seen ? new Date(last_seen) : undefined,
 				last_login ? new Date(last_login) : undefined
 			);
 		});
+	}
+
+	static create(data: AppUserCreateDTOType): AppUser {
+		const generatedId = uuid();
+
+		const validatedData = AppUserCreateDTOSchema.parse(data);
+
+		return new AppUser(
+			generatedId,
+			validatedData.email,
+			validatedData.username,
+			{id: validatedData.tenantId, name: ''},
+			validatedData.role,
+			[],
+			false,
+			true
+		);
+	}
+
+	static update(data: AppUserUpdateDTOType): AppUserUpdateDBType {
+		const updateData: AppUserUpdateDBType = {};
+
+		if (data.email) {
+			updateData.email = data.email;
+		}
+
+		if (data.username) {
+			updateData.username = data.username;
+		}
+
+		if (data.role) {
+			updateData.role = data.role;
+		}
+
+		if (data.isBlocked) {
+			updateData.is_blocked = data.isBlocked;
+		}
+
+		return updateData;
 	}
 }
 

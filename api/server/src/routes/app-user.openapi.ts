@@ -21,8 +21,24 @@ const findUsersRoute = createPrivateAppRoute([AppSecurityScopes.READ_USERS])({
 				.string()
 				.optional()
 				.transform((value) => {
+					if (value === undefined) {
+						return undefined;
+					}
 					return !!value && value !== 'false' && value !== '0';
 				}),
+			'is_active[eq]': z
+				.string()
+				.optional()
+				.transform((value) => {
+					if (value === undefined) {
+						return undefined;
+					}
+
+					return !!value && value !== 'false' && value !== '0';
+				}),
+			limit: z.string().optional(),
+			offset: z.string().optional(),
+			order_by: z.string().optional(),
 		}),
 	},
 	responses: {
@@ -172,16 +188,62 @@ const createUserRoute = createPrivateAppRoute(
 	},
 });
 
-const deleteUserRoute = createPrivateAppRoute(
-	[AppSecurityScopes.DELETE_USERS],
+const addUserToLocationRoute = createPrivateAppRoute(
+	[AppSecurityScopes.UPDATE_USERS],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'post',
+	summary: 'Add a user to a location',
+	tags: ['Users'],
+	path: '/{id}/location/{locationId}',
+	request: {
+		params: z.object({
+			id: z.string(),
+			locationId: z.string(),
+		}),
+	},
+	responses: {
+		204: {
+			description: 'Successful response',
+		},
+	},
+});
+
+const removeUserFromLocationRoute = createPrivateAppRoute(
+	[AppSecurityScopes.UPDATE_USERS],
 	{
 		canThrowBadRequest: true,
 	}
 )({
 	method: 'delete',
-	summary: 'Delete a user',
+	summary: 'Inactivate a user from a location',
 	tags: ['Users'],
-	path: '/{id}',
+	path: '/{id}/location/{locationId}',
+	request: {
+		params: z.object({
+			id: z.string(),
+			locationId: z.string(),
+		}),
+	},
+	responses: {
+		204: {
+			description: 'Successful response',
+		},
+	},
+});
+
+const inactivateUserRoute = createPrivateAppRoute(
+	[AppSecurityScopes.UPDATE_USERS],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'put',
+	summary: 'Inactivate a user from a tenant',
+	tags: ['Users'],
+	path: '/{id}/inactivate',
 	request: {
 		params: z.object({
 			id: z.string(),
@@ -200,5 +262,7 @@ export {
 	getUserByEmailAddressRoute,
 	updateUserRoute,
 	createUserRoute,
-	deleteUserRoute,
+	addUserToLocationRoute,
+	removeUserFromLocationRoute,
+	inactivateUserRoute,
 };

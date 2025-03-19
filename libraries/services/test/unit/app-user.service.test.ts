@@ -1,13 +1,18 @@
 import {describe, vi} from 'vitest';
 
 import {
+	ForbiddenError,
 	LocationNotAllowedError,
 	NotFoundError,
 	TenantNotAllowedError,
 	UnauthorizedError,
+	UserAlreadyExistsError,
 } from '@lib/errors';
 import {AppUser, AppUserRole} from '@lib/models/app-user';
-import type {IAppUserRepository} from '@lib/repositories/types';
+import type {
+	IAppUserRepository,
+	ITenantLocationRepository,
+} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
 
 import {AppUserService} from '../../src/app-user-service/app-user.service';
@@ -43,7 +48,31 @@ const mockAppUserRepositoryBase = {
 	getUserByEmail: vi.fn(),
 	getUserByIdForUpdate: vi.fn(),
 	transaction: vi.fn((fn) => fn()),
-};
+} satisfies Omit<IAppUserRepository, 'withTransaction'>;
+
+const mockTenantLocationRepositoryBase = {
+	findTenantLocations: vi.fn(),
+	findTenantLocationsByUserId: vi.fn(),
+	getTenantLocationById: vi.fn(),
+	createTenantLocation: vi.fn(),
+	updateUserTenantLocations: vi.fn(),
+	addUserToTenantLocation: vi.fn(),
+	removeUserFromTenantLocation: vi.fn(),
+	transaction: vi.fn((fn) => fn()),
+	findTenantLocationsByUserIdForUpdate: vi.fn(),
+	addUserToTenantLocations: vi.fn(),
+	removeUserFromTenantLocations: vi.fn(),
+	inactivateTenantLocation: vi.fn(),
+	updateTenantLocation: vi.fn(),
+} satisfies Omit<ITenantLocationRepository, 'withTransaction'>;
+
+const mockTenantLocationRepository = {
+	...mockTenantLocationRepositoryBase,
+	withTransaction: vi.fn(() => ({
+		...mockTenantLocationRepositoryBase,
+		withTransaction: vi.fn(),
+	})),
+} satisfies ITenantLocationRepository;
 
 const mockAppUserRepository = {
 	...mockAppUserRepositoryBase,
@@ -58,13 +87,21 @@ afterEach(() => {
 });
 
 describe('AppUserService', () => {
+	let appUserService: AppUserService;
+
+	beforeEach(() => {
+		appUserService = new AppUserService(
+			mockAppUserRepository,
+			mockTenantLocationRepository,
+			{
+				...context,
+			}
+		);
+	});
+
 	describe('findUserByFilters', () => {
 		it('should return all users when no filters are given', async () => {
 			mockAppUserRepository.findUsersByFilters.mockResolvedValue([]);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.findUserByFilters();
 
@@ -78,10 +115,6 @@ describe('AppUserService', () => {
 
 		it('should passthrough the filters to the repository', async () => {
 			mockAppUserRepository.findUsersByFilters.mockResolvedValue([]);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.findUserByFilters({
 				where: [
@@ -114,10 +147,6 @@ describe('AppUserService', () => {
 				new Error('Test error')
 			);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
-
 			const result = await appUserService.findUserByFilters();
 
 			expect(result).toEqual([]);
@@ -137,15 +166,19 @@ describe('AppUserService', () => {
 				true
 			);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
-					isElaut: false,
-					locationIds: ['00000000-0000-0000-0000-9999'],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-9999'],
+					},
+				}
+			);
 
 			const result = await appUserService.findUserByFilters();
 
@@ -168,15 +201,19 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					role: AppUserRole.ELAUT_ADMIN,
-					isElaut: true,
-					locationIds: ['00000000-0000-0000-0000-9999'],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.ELAUT_ADMIN,
+						isElaut: true,
+						locationIds: ['00000000-0000-0000-0000-9999'],
+					},
+				}
+			);
 
 			const result = await appUserService.findUserByFilters();
 
@@ -197,15 +234,19 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
-					isElaut: false,
-					locationIds: ['00000000-0000-0000-0000-9999'],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-9999'],
+					},
+				}
+			);
 
 			const result = await appUserService.findUserByFilters();
 
@@ -233,12 +274,9 @@ describe('AppUserService', () => {
 				},
 				username: 'user',
 				locationIds: ['00000000-0000-0000-0000-000000000009'],
+				isActive: true,
 			});
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.blockUser(
 				'00000000-0000-0000-0000-000000000009'
@@ -255,7 +293,7 @@ describe('AppUserService', () => {
 			);
 		});
 
-		it('sshould pass the tenantId from the context to the repository if the logged in user is tenant bound', async () => {
+		it('should pass the tenantId from the context to the repository if the logged in user is tenant bound', async () => {
 			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
@@ -275,19 +313,24 @@ describe('AppUserService', () => {
 				},
 				username: 'user',
 				locationIds: ['00000000-0000-0000-0000-000000000009'],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
-					isElaut: false,
-					locationIds: ['00000000-0000-0000-0000-9999'],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-9999'],
+					},
+				}
+			);
 
 			const result = await appUserService.blockUser(
 				'00000000-0000-0000-0000-000000000009'
@@ -324,19 +367,24 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: ['00000000-0000-0000-0000-000000000009'],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
-					isElaut: false,
-					locationIds: ['00000000-0000-0000-0000-9999'],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-9999'],
+					},
+				}
+			);
 
 			const result = await appUserService.blockUser(
 				'00000000-0000-0000-0000-000000000009'
@@ -378,13 +426,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.getUserById(
 				'00000000-0000-0000-0000-000000000009'
@@ -419,13 +464,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.getUserById(
 				'00000000-0000-0000-0000-000000000009'
@@ -460,13 +502,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.getUserById(
 				'00000000-0000-0000-0000-000000000009'
@@ -505,13 +544,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.getUserByEmail('admin@example.com');
 
@@ -544,13 +580,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.getUserByEmail('admin@example.com');
 
@@ -583,13 +616,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.getUserByEmail('admin@example.com');
 
@@ -626,13 +656,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.updateUserLastSeen(
 				'00000000-0000-0000-0000-000000000009'
@@ -670,13 +697,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.updateUserLastSeen(
 				'00000000-0000-0000-0000-000000000009'
@@ -714,13 +738,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.updateUserLastSeen(
 				'00000000-0000-0000-0000-000000000009'
@@ -762,13 +783,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.updateUserLastLogin(
 				'00000000-0000-0000-0000-000000000009'
@@ -807,13 +825,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.updateUserLastLogin(
 				'00000000-0000-0000-0000-000000000009'
@@ -852,13 +867,10 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.updateUserLastLogin(
 				'00000000-0000-0000-0000-000000000009'
@@ -880,10 +892,14 @@ describe('AppUserService', () => {
 
 	describe('createUser', () => {
 		it('should throw an error when the context is not authenticated', async () => {
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				isAuthenticated: false,
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: undefined,
+				}
+			);
 
 			await expect(
 				appUserService.createUser({
@@ -897,15 +913,19 @@ describe('AppUserService', () => {
 		});
 
 		it('should throw an error when the tenantId of the user does not match the tenantId of the logged in user', async () => {
-			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(true);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					tenantId: '00000000-0000-0000-0000-000000000002',
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						tenantId: '00000000-0000-0000-0000-000000000002',
+					},
+				}
+			);
 
 			await expect(
 				appUserService.createUser({
@@ -922,18 +942,39 @@ describe('AppUserService', () => {
 			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(true);
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(true);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					tenantId: '00000000-0000-0000-0000-000000000001',
-					locationIds: [
-						'00000000-0000-0000-0000-000000000096',
-						'00000000-0000-0000-0000-000000000097',
-						'00000000-0000-0000-0000-000000000098',
-					],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						tenantId: '00000000-0000-0000-0000-000000000001',
+						locationIds: [
+							'00000000-0000-0000-0000-000000000096',
+							'00000000-0000-0000-0000-000000000097',
+							'00000000-0000-0000-0000-000000000098',
+						],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue(
+				AppUser.fromJSON({
+					id: '00000000-0000-0000-0000-000000000009',
+					email: 'admin@example.com',
+					role: AppUserRole.ELAUT_ADMIN,
+					isBlocked: false,
+					lastSeen: '2021-01-01T00:00:00.000Z',
+					isActive: true,
+					locationIds: [],
+					username: 'admin',
+					tenant: {
+						id: '00000000-0000-0000-0000-000000000001',
+						name: 'Test Tenant',
+					},
+				})
+			);
 
 			await expect(
 				appUserService.createUser({
@@ -961,13 +1002,9 @@ describe('AppUserService', () => {
 		});
 
 		it('should call the repository with the correct arguments', async () => {
-			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(
-				false
-			);
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
 
-			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
-				false
-			);
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
 			const user = AppUser.fromJSON({
 				id: '00000000-0000-0000-0000-000000000009',
@@ -982,14 +1019,11 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.createUser.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			const result = await appUserService.createUser({
 				email: 'admin@example.com',
@@ -1013,13 +1047,9 @@ describe('AppUserService', () => {
 		});
 
 		it('should throw a not found error when the user is not found', async () => {
-			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(
-				false
-			);
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
 
-			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
-				false
-			);
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
 			const user = AppUser.fromJSON({
 				id: '00000000-0000-0000-0000-000000000009',
@@ -1034,14 +1064,11 @@ describe('AppUserService', () => {
 				},
 				username: 'admin',
 				locationIds: [],
+				isActive: true,
 			});
 
 			mockAppUserRepository.createUser.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValue(undefined);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			await expect(
 				appUserService.createUser({
@@ -1054,27 +1081,29 @@ describe('AppUserService', () => {
 			).rejects.toThrowError(NotFoundError);
 		});
 
-		it('should throw an unauthorized error when a user attempts to create a user with a role above them', async () => {
-			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+		it('should throw an forbidden error when a user attempts to create an user with a role above them', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(true);
 
-			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
-				false
-			);
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
 			vi.spyOn(
 				AuthorizationService,
 				'isAllowedToEditUserRole'
 			).mockReturnValueOnce(false);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				auth: {
-					...authContext,
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
-					isElaut: false,
-					locationIds: [],
-				},
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
 
 			await expect(
 				appUserService.createUser({
@@ -1084,17 +1113,286 @@ describe('AppUserService', () => {
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [],
 				})
-			).rejects.toThrowError(UnauthorizedError);
+			).rejects.toThrowError(ForbiddenError);
+		});
+
+		it('should throw a forbidden error when a user attempts to create an user with locations they do not have access to', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(true);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(true);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-9999'],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue(
+				AppUser.fromJSON({
+					id: '00000000-0000-0000-0000-000000000009',
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					isBlocked: false,
+					lastSeen: '2021-01-01T00:00:00.000Z',
+					lastLogin: '2021-01-01T00:00:00.000Z',
+					tenant: {
+						id: '00000000-0000-0000-0000-000000000001',
+						name: 'Test Tenant',
+					},
+					username: 'employee',
+					locationIds: [],
+					isActive: true,
+				})
+			);
+
+			await expect(
+				appUserService.createUser({
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					tenantId: '00000000-0000-0000-0000-000000000001',
+					locationIds: ['00000000-0000-0000-0000-000000000009'],
+				})
+			).rejects.toThrowError(LocationNotAllowedError);
+		});
+
+		it('should throw a forbidden error when a user attempts to create an user with locations from another tenant', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockImplementation(
+				(role: AppUserRole) => {
+					return role !== AppUserRole.ELAUT_ADMIN;
+				}
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(true);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						role: AppUserRole.ELAUT_ADMIN,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
+
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([]);
+			mockAppUserRepository.getUserById.mockResolvedValue(
+				AppUser.fromJSON({
+					id: '00000000-0000-0000-0000-000000000009',
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					isBlocked: false,
+					lastSeen: '2021-01-01T00:00:00.000Z',
+					lastLogin: '2021-01-01T00:00:00.000Z',
+					tenant: {
+						id: '00000000-0000-0000-0000-000000000001',
+						name: 'Test Tenant',
+					},
+					username: 'employee',
+					locationIds: [],
+					isActive: true,
+				})
+			);
+
+			await expect(
+				appUserService.createUser({
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					tenantId: '00000000-0000-0000-0000-000000000001',
+					locationIds: ['00000000-0000-0000-0000-000000000009'],
+				})
+			).rejects.toThrowError(LocationNotAllowedError);
+
+			expect(
+				mockTenantLocationRepository.findTenantLocations
+			).toHaveBeenCalledWith(
+				{
+					where: [
+						{
+							columnName: 'tenant_location.id',
+							type: 'in',
+							value: ['00000000-0000-0000-0000-000000000009'],
+						},
+					],
+				},
+				'00000000-0000-0000-0000-000000000001'
+			);
+		});
+
+		// TODO: security issue
+		it('should throw a user already exists error when the user already exists with another tenant', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
+
+			const user = AppUser.fromJSON({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				isBlocked: false,
+				lastSeen: '2021-01-01T00:00:00.000Z',
+				lastLogin: '2021-01-01T00:00:00.000Z',
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000002',
+					name: 'Test Tenant 2',
+				},
+				username: 'employee',
+				locationIds: [],
+				isActive: true,
+			});
+
+			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
+
+			await expect(
+				appUserService.createUser({
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					tenantId: '00000000-0000-0000-0000-000000000001',
+					locationIds: [],
+				})
+			).rejects.toThrowError(UserAlreadyExistsError);
+		});
+
+		it('should throw a user already exists error when the user already exists with the same tenant but different role', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
+
+			const user = AppUser.fromJSON({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				isBlocked: false,
+				lastSeen: '2021-01-01T00:00:00.000Z',
+				lastLogin: '2021-01-01T00:00:00.000Z',
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				username: 'employee',
+				locationIds: [],
+				isActive: true,
+			});
+
+			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
+
+			await expect(
+				appUserService.createUser({
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_MANAGER,
+					username: 'employee',
+					tenantId: '00000000-0000-0000-0000-000000000001',
+					locationIds: [],
+				})
+			).rejects.toThrowError(UserAlreadyExistsError);
+		});
+
+		it('should update the user locationIds when the user already exists with the same tenant and role', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
+
+			const user = AppUser.fromJSON({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				isBlocked: false,
+				lastSeen: '2021-01-01T00:00:00.000Z',
+				lastLogin: '2021-01-01T00:00:00.000Z',
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				username: 'employee',
+				locationIds: ['00000000-0000-0000-0000-000000000009'],
+				isActive: true,
+			});
+
+			const newUser = AppUser.fromJSON({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				isBlocked: false,
+				lastSeen: '2021-01-01T00:00:00.000Z',
+				lastLogin: '2021-01-01T00:00:00.000Z',
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				username: 'employee',
+				locationIds: [
+					'00000000-0000-0000-0000-000000000009',
+					'00000000-0000-0000-0000-000000000010',
+				],
+				isActive: true,
+			});
+
+			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
+			mockAppUserRepository.getUserById.mockResolvedValueOnce(newUser);
+
+			const result = await appUserService.createUser({
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				username: 'employee',
+				tenantId: '00000000-0000-0000-0000-000000000001',
+				locationIds: ['00000000-0000-0000-0000-000000000010'],
+			});
+
+			expect(result).toEqual(newUser);
+
+			expect(mockAppUserRepository.getUserByEmail).toHaveBeenCalledWith(
+				'employee@example.com',
+				undefined,
+				undefined
+			);
+			expect(mockAppUserRepository.getUserById).toHaveBeenCalledWith(
+				'00000000-0000-0000-0000-000000000009',
+				undefined,
+				undefined
+			);
+
+			expect(
+				mockTenantLocationRepository.updateUserTenantLocations
+			).toHaveBeenCalledWith(
+				'00000000-0000-0000-0000-000000000009',
+				[
+					'00000000-0000-0000-0000-000000000009',
+					'00000000-0000-0000-0000-000000000010',
+				],
+				undefined
+			);
 		});
 	});
 
 	describe('updateUser', () => {
 		it('should throw an not found error when the user is not found', async () => {
 			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue(undefined);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
 
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
@@ -1107,57 +1405,20 @@ describe('AppUserService', () => {
 		});
 
 		it('should throw an error when the context is not authenticated', async () => {
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				isAuthenticated: false,
-				auth: undefined,
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: false,
+					auth: undefined,
+				}
+			);
 
 			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'admin@example.com',
 				role: AppUserRole.ELAUT_ADMIN,
-				username: 'admin',
-				locationIds: [],
-			});
-
-			await expect(
-				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
-					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
-					username: 'admin',
-					locationIds: [],
-				})
-			).rejects.toThrowError(UnauthorizedError);
-		});
-
-		it('should throw an unauthorized error when a user attempts to update a user with a role above them', async () => {
-			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
-
-			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
-				false
-			);
-
-			vi.spyOn(
-				AuthorizationService,
-				'isAllowedToEditUserRole'
-			).mockReturnValueOnce(false);
-
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-				isAuthenticated: true,
-				auth: {
-					...authContext,
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
-					isElaut: false,
-					locationIds: [],
-				},
-			});
-
-			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.TENANT_ADMIN,
 				username: 'admin',
 				locationIds: [],
 			});
@@ -1194,14 +1455,13 @@ describe('AppUserService', () => {
 				lastSeen: '2021-01-01T00:00:00.000Z',
 				lastLogin: '2021-01-01T00:00:00.000Z',
 				isBlocked: false,
+				isActive: true,
 			});
 
-			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue(user);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([]);
 
 			const result = await appUserService.updateUser(
 				'00000000-0000-0000-0000-000000000009',
@@ -1245,14 +1505,24 @@ describe('AppUserService', () => {
 				lastSeen: '2021-01-01T00:00:00.000Z',
 				lastLogin: '2021-01-01T00:00:00.000Z',
 				isBlocked: false,
+				isActive: true,
 			});
 
-			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue(user);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([]);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+					},
+				}
+			);
 
 			const result = await appUserService.updateUser(
 				'00000000-0000-0000-0000-000000000009',
@@ -1266,7 +1536,7 @@ describe('AppUserService', () => {
 
 			expect(result).toEqual(user);
 
-			expect(mockAppUserRepository.getUserByIdForUpdate).toHaveBeenCalledWith(
+			expect(mockAppUserRepository.getUserById).toHaveBeenCalledWith(
 				'00000000-0000-0000-0000-000000000009',
 				context.auth.tenantId,
 				undefined
@@ -1298,18 +1568,32 @@ describe('AppUserService', () => {
 				},
 				role: AppUserRole.ELAUT_ADMIN,
 				username: 'admin',
-				locationIds: [],
+				locationIds: ['00000000-0000-0000-0000-000000000001'],
 				lastSeen: '2021-01-01T00:00:00.000Z',
 				lastLogin: '2021-01-01T00:00:00.000Z',
 				isBlocked: false,
+				isActive: true,
 			});
 
-			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue(user);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([
+				{
+					id: '00000000-0000-0000-0000-000000000001',
+				},
+			]);
 
-			const appUserService = new AppUserService(mockAppUserRepository, {
-				...context,
-			});
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					auth: {
+						...authContext,
+						locationIds: ['00000000-0000-0000-0000-000000000001'],
+					},
+				}
+			);
 
 			const result = await appUserService.updateUser(
 				'00000000-0000-0000-0000-000000000009',
@@ -1317,16 +1601,15 @@ describe('AppUserService', () => {
 					email: 'admin@example.com',
 					role: AppUserRole.ELAUT_ADMIN,
 					username: 'admin',
-					locationIds: [],
 				}
 			);
 
 			expect(result).toEqual(user);
 
-			expect(mockAppUserRepository.getUserByIdForUpdate).toHaveBeenCalledWith(
+			expect(mockAppUserRepository.getUserById).toHaveBeenCalledWith(
 				'00000000-0000-0000-0000-000000000009',
 				context.auth.tenantId,
-				context.auth.locationIds
+				['00000000-0000-0000-0000-000000000001']
 			);
 
 			expect(mockAppUserRepository.updateUser).toHaveBeenCalledWith(
@@ -1337,8 +1620,543 @@ describe('AppUserService', () => {
 					username: 'admin',
 				},
 				context.auth.tenantId,
-				context.auth.locationIds
+				['00000000-0000-0000-0000-000000000001']
 			);
 		});
+
+		it('should update the user locationIds when they are given as arguments', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
+
+			const user = AppUser.fromJSON({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				isBlocked: false,
+				lastSeen: '2021-01-01T00:00:00.000Z',
+				lastLogin: '2021-01-01T00:00:00.000Z',
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				username: 'employee',
+				locationIds: ['00000000-0000-0000-0000-000000000012'],
+				isActive: true,
+			});
+
+			const newUser = AppUser.fromJSON({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				isBlocked: false,
+				lastSeen: '2021-01-01T00:00:00.000Z',
+				lastLogin: '2021-01-01T00:00:00.000Z',
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				username: 'employee',
+				locationIds: [
+					'00000000-0000-0000-0000-000000000009',
+					'00000000-0000-0000-0000-000000000010',
+				],
+				isActive: true,
+			});
+
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
+			mockAppUserRepository.updateUser.mockResolvedValue(newUser);
+
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([
+				{
+					id: '00000000-0000-0000-0000-000000000009',
+				},
+				{
+					id: '00000000-0000-0000-0000-000000000010',
+				},
+			]);
+
+			const result = await appUserService.updateUser(
+				'00000000-0000-0000-0000-000000000009',
+				{
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					locationIds: [
+						'00000000-0000-0000-0000-000000000009',
+						'00000000-0000-0000-0000-000000000010',
+					],
+				}
+			);
+
+			expect(result).toEqual(newUser);
+
+			expect(mockAppUserRepository.getUserById).toHaveBeenCalledWith(
+				'00000000-0000-0000-0000-000000000009',
+				undefined,
+				undefined
+			);
+
+			expect(mockAppUserRepository.updateUser).toHaveBeenCalledWith(
+				'00000000-0000-0000-0000-000000000009',
+				{
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+				},
+				undefined,
+				undefined
+			);
+
+			expect(
+				mockTenantLocationRepository.findTenantLocations
+			).toHaveBeenCalledWith(
+				{
+					where: [
+						{
+							columnName: 'tenant_location.id',
+							type: 'in',
+							value: [
+								'00000000-0000-0000-0000-000000000009',
+								'00000000-0000-0000-0000-000000000010',
+							],
+						},
+					],
+				},
+				'00000000-0000-0000-0000-000000000001'
+			);
+
+			expect(
+				mockTenantLocationRepository.updateUserTenantLocations
+			).toHaveBeenCalledWith(
+				'00000000-0000-0000-0000-000000000009',
+				[
+					'00000000-0000-0000-0000-000000000009',
+					'00000000-0000-0000-0000-000000000010',
+				],
+				undefined
+			);
+		});
+
+		it('should throw an forbidden error when a user attempts to update a user with a role above them', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
+				false
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(false);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'admin@example.com',
+				role: AppUserRole.TENANT_ADMIN,
+				username: 'admin',
+				locationIds: [],
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+			});
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					email: 'admin@example.com',
+					role: AppUserRole.ELAUT_ADMIN,
+					username: 'admin',
+					locationIds: [],
+				})
+			).rejects.toThrowError(ForbiddenError);
+		});
+
+		it('should not throw an unauthorized error when a user attempts to update themselves', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(false);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						userId: '00000000-0000-0000-0000-000000000009',
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'admin@example.com',
+				role: AppUserRole.TENANT_ARCADE_MANAGER,
+				username: 'admin',
+				locationIds: [],
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+			});
+
+			mockAppUserRepository.updateUser.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'admin@example.com',
+				role: AppUserRole.TENANT_ARCADE_MANAGER,
+				username: 'admin2',
+				locationIds: [],
+			});
+
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([]);
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					username: 'admin2',
+				})
+			).resolves.not.toThrowError();
+		});
+
+		it('should throw an forbidden error when a user attempts to update their own role', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
+				false
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(false);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: authContext.userId,
+				email: 'admin@example.com',
+				role: AppUserRole.TENANT_ARCADE_MANAGER,
+				tenant: {
+					id: authContext.tenantId,
+					name: 'Test Tenant',
+				},
+				username: 'admin',
+				locationIds: [],
+			});
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					email: 'admin@example.com',
+					role: AppUserRole.TENANT_ADMIN,
+					username: 'admin',
+					locationIds: [],
+				})
+			).rejects.toThrowError(ForbiddenError);
+		});
+
+		it('should throw an forbidden error when a user attempts to update a user to a role above them', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
+				false
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(false);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				username: 'employee',
+				locationIds: [],
+				tenant: {
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+			});
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ADMIN,
+					username: 'employee',
+					locationIds: [],
+				})
+			).rejects.toThrowError(ForbiddenError);
+		});
+
+		it('should throw an forbidden error when a user attempts to update a user that is from another tenant when they are tenant bound', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
+				false
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(true);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						tenantId: 'SOME_TENANT_ID',
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: [],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				username: 'employee',
+				locationIds: [],
+				tenant: {
+					id: 'ANOTHER_TENANT_ID',
+					name: 'Test Tenant',
+				},
+			});
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					locationIds: [],
+				})
+			).rejects.toThrowError(TenantNotAllowedError);
+		});
+
+		it('should throw an location not allowed error when a user attempts to update a user their locations to one from a different tenant', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
+				false
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(true);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-000000000001'],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				username: 'employee',
+				locationIds: ['00000000-0000-0000-0000-000000000001'],
+				tenant: {
+					id: authContext.tenantId,
+					name: 'Test Tenant',
+				},
+			});
+
+			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([]);
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					locationIds: ['00000000-0000-0000-0000-000000000002'],
+				})
+			).rejects.toThrowError(LocationNotAllowedError);
+
+			expect(
+				mockTenantLocationRepository.findTenantLocations
+			).toHaveBeenCalledWith(
+				{
+					where: [
+						{
+							columnName: 'tenant_location.id',
+							type: 'in',
+							value: ['00000000-0000-0000-0000-000000000002'],
+						},
+					],
+				},
+				'00000000-0000-0000-0000-000000000001'
+			);
+		});
+
+		// it('should throw an error when passing an empty locations array to a location bound user', async () => {
+		// 	vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+		//
+		// 	vi.spyOn(AuthorizationService, 'isLocationBound').mockImplementation(
+		// 		(role: AppUserRole) => {
+		// 			return role === AppUserRole.TENANT_ARCADE_EMPLOYEE;
+		// 		}
+		// 	);
+		//
+		// 	vi.spyOn(
+		// 		AuthorizationService,
+		// 		'isAllowedToEditUserRole'
+		// 	).mockReturnValueOnce(true);
+		//
+		// 	appUserService = new AppUserService(
+		// 		mockAppUserRepository,
+		// 		mockTenantLocationRepository,
+		// 		{
+		// 			...context,
+		// 			isAuthenticated: true,
+		// 			auth: {
+		// 				...authContext,
+		// 				role: AppUserRole.TENANT_ADMIN,
+		// 				isElaut: false,
+		// 				locationIds: [],
+		// 			},
+		// 		}
+		// 	);
+		//
+		// 	mockAppUserRepository.getUserById.mockResolvedValue({
+		// 		id: '00000000-0000-0000-0000-000000000009',
+		// 		email: 'employee@example.com',
+		// 		role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+		// 		username: 'employee',
+		// 		locationIds: ['00000000-0000-0000-0000-000000000001'],
+		// 		tenant: {
+		// 			id: authContext.tenantId,
+		// 			name: 'Test Tenant',
+		// 		},
+		// 	});
+		//
+		// 	await expect(
+		// 		appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+		// 			email: 'employee@example.com',
+		// 			role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+		// 			username: 'employee',
+		// 			locationIds: [],
+		// 		})
+		// 	).rejects.toThrowError(MissingLocationError);
+		// });
+
+		it('should throw an error when a location bound user attempts to update a user their location', async () => {
+			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
+
+			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValueOnce(
+				true
+			);
+
+			vi.spyOn(
+				AuthorizationService,
+				'isAllowedToEditUserRole'
+			).mockReturnValueOnce(true);
+
+			appUserService = new AppUserService(
+				mockAppUserRepository,
+				mockTenantLocationRepository,
+				{
+					...context,
+					isAuthenticated: true,
+					auth: {
+						...authContext,
+						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						isElaut: false,
+						locationIds: ['00000000-0000-0000-0000-000000000001'],
+					},
+				}
+			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue({
+				id: '00000000-0000-0000-0000-000000000009',
+				email: 'employee@example.com',
+				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				username: 'employee',
+				locationIds: ['00000000-0000-0000-0000-000000000002'],
+				tenant: {
+					id: authContext.tenantId,
+					name: 'Test Tenant',
+				},
+			});
+
+			await expect(
+				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
+					email: 'employee@example.com',
+					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					username: 'employee',
+					locationIds: ['00000000-0000-0000-0000-000000000001'],
+				})
+			).rejects.toThrowError(LocationNotAllowedError);
+		});
 	});
+
+	//TODO: add tests for add user to location
+	//TODO: add tests for remove user from location
 });

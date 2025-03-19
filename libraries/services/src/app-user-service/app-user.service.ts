@@ -1,19 +1,26 @@
+import type {Knex} from 'knex';
 import {v4 as uuid} from 'uuid';
 
 import {
-	CreateUserLocationNotAllowedError,
-	CreateUserTenantNotAllowedError,
+	ForbiddenError,
+	LocationNotAllowedError,
 	NotFoundError,
+	TenantNotAllowedError,
 	UnauthorizedError,
+	UserAlreadyExistsError,
 } from '@lib/errors';
-import type {
+import {
 	AppUser,
-	AppUserCreateDTOType,
-	AppUserUpdateDTOType,
+	type AppUserCreateDTOType,
+	type AppUserUpdateDTOType,
 } from '@lib/models/app-user';
-import type {IAppUserRepository} from '@lib/repositories/types';
-import {PinoLogger} from '@lib/utils';
+import type {
+	IAppUserRepository,
+	ITenantLocationRepository,
+} from '@lib/repositories/types';
+import {doesArrayHaveAllSameItems} from '@lib/utils/array';
 import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import {PinoLogger} from '@lib/utils/logger';
 
 import {AuthorizationService} from '../authorization-service/authorization.service';
 import {type AppContext, isAuthenticatedContext} from '../types';
@@ -21,10 +28,10 @@ import type {IAppUserService} from './app-user.service.types';
 
 class AppUserService implements IAppUserService {
 	private readonly logger: PinoLogger;
-	private readonly appUserRepositoryProxyWithContext: IAppUserRepository;
 
 	constructor(
 		private appUserRepository: IAppUserRepository,
+		private tenantLocationRepository: ITenantLocationRepository,
 		private context: AppContext
 	) {
 		this.appUserRepository = appUserRepository;
@@ -37,7 +44,7 @@ class AppUserService implements IAppUserService {
 		);
 	}
 
-	private getContextArgs() {
+	private getTenantAndLocationFromContext() {
 		const auth = this.context.auth;
 
 		if (!auth) {
@@ -58,7 +65,7 @@ class AppUserService implements IAppUserService {
 			{
 				is_blocked: true,
 			},
-			...this.getContextArgs()
+			...this.getTenantAndLocationFromContext()
 		);
 	}
 
@@ -66,7 +73,7 @@ class AppUserService implements IAppUserService {
 		try {
 			return await this.appUserRepository.findUsersByFilters(
 				filters,
-				...this.getContextArgs()
+				...this.getTenantAndLocationFromContext()
 			);
 		} catch (e) {
 			this.logger.error(e);
@@ -75,13 +82,16 @@ class AppUserService implements IAppUserService {
 	}
 
 	getUserById(id: string): Promise<AppUser | undefined> {
-		return this.appUserRepository.getUserById(id, ...this.getContextArgs());
+		return this.appUserRepository.getUserById(
+			id,
+			...this.getTenantAndLocationFromContext()
+		);
 	}
 
 	getUserByEmail(email: string): Promise<AppUser | undefined> {
 		return this.appUserRepository.getUserByEmail(
 			email,
-			...this.getContextArgs()
+			...this.getTenantAndLocationFromContext()
 		);
 	}
 
@@ -91,7 +101,7 @@ class AppUserService implements IAppUserService {
 			{
 				last_seen: new Date().toISOString(),
 			},
-			...this.getContextArgs()
+			...this.getTenantAndLocationFromContext()
 		);
 	}
 
@@ -102,108 +112,413 @@ class AppUserService implements IAppUserService {
 				last_login: new Date().toISOString(),
 				last_seen: new Date().toISOString(),
 			},
-			...this.getContextArgs()
+			...this.getTenantAndLocationFromContext()
 		);
 	}
 
-	async createUser(user: AppUserCreateDTOType): Promise<AppUser> {
-		if (!isAuthenticatedContext(this.context)) {
+	private async checkIfLocationsAreTenantLocations(
+		locationIds: string[],
+		tenantId: string
+	) {
+		if (locationIds.length === 0) {
+			return;
+		}
+
+		const tenantLocations =
+			await this.tenantLocationRepository.findTenantLocations(
+				{
+					where: [
+						{
+							columnName: 'tenant_location.id',
+							type: 'in',
+							value: locationIds,
+						},
+					],
+				},
+				tenantId
+			);
+
+		const isEveryLocationOfTenant =
+			tenantLocations.length === locationIds.length;
+
+		if (!isEveryLocationOfTenant) {
+			throw new LocationNotAllowedError(
+				'You are not allowed to add a user to one or more given locations'
+			);
+		}
+	}
+
+	async createUser(userDTO: AppUserCreateDTOType): Promise<AppUser> {
+		if (!this.context.auth || !isAuthenticatedContext(this.context)) {
 			throw new UnauthorizedError('Unauthorized');
 		}
 
-		const loggedInTenantId = this.context.auth.tenantId;
-		const loggedInLocationIds = this.context.auth.locationIds;
+		const [loggedInTenantId] = this.getTenantAndLocationFromContext();
 
-		const shouldAddUserToTenant = AuthorizationService.isTenantBound(
-			this.context.auth.role
+		const isAllowedToCreateRole = AuthorizationService.isAllowedToEditUserRole(
+			this.context.auth.role,
+			userDTO.role
 		);
 
-		const shouldAddUserToLocation = AuthorizationService.isLocationBound(
-			this.context.auth.role
-		);
+		if (!isAllowedToCreateRole) {
+			throw new ForbiddenError('You are not allowed to perform this action.');
+		}
 
-		const isTenantAllowed = shouldAddUserToTenant
-			? user.tenantId === loggedInTenantId
-			: true;
-		let isLocationAllowed = !shouldAddUserToLocation;
-		if (shouldAddUserToLocation) {
-			isLocationAllowed = user.locationIds.every((locationId) =>
-				loggedInLocationIds.includes(locationId)
+		const isAllowedToAccessTenant =
+			AuthorizationService.isAllowedToAccessTenant(
+				this.context.auth,
+				userDTO.tenantId
+			);
+
+		if (!isAllowedToAccessTenant) {
+			throw new TenantNotAllowedError(
+				'You are not allowed to perform this action.'
 			);
 		}
 
-		if (!isTenantAllowed) {
-			throw new CreateUserTenantNotAllowedError('Tenant not allowed');
+		const shouldAddUserToLocations = AuthorizationService.isLocationBound(
+			userDTO.role
+		);
+
+		let userExists = await this.getUserByEmail(userDTO.email);
+
+		if (!userExists) {
+			const newId = await this.appUserRepository.transaction(async (trx) => {
+				const appUserRepoScoped = this.appUserRepository.withTransaction(trx);
+
+				const id = uuid();
+				await appUserRepoScoped.createUser(
+					AppUser.create(userDTO).toInsertDBType()
+				);
+
+				if (
+					shouldAddUserToLocations &&
+					userDTO.locationIds &&
+					userDTO.locationIds.length > 0
+				) {
+					await this.addUserToLocations(id, userDTO.locationIds, trx);
+				}
+
+				return id;
+			});
+
+			const createdUser = await this.getUserById(newId);
+
+			if (!createdUser) {
+				throw new NotFoundError('User not created');
+			}
+			return createdUser;
 		}
 
-		if (!isLocationAllowed) {
-			throw new CreateUserLocationNotAllowedError('Location not allowed');
+		if (userExists.tenant.id !== userDTO.tenantId) {
+			// TODO: security issue, should not expose if a user exists or not to another tenant
+			throw new UserAlreadyExistsError();
 		}
 
-		// A user can only create a user with a role that is lower or equal than their own
+		if (userExists.role !== userDTO.role) {
+			throw new UserAlreadyExistsError();
+		}
+
 		if (
-			!AuthorizationService.isAllowedToEditUserRole(
-				this.context.auth.role,
-				user.role
-			)
+			userDTO.locationIds &&
+			userDTO.locationIds.length > 0 &&
+			!doesArrayHaveAllSameItems(userExists.locationIds, userDTO.locationIds)
 		) {
+			await this.tenantLocationRepository.updateUserTenantLocations(
+				userExists.id,
+				[...new Set([...userExists.locationIds, ...userDTO.locationIds])],
+				loggedInTenantId
+			);
+
+			userExists = (await this.getUserById(userExists.id))!;
+		}
+
+		return userExists;
+	}
+
+	async updateUser(
+		id: string,
+		userBeingUpdated: AppUserUpdateDTOType
+	): Promise<AppUser> {
+		if (!this.context.auth || !isAuthenticatedContext(this.context)) {
 			throw new UnauthorizedError('Unauthorized');
 		}
 
-		const id = uuid();
-		await this.appUserRepository.createUser({
-			id,
-			username: user.username,
-			role: user.role,
-			email: user.email,
-			tenant_id: user.tenantId,
-		});
+		const [loggedInTenantId, loggedInLocationIds] =
+			this.getTenantAndLocationFromContext();
 
-		// TODO: add user to locations via location service
+		const isLoggedInUserLocationBound = loggedInLocationIds !== undefined;
 
-		const createdUser = await this.getUserById(id);
+		const currentUserBeingUpdated = await this.getUserById(id);
 
-		if (!createdUser) {
-			throw new NotFoundError('User not created');
+		if (!currentUserBeingUpdated) {
+			throw new NotFoundError('User not found');
 		}
 
-		return createdUser;
-	}
+		const isSelf = this.context.auth.userId === currentUserBeingUpdated.id;
 
-	async updateUser(id: string, user: AppUserUpdateDTOType): Promise<AppUser> {
+		const isAllowedToEditUserRole =
+			AuthorizationService.isAllowedToEditUserRole(
+				this.context.auth.role,
+				userBeingUpdated.role ?? currentUserBeingUpdated.role
+			);
+
+		const isAllowedToAccessTenant =
+			AuthorizationService.isAllowedToAccessTenant(
+				this.context.auth,
+				currentUserBeingUpdated.tenant.id
+			);
+
+		const isUserRoleChanged =
+			userBeingUpdated.role &&
+			userBeingUpdated.role !== currentUserBeingUpdated.role;
+
+		const isUserLocationBound = AuthorizationService.isLocationBound(
+			userBeingUpdated.role ?? currentUserBeingUpdated.role
+		);
+
+		if (
+			(!isSelf && !isAllowedToEditUserRole) ||
+			(isSelf && isUserRoleChanged)
+		) {
+			throw new ForbiddenError('You are not allowed to perform this action.');
+		}
+
+		if (!isAllowedToAccessTenant) {
+			throw new TenantNotAllowedError(
+				'You are not allowed to perform this action.'
+			);
+		}
+
+		// TODO: check if user is allowed to edit locations
+		if (isLoggedInUserLocationBound && userBeingUpdated.locationIds) {
+			throw new LocationNotAllowedError(
+				'You are not allowed to edit locations'
+			);
+		}
+
+		await this.checkIfLocationsAreTenantLocations(
+			userBeingUpdated.locationIds ?? [],
+			currentUserBeingUpdated.tenant.id
+		);
+
 		return await this.appUserRepository.transaction(async (trx) => {
 			const appUserRepoScoped = this.appUserRepository.withTransaction(trx);
+			const tenantLocationServiceScoped =
+				this.tenantLocationRepository.withTransaction(trx);
 
-			// Change the 'this.db' value to the current transaction within the getUserById call for once
-			const currentUser = await appUserRepoScoped.getUserByIdForUpdate(
-				id,
-				...this.getContextArgs()
-			);
+			const locationIds =
+				isUserRoleChanged && !isUserLocationBound
+					? []
+					: userBeingUpdated.locationIds;
 
-			if (!currentUser) {
-				throw new NotFoundError('User not found');
+			if (locationIds) {
+				await tenantLocationServiceScoped.updateUserTenantLocations(
+					id,
+					locationIds,
+					loggedInTenantId
+				);
 			}
 
-			if (
-				!this.context.isAuthenticated ||
-				!this.context.auth ||
-				!AuthorizationService.isAllowedToEditUserRole(
-					this.context.auth.role,
-					currentUser.role
-				)
-			) {
-				throw new UnauthorizedError('Unauthorized');
+			const toUpdate = AppUser.update(userBeingUpdated);
+			const shouldUpdate = Object.keys(toUpdate).length > 0;
+
+			if (!shouldUpdate) {
+				const user = await this.appUserRepository.getUserById(
+					id,
+					loggedInTenantId,
+					loggedInLocationIds
+				);
+
+				if (!user) {
+					throw new NotFoundError('User not found');
+				}
+
+				return user;
 			}
-
-			// TODO: add or remove user to locations via location service
-
-			const {locationIds, ...userWithoutLocations} = user;
 
 			return await appUserRepoScoped.updateUser(
 				id,
-				userWithoutLocations,
-				...this.getContextArgs()
+				AppUser.update(userBeingUpdated),
+				loggedInTenantId,
+				loggedInLocationIds
 			);
+		});
+	}
+
+	async addUserToLocations(
+		userId: string,
+		locationIds: string[],
+		trx?: Knex.Transaction
+	): Promise<AppUser> {
+		if (!this.context.auth || !isAuthenticatedContext(this.context)) {
+			throw new UnauthorizedError('Unauthorized');
+		}
+
+		const [loggedInTenantId] = this.getTenantAndLocationFromContext();
+
+		const user = await this.getUserById(userId);
+
+		if (!user) {
+			throw new NotFoundError('User not found');
+		}
+
+		const isAllowedToAccessTenant =
+			AuthorizationService.isAllowedToAccessTenant(
+				this.context.auth,
+				user.tenant.id
+			);
+
+		if (!isAllowedToAccessTenant) {
+			throw new TenantNotAllowedError(
+				'You are not allowed to perform this action.'
+			);
+		}
+
+		const isAllowedToAddToLocations =
+			AuthorizationService.isAllowedToAccessLocations(
+				this.context.auth,
+				locationIds
+			);
+
+		if (!isAllowedToAddToLocations) {
+			throw new LocationNotAllowedError(
+				'You are not allowed to add a user to one or more given locations'
+			);
+		}
+
+		const tenantLocationRepo = trx
+			? this.tenantLocationRepository.withTransaction(trx)
+			: this.tenantLocationRepository;
+
+		await this.checkIfLocationsAreTenantLocations(locationIds, user.tenant.id);
+
+		await tenantLocationRepo.addUserToTenantLocations(
+			userId,
+			locationIds,
+			loggedInTenantId
+		);
+
+		const updatedUser = await this.getUserById(userId);
+
+		if (!updatedUser) {
+			throw new NotFoundError('User not found');
+		}
+
+		return updatedUser;
+	}
+
+	async addUserToLocation(
+		userId: string,
+		locationId: string
+	): Promise<AppUser> {
+		return this.addUserToLocations(userId, [locationId]);
+	}
+
+	async removeUserFromLocations(
+		userId: string,
+		locationIds: string[]
+	): Promise<void> {
+		if (!this.context.auth || !isAuthenticatedContext(this.context)) {
+			throw new UnauthorizedError('Unauthorized');
+		}
+
+		const [loggedInTenantId] = this.getTenantAndLocationFromContext();
+
+		const user = await this.getUserById(userId);
+
+		if (!user) {
+			throw new NotFoundError('User not found');
+		}
+
+		const isAllowedToAccessTenant =
+			AuthorizationService.isAllowedToAccessTenant(
+				this.context.auth,
+				user.tenant.id
+			);
+
+		if (!isAllowedToAccessTenant) {
+			throw new TenantNotAllowedError(
+				'You are not allowed to perform this action.'
+			);
+		}
+
+		await this.tenantLocationRepository.removeUserFromTenantLocations(
+			userId,
+			locationIds,
+			loggedInTenantId
+		);
+	}
+
+	async removeUserFromLocation(
+		userId: string,
+		locationId: string
+	): Promise<void> {
+		return this.removeUserFromLocations(userId, [locationId]);
+	}
+
+	async inactivateUser(id: string): Promise<void> {
+		if (!this.context.auth || !isAuthenticatedContext(this.context)) {
+			throw new UnauthorizedError('Unauthorized');
+		}
+
+		const isSelf = this.context.auth.userId === id;
+
+		if (isSelf) {
+			throw new ForbiddenError('You cannot inactivate yourself');
+		}
+
+		const user = await this.getUserById(id);
+
+		if (!user) {
+			throw new NotFoundError('User not found');
+		}
+
+		const [loggedInTenantId, loggedInLocationIds] =
+			this.getTenantAndLocationFromContext();
+
+		const isAllowedToAccessTenant =
+			AuthorizationService.isAllowedToAccessTenant(
+				this.context.auth,
+				user.tenant.id
+			);
+
+		if (!isAllowedToAccessTenant) {
+			throw new TenantNotAllowedError(
+				'You are not allowed to perform this action.'
+			);
+		}
+
+		const userLocationsAfterDeletion = loggedInLocationIds
+			? user.locationIds.filter((locationId) => {
+					return !loggedInLocationIds.includes(locationId);
+				})
+			: [];
+
+		return this.appUserRepository.transaction(async (trx) => {
+			const appUserRepoScoped = this.appUserRepository.withTransaction(trx);
+			const tenantLocationRepoScoped =
+				this.tenantLocationRepository.withTransaction(trx);
+
+			await tenantLocationRepoScoped.removeUserFromTenantLocations(
+				id,
+				user.locationIds.filter((locationId) => {
+					return !userLocationsAfterDeletion.includes(locationId);
+				}),
+				loggedInTenantId
+			);
+
+			if (userLocationsAfterDeletion.length === 0) {
+				// If user would not have any locations after deletion, inactivate the user
+				await appUserRepoScoped.updateUser(
+					id,
+					{
+						is_active: false,
+					},
+					loggedInTenantId,
+					loggedInLocationIds
+				);
+			}
 		});
 	}
 }

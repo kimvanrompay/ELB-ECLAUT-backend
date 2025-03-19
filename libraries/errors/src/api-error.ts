@@ -5,8 +5,10 @@ import {DatabaseInsertError} from './database-insert-error';
 import {DatabaseRetrieveError} from './database-retrieve-error';
 import {DatabaseUpdateError} from './database-update-error';
 import {LocationNotAllowedError} from './location-not-allowed-error';
+import {MissingLocationError} from './missing-location-error';
 import {NotFoundError} from './not-found-error';
 import {TenantNotAllowedError} from './tenant-not-allowed-error';
+import {UserAlreadyExistsError} from './user-already-exists-error';
 
 const ApiErrorSchema = z
 	.object({
@@ -103,6 +105,18 @@ class ApiError extends Error {
 				'You are not allowed to perform this action',
 				'FORBIDDEN'
 			);
+		}
+
+		if (error instanceof MissingLocationError) {
+			return new ApiError(
+				400,
+				'Location is required for this action',
+				'BAD_REQUEST'
+			);
+		}
+
+		if (error instanceof UserAlreadyExistsError) {
+			return new ApiError(400, 'User already exists', 'BAD_REQUEST');
 		}
 
 		if (error instanceof NotFoundError) {

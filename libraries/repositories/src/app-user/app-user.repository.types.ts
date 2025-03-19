@@ -8,12 +8,9 @@ import {
 } from '@lib/models/app-user';
 import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
-interface IAppUserRepository {
-	transaction<T>(
-		transactionScope: (trx: Knex.Transaction) => Promise<T> | void,
-		config?: Knex.TransactionConfig
-	): Promise<T>;
+import type {IRepository} from '../internal-types';
 
+interface IAppUserRepository extends IRepository<any, any> {
 	withTransaction(trx: Knex.Transaction): IAppUserRepository;
 
 	findUsersByFilters(

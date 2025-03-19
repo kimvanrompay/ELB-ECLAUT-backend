@@ -12,7 +12,8 @@
     "./login-verification-code": "./src/login-verification-code-service/login-verification-code.service.ts",
     "./gametype": "./src/gametype-service/gametype.service.ts",
     "./machine": "./src/machine-service/machine.service.ts",
-    "./email": "./src/email-service/email.service.ts"
+    "./email": "./src/email-service/email.service.ts",
+    "./tenant-location": "./src/tenant-location-service/tenant-location.service.ts"
   },
   "scripts": {
     "test": "yarn test:unit",

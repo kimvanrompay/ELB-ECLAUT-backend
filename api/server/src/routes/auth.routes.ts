@@ -5,6 +5,7 @@ import {BadRequestError, UnauthorizedError} from '@lib/errors';
 import {AppUserRepository} from '@lib/repositories/app-user';
 import {LoginVerificationCodeRepository} from '@lib/repositories/login-verification-code';
 import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
+import {TenantLocationRepository} from '@lib/repositories/tenant-location';
 import {AppUserService} from '@lib/services/app-user';
 import {AuthService} from '@lib/services/auth';
 import {EmailService} from '@lib/services/email';
@@ -27,10 +28,17 @@ const createServices = (appContext: AppContext) => {
 	// TODO: implement the email service
 	const emailService = new EmailService(appContext);
 
+	const tenantLocationRepository = new TenantLocationRepository(db, {
+		logger: appContext.logger,
+	});
 	const appUserCodeRepository = new AppUserRepository(db, {
 		logger: appContext.logger,
 	});
-	const appUserService = new AppUserService(appUserCodeRepository, appContext);
+	const appUserService = new AppUserService(
+		appUserCodeRepository,
+		tenantLocationRepository,
+		appContext
+	);
 
 	const loginVerificationCodeRepository = new LoginVerificationCodeRepository(
 		db

@@ -11,5 +11,5 @@ export * from './unauthorized-error';
 export * from './refresh-token-multi-usage-error';
 export * from './location-not-allowed-error';
 export * from './tenant-not-allowed-error';
-export * from './create-user-tenant-not-allowed-error';
-export * from './create-user-location-not-allowed-error';
+export * from './missing-location-error';
+export * from './user-already-exists-error';

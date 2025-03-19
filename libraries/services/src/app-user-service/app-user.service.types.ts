@@ -21,6 +21,8 @@ interface IAppUserService {
 	createUser(user: AppUserCreateDTOType): Promise<AppUser>;
 
 	updateUser(id: string, user: AppUserUpdateDTOType): Promise<AppUser>;
+
+	inactivateUser(id: string): Promise<void>;
 }
 
 export type {IAppUserService};

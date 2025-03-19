@@ -5,6 +5,26 @@ enum AppSecurityScopes {
 	CREATE_USERS = 'create:users',
 	UPDATE_USERS = 'update:users',
 	DELETE_USERS = 'delete:users',
+
+	READ_TENANT_LOCATIONS = 'read:tenant-locations',
+	CREATE_TENANT_LOCATIONS = 'create:tenant-locations',
+	UPDATE_TENANT_LOCATIONS = 'update:tenant-locations',
+	DELETE_TENANT_LOCATIONS = 'delete:tenant-locations',
+
+	READ_MACHINES = 'read:machines',
+	CREATE_MACHINES = 'create:machines',
+	UPDATE_MACHINES = 'update:machines',
+	DELETE_MACHINES = 'delete:machines',
+
+	READ_GAME_TYPES = 'read:game-types',
+	CREATE_GAME_TYPES = 'create:game-types',
+	UPDATE_GAME_TYPES = 'update:game-types',
+	DELETE_GAME_TYPES = 'delete:game-types',
+
+	READ_GAMESESSIONS = 'read:gamesessions',
+	CREATE_GAMESESSIONS = 'create:gamesessions',
+	UPDATE_GAMESESSIONS = 'update:gamesessions',
+	DELETE_GAMESESSIONS = 'delete:gamesessions',
 }
 
 const AppRoleToSecurityClaims: Record<AppUserRole, AppSecurityScopes[]> = {
@@ -104,7 +124,7 @@ class AuthorizationService {
 		}
 
 		if (loggedInUserRole === AppUserRole.ELAUT_SERVICE) {
-			return !isElautRole || userRole === AppUserRole.ELAUT_SERVICE;
+			return !isElautRole;
 		}
 
 		if (loggedInUserRole === AppUserRole.DISTRIBUTOR) {
@@ -119,7 +139,9 @@ class AuthorizationService {
 			return (
 				!isElautRole &&
 				!isDistributorRole &&
-				userRole !== AppUserRole.TENANT_ADMIN
+				![AppUserRole.TENANT_ADMIN, AppUserRole.TENANT_GLOBAL_MANAGER].includes(
+					userRole
+				)
 			);
 		}
 
@@ -127,12 +149,60 @@ class AuthorizationService {
 			return (
 				!isElautRole &&
 				!isDistributorRole &&
-				userRole !== AppUserRole.TENANT_ADMIN &&
-				userRole !== AppUserRole.TENANT_GLOBAL_MANAGER
+				![
+					AppUserRole.TENANT_ADMIN,
+					AppUserRole.TENANT_GLOBAL_MANAGER,
+					AppUserRole.TENANT_ARCADE_MANAGER,
+				].includes(userRole)
 			);
 		}
 
 		return false;
+	}
+
+	// TODO: distributors will have a list of tenants they can access
+	static isAllowedToAccessTenant(
+		loggedInUser: {
+			role: AppUserRole;
+			tenantId: string | undefined;
+		},
+		tenantId: string
+	) {
+		if (this.isTenantBound(loggedInUser.role)) {
+			return loggedInUser.tenantId === tenantId;
+		}
+
+		return true;
+	}
+
+	static isAllowedToAccessLocation(
+		loggedInUser: {
+			role: AppUserRole;
+			locationIds: string[];
+		},
+		locationId: string
+	) {
+		if (this.isLocationBound(loggedInUser.role)) {
+			return loggedInUser.locationIds.includes(locationId);
+		}
+
+		return true;
+	}
+
+	static isAllowedToAccessLocations(
+		loggedInUser: {
+			role: AppUserRole;
+			locationIds: string[];
+		},
+		locations: string[]
+	) {
+		if (this.isLocationBound(loggedInUser.role)) {
+			return locations.every((location) =>
+				loggedInUser.locationIds.includes(location)
+			);
+		}
+
+		return true;
 	}
 }
 

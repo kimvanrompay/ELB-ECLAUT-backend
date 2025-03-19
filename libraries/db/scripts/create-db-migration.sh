@@ -14,6 +14,6 @@ input="$*"
 description=${input// /-}
 timestamp=$(date '+%Y%m%d%H%M%S')
 
-echo "START TRANSACTION; \n\nCOMMIT;" > ../libraries/db/scripts/migrations/V"${timestamp}"__"${description}".sql
+echo "START TRANSACTION; \n\nCOMMIT;" > ./migrations/V"${timestamp}"__"${description}".sql
 
-echo "created ../libraries/db/scripts/migrations/V${timestamp}__${description}.sql"
+echo "created ./migrations/V${timestamp}__${description}.sql"

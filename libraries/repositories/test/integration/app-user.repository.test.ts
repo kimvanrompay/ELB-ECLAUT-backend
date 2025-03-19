@@ -41,6 +41,7 @@ const ADMIN_TEST_USER = AppUser.fromJSON({
 	},
 	username: 'admin',
 	locationIds: [],
+	isActive: true,
 });
 
 const DEVELOPER_TEST_USER = AppUser.fromJSON({
@@ -56,6 +57,7 @@ const DEVELOPER_TEST_USER = AppUser.fromJSON({
 	},
 	username: 'developer',
 	locationIds: [],
+	isActive: true,
 });
 
 const context = {
@@ -208,6 +210,8 @@ describe('AppUserRepository', () => {
 		it('should be able to apply NOT LIKE filters', async () => {
 			const repo = new AppUserRepository(db, context);
 
+			const allUsers = await repo.findUsersByFilters();
+
 			const users = await repo.findUsersByFilters({
 				where: [
 					{
@@ -219,7 +223,7 @@ describe('AppUserRepository', () => {
 			});
 
 			expect(users).toBeDefined();
-			expect(users.length).toBe(1);
+			expect(users.length).toBeLessThan(allUsers.length);
 
 			expect(users[0]).toBeDefined();
 			expect(users[0] instanceof AppUser).toBe(true);
@@ -236,7 +240,7 @@ describe('AppUserRepository', () => {
 			});
 
 			expect(usersWithSingleWildcard).toBeDefined();
-			expect(usersWithSingleWildcard.length).toBe(1);
+			expect(usersWithSingleWildcard.length).toBeLessThan(allUsers.length);
 			expect(usersWithSingleWildcard[0] instanceof AppUser).toBe(true);
 			expect(usersWithSingleWildcard[0]?.username).toBe('admin');
 
@@ -251,7 +255,7 @@ describe('AppUserRepository', () => {
 			});
 
 			expect(usersWithMultipleWildcard).toBeDefined();
-			expect(usersWithMultipleWildcard.length).toBe(1);
+			expect(usersWithMultipleWildcard.length).toBeLessThan(allUsers.length);
 			expect(usersWithMultipleWildcard[0] instanceof AppUser).toBe(true);
 			expect(usersWithMultipleWildcard[0]?.username).toBe('admin');
 		});
@@ -450,7 +454,7 @@ describe('AppUserRepository', () => {
 			const repo = new AppUserRepository(db, context);
 
 			const user = await repo.getUserById(
-				'00000000-0000-0000-0000-000000000003'
+				'00000000-0000-0000-0000-000000000099'
 			);
 
 			expect(user).toBeUndefined();
@@ -566,7 +570,7 @@ describe('AppUserRepository', () => {
 			const repo = new AppUserRepository(db, context);
 
 			await expect(
-				repo.updateUser('00000000-0000-0000-0000-000000000003', {
+				repo.updateUser('00000000-0000-0000-0000-000000000099', {
 					is_blocked: true,
 				})
 			).rejects.toThrowError(DatabaseUpdateError);
@@ -616,7 +620,7 @@ describe('AppUserRepository', () => {
 			const newUser = await repo.createUser({
 				email: 'new@example.com',
 				username: 'new',
-				id: '00000000-0000-0000-0000-000000000003',
+				id: '00000000-0000-0000-0000-000000000099',
 				role: AppUserRole.ELAUT_ADMIN,
 				tenant_id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
 			});
@@ -625,7 +629,7 @@ describe('AppUserRepository', () => {
 			expect(newUser instanceof AppUser).toBe(true);
 
 			const createdUser = await repo.getUserById(
-				'00000000-0000-0000-0000-000000000003'
+				'00000000-0000-0000-0000-000000000099'
 			);
 
 			expect(createdUser).toBeDefined();

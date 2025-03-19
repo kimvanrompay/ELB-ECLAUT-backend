@@ -87,6 +87,28 @@ const parseQueryParamsToDatabaseFilters = (queryParams: {
 			continue;
 		}
 
+		if (key === 'orderBy' || key === 'order_by') {
+			const rules = (value as string).split(',');
+
+			filters.orderBy = rules.map((rule) => {
+				const [columnName, order] = rule.split(':');
+
+				if (!order) {
+					return {
+						type: 'orderBy',
+						columnName: columnName!,
+						value: 'asc',
+					};
+				}
+
+				return {
+					type: 'orderBy',
+					columnName: columnName!,
+					value: order as 'asc' | 'desc',
+				};
+			});
+		}
+
 		const regex = /^.*\[(\w+)]$/;
 		const match = key.match(regex);
 
