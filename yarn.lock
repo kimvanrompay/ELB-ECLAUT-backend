@@ -905,6 +905,20 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@aws-solutions-constructs/aws-iot-sqs@npm:^2.77.0":
+  version: 2.79.0
+  resolution: "@aws-solutions-constructs/aws-iot-sqs@npm:2.79.0"
+  dependencies:
+    "@aws-solutions-constructs/core": "npm:2.79.0"
+    constructs: "npm:^10.0.0"
+  peerDependencies:
+    "@aws-solutions-constructs/core": 2.79.0
+    aws-cdk-lib: ^2.177.0
+    constructs: ^10.0.0
+  checksum: 10c0/70ac7bb6b9fff44cba6eb104538c575c0cde0404953aff7365ec334ee07af273cc9435f38bbb45d3898db224545e03ed3172b1163ac2f42d928a0247d47c8ffc
+  languageName: node
+  linkType: hard
+
 "@aws-solutions-constructs/aws-sqs-lambda@npm:^2.77.0":
   version: 2.79.0
   resolution: "@aws-solutions-constructs/aws-sqs-lambda@npm:2.79.0"
@@ -5234,6 +5248,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "infrastructure@workspace:infrastructure"
   dependencies:
+    "@aws-solutions-constructs/aws-iot-sqs": "npm:^2.77.0"
     "@aws-solutions-constructs/aws-sqs-lambda": "npm:^2.77.0"
     "@types/node": "npm:^22.12.0"
     aws-cdk-lib: "npm:^2.177.0"

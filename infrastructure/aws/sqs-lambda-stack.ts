@@ -1,8 +1,11 @@
 #!/usr/bin/env node
+import {IotToSqs} from '@aws-solutions-constructs/aws-iot-sqs';
 import {SqsToLambda} from '@aws-solutions-constructs/aws-sqs-lambda';
 import * as cdk from 'aws-cdk-lib';
+import * as iot from 'aws-cdk-lib/aws-iot';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import {NodejsFunction} from 'aws-cdk-lib/aws-lambda-nodejs';
+import * as sns from 'aws-cdk-lib/aws-sns';
 import * as sqs from 'aws-cdk-lib/aws-sqs';
 import {Construct} from 'constructs';
 import {join, resolve} from 'path';
@@ -45,6 +48,18 @@ export class SqsLambdaStack extends cdk.Stack {
 				batchSize: 1000, // Maximum amount of messages to batch during the batch window (max 10 if maxBatchingWindow is not set === 1 poll)
 				maxConcurrency: 10, // Maximum number of concurrent Lambda function executions
 				maxBatchingWindow: cdk.Duration.seconds(5), // Maximum amount of time to wait before invoking the Lambda function
+			},
+		});
+
+		new IotToSqs(this, 'test-iot-sqs-integration', {
+			existingQueueObj: queue,
+			iotTopicRuleProps: {
+				topicRulePayload: {
+					ruleDisabled: false,
+					description: 'Testing the IotToSqs Pattern',
+					sql: "SELECT * as message, topic() from '+/+/data'",
+					actions: [],
+				},
 			},
 		});
 	}

@@ -35,10 +35,14 @@ const getMachineMessagesFromSQSMessage = (message: Message | SQSRecord) => {
 		);
 		const props = getPropertiesFromMqttTopic(parsedBody.topic);
 
-		const isArrayOfMessages = Array.isArray(parsedBody.message);
-		const messages = isArrayOfMessages
-			? parsedBody.message
-			: [parsedBody.message];
+		const isNested =
+			parsedBody.message.e !== undefined && Array.isArray(parsedBody.message.e);
+		const messagesFromBody = isNested
+			? parsedBody.message.e
+			: parsedBody.message;
+
+		const isArrayOfMessages = Array.isArray(messagesFromBody);
+		const messages = isArrayOfMessages ? messagesFromBody : [messagesFromBody];
 		const messagesWithProps = messages.map((m: any) => ({
 			...m,
 			c: props.cabinetId,
