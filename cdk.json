@@ -1,0 +1,3 @@
+{
+  "app": "node dist/infrastructure/eclaut-backend.js"
+}

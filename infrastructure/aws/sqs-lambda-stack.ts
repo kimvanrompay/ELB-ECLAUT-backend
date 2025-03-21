@@ -1,4 +1,3 @@
-#!/usr/bin/env node
 import {IotToSqs} from '@aws-solutions-constructs/aws-iot-sqs';
 import {SqsToLambda} from '@aws-solutions-constructs/aws-sqs-lambda';
 import * as cdk from 'aws-cdk-lib';
