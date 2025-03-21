@@ -26,7 +26,7 @@ class CabinetRepository extends KnexRepository implements ICabinetRepository {
 		super('cabinet-repository', db, context);
 	}
 
-	public withTransaction(trx: Knex.Transaction) {
+	public override withTransaction(trx: Knex.Transaction) {
 		return new CabinetRepository(trx, {
 			logger: this.logger,
 		});
@@ -171,6 +171,34 @@ class CabinetRepository extends KnexRepository implements ICabinetRepository {
 				`Error updating cabinet with serial number: ${serialNumber}, error: ${error?.message}`
 			);
 			throw new DatabaseUpdateError('Error updating cabinet');
+		}
+	}
+
+	async getCabinetByPlayfieldId(
+		playfieldId: string,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Cabinet | undefined> {
+		try {
+			const query =
+				this.selectCabinetWithPlayfields<CabinetWithPlayfieldsDBType>()
+					.where('playfield.id', playfieldId)
+					.first();
+
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			);
+
+			if (!result) {
+				return undefined;
+			}
+
+			return Cabinet.fromDBType(result);
+		} catch (error) {
+			this.logger.error(error);
+			throw new DatabaseRetrieveError('Could not retrieve cabinet');
 		}
 	}
 }

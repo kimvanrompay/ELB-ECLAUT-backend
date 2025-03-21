@@ -52,7 +52,7 @@ class RefreshTokenRepository implements IRefreshTokenRepository {
 				.where('id', id)
 				.delete();
 		} catch (e) {
-			console.error(e);
+			this.logger.error(e);
 			throw new DatabaseDeleteError('Error deleting refresh token');
 		}
 	}
@@ -80,7 +80,7 @@ class RefreshTokenRepository implements IRefreshTokenRepository {
 					usage_count: 1,
 				});
 		} catch (e) {
-			console.error(e);
+			this.logger.error(e);
 			throw new DatabaseUpdateError('Error invalidating refresh tokens');
 		}
 	}
@@ -94,7 +94,7 @@ class RefreshTokenRepository implements IRefreshTokenRepository {
 				created_at: refreshToken.createdAt,
 			});
 		} catch (e) {
-			console.error(e);
+			this.logger.error(e);
 			throw new DatabaseRetrieveError('Error inserting refresh token');
 		}
 	}

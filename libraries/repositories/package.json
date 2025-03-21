@@ -4,16 +4,18 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./types": "./src/types.ts",
     "./app-user": "./src/app-user/app-user.repository.ts",
-    "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
-    "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
-    "./machine": "./src/machine/machine.repository.ts",
-    "./playfield": "./src/playfield/playfield.repository.ts",
     "./cabinet": "./src/cabinet/cabinet.repository.ts",
+    "./game-session": "./src/game-session/game-session.repository.ts",
     "./gametype": "./src/gametype/gametype.repository.ts",
+    "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
+    "./machine": "./src/machine/machine.repository.ts",
+    "./machine-log": "./src/machine-log/machine-log.repository.ts",
     "./machine-message": "./src/machine-message/machine-message.repository.ts",
-    "./tenant-location": "./src/tenant-location/tenant-location.repository.ts"
+    "./playfield": "./src/playfield/playfield.repository.ts",
+    "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
+    "./tenant-location": "./src/tenant-location/tenant-location.repository.ts",
+    "./types": "./src/types.ts"
   },
   "scripts": {
     "test": "yarn test:integration",

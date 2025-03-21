@@ -24,6 +24,12 @@ interface ICabinetRepository extends IKnexRepository {
 		locationIds?: string[]
 	): Promise<Cabinet | undefined>;
 
+	getCabinetByPlayfieldId(
+		playfieldId: string,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Cabinet | undefined>;
+
 	createCabinet(cabinet: CabinetInsertDBType): Promise<Cabinet>;
 
 	updateCabinet(

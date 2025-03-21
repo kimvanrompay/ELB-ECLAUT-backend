@@ -6,3 +6,5 @@ export type {ITenantLocationRepository} from './tenant-location/tenant-location.
 export type {IGametypeRepository} from './gametype/gametype.repository.types';
 export type {ICabinetRepository} from './cabinet/cabinet.repository.types';
 export type {IMachineRepository} from './machine/machine.repository.types';
+export type {IGameSessionRepository} from './game-session/game-session.repository.types';
+export type {IMachineLogRepository} from './machine-log/machine-log.repository.types';

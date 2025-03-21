@@ -19,7 +19,7 @@ class MachineRepository extends KnexRepository implements IMachineRepository {
 		this.playfieldRepository = playfieldRepository;
 	}
 
-	withTransaction(trx: Knex.Transaction): MachineRepository {
+	override withTransaction(trx: Knex.Transaction): MachineRepository {
 		return new MachineRepository(
 			trx,
 			this.playfieldRepository.withTransaction(trx),

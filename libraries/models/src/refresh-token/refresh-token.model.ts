@@ -6,7 +6,7 @@ type RefreshTokenDBType = {
 };
 
 /**
- * A refresh tokem model doesn't actually contain the token itself, but rather the metadata.
+ * A refresh token model doesn't actually contain the token itself, but rather the metadata.
  * Storing the token itself in the model would be a security risk.
  * and the token is very long.
  */

@@ -5,16 +5,18 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.utils.ts",
-    "./query-params": "./src/query-params.utils.ts",
     "./array": "./src/array.utils.ts",
     "./aws-secret-manager": "./src/aws-secret-manager.ts",
     "./db": "./src/database/database.utils.ts",
     "./db/filters": "./src/database/database-filters.ts",
+    "./env": "./src/env.utils.ts",
     "./jwt": "./src/jwt.utils.ts",
     "./logger": "./src/logger/logger.ts",
+    "./object": "./src/object.utils.ts",
+    "./query-params": "./src/query-params.utils.ts",
     "./sqs": "./src/sqs/sqs.utils.ts",
-    "./object": "./src/object.utils.ts"
+    "./string": "./src/string.utils.ts",
+    "./types": "./src/types.utils.ts"
   },
   "scripts": {
     "test": "yarn test:unit",

@@ -33,10 +33,15 @@ const doesArrayContainSameItems = <T>(
 	);
 };
 
+const isValidArrayIndex = (index: number, arrayLength: number) => {
+	return index >= 0 && index < arrayLength;
+};
+
 export {
 	mapArrayOrSingleItem,
 	isArrayEmptyOrUndefined,
 	isArrayEmpty,
 	doesArrayHaveAllSameItems,
 	doesArrayContainSameItems,
+	isValidArrayIndex,
 };

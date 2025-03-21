@@ -30,7 +30,7 @@ class AppUserRepository extends KnexRepository implements IAppUserRepository {
 		super('app-user-repository', db, context);
 	}
 
-	public withTransaction(trx: Knex) {
+	public override withTransaction(trx: Knex) {
 		return new AppUserRepository(trx, {logger: this.logger});
 	}
 
@@ -136,8 +136,6 @@ class AppUserRepository extends KnexRepository implements IAppUserRepository {
 				return undefined;
 			}
 
-			console.log('result', result);
-
 			return AppUser.fromDB(result);
 		} catch (error) {
 			this.logger.error(error);
@@ -212,13 +210,9 @@ class AppUserRepository extends KnexRepository implements IAppUserRepository {
 
 	async createUser(user: AppUserInsertDBType): Promise<AppUser> {
 		try {
-			console.log('creating user', user);
-
 			const result = await this.db<AppUserInsertDBType>('app_user')
 				.insert(user)
 				.returning('*');
-
-			console.log('result', result);
 
 			if (!result) {
 				throw new Error('Could not create user');

@@ -24,7 +24,7 @@ class PlayfieldRepository
 		super('playfield-repository', db, context);
 	}
 
-	public withTransaction(trx: Knex.Transaction) {
+	public override withTransaction(trx: Knex.Transaction) {
 		return new PlayfieldRepository(trx, {
 			logger: this.logger,
 		});

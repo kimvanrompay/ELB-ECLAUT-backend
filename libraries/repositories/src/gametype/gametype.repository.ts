@@ -32,7 +32,7 @@ class GametypeRepository extends KnexRepository implements IGametypeRepository {
 		super('gametype-repository', db, context);
 	}
 
-	withTransaction(trx: Knex): IGametypeRepository {
+	override withTransaction(trx: Knex): IGametypeRepository {
 		return new GametypeRepository(trx, {logger: this.logger});
 	}
 

@@ -49,8 +49,6 @@ const getPossiblyLocalDatabaseConfig = async (): Promise<DatabaseConfig> => {
 	const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD;
 	const POSTGRES_DB = process.env.POSTGRES_DB;
 
-	console.log(POSTGRES_HOST);
-
 	const areAllEnvVarsSet =
 		!!POSTGRES_HOST &&
 		!!POSTGRES_PORT &&

@@ -36,7 +36,7 @@ class TenantLocationRepository
 		super('tenant-location-repository', db, context);
 	}
 
-	withTransaction(trx: Knex.Transaction) {
+	override withTransaction(trx: Knex.Transaction) {
 		return new TenantLocationRepository(trx, {logger: this.logger});
 	}
 

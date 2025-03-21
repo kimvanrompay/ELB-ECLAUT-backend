@@ -16,6 +16,7 @@
     "strictPropertyInitialization": false,
     "useUnknownInCatchVariables": false,
     "verbatimModuleSyntax": true,
+    "noImplicitOverride": true,
     "noEmit": true,
     "lib": [
       "ES2020"
@@ -25,7 +26,7 @@
       "vitest/globals"
     ],
     "typeRoots": [
-      "node_modules",
+      "node_modules"
     ]
   },
   "include": [
