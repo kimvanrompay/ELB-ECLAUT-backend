@@ -51,7 +51,7 @@ export class SqsLambdaStack extends cdk.Stack {
 			},
 		});
 
-		new IotToSqs(this, 'test-iot-sqs-integration', {
+		new IotToSqs(this, 'machine-iot-to-sqs', {
 			existingQueueObj: queue,
 			iotTopicRuleProps: {
 				topicRulePayload: {
