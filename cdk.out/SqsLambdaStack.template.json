@@ -1,0 +1,281 @@
+{
+ "Resources": {
+  "machinemessagedlq37FB21AF": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "machine-message-dlq",
+    "ReceiveMessageWaitTimeSeconds": 20,
+    "VisibilityTimeout": 30
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-message-dlq/Resource"
+   }
+  },
+  "machinemessagequeueC5D99B30": {
+   "Type": "AWS::SQS::Queue",
+   "Properties": {
+    "QueueName": "machine-message-queue",
+    "ReceiveMessageWaitTimeSeconds": 20,
+    "RedrivePolicy": {
+     "deadLetterTargetArn": {
+      "Fn::GetAtt": [
+       "machinemessagedlq37FB21AF",
+       "Arn"
+      ]
+     },
+     "maxReceiveCount": 5
+    },
+    "VisibilityTimeout": 30
+   },
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-message-queue/Resource"
+   }
+  },
+  "machinemessagelambdaServiceRole77BCFAF1": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-message-lambda/ServiceRole/Resource"
+   }
+  },
+  "machinemessagelambdaServiceRoleDefaultPolicyAA7AFB66": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "sqs:ChangeMessageVisibility",
+        "sqs:DeleteMessage",
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:ReceiveMessage"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "machinemessagequeueC5D99B30",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "machinemessagelambdaServiceRoleDefaultPolicyAA7AFB66",
+    "Roles": [
+     {
+      "Ref": "machinemessagelambdaServiceRole77BCFAF1"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-message-lambda/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "machinemessagelambdaE4746BC2": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-084828585414-eu-west-1",
+     "S3Key": "392b903e058ff3e6e84a0c81a330aaec75eada3f30fe3f25afca2c259b84d39e.zip"
+    },
+    "Handler": "index.handler",
+    "Role": {
+     "Fn::GetAtt": [
+      "machinemessagelambdaServiceRole77BCFAF1",
+      "Arn"
+     ]
+    },
+    "Runtime": "nodejs22.x"
+   },
+   "DependsOn": [
+    "machinemessagelambdaServiceRoleDefaultPolicyAA7AFB66",
+    "machinemessagelambdaServiceRole77BCFAF1"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-message-lambda/Resource",
+    "aws:asset:path": "asset.392b903e058ff3e6e84a0c81a330aaec75eada3f30fe3f25afca2c259b84d39e",
+    "aws:asset:is-bundled": true,
+    "aws:asset:property": "Code"
+   }
+  },
+  "machinemessagelambdaSqsEventSourceSqsLambdaStackmachinemessagequeueEC1E3DCB9F8C69DF": {
+   "Type": "AWS::Lambda::EventSourceMapping",
+   "Properties": {
+    "BatchSize": 1000,
+    "EventSourceArn": {
+     "Fn::GetAtt": [
+      "machinemessagequeueC5D99B30",
+      "Arn"
+     ]
+    },
+    "FunctionName": {
+     "Ref": "machinemessagelambdaE4746BC2"
+    },
+    "MaximumBatchingWindowInSeconds": 5,
+    "ScalingConfig": {
+     "MaximumConcurrency": 10
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-message-lambda/SqsEventSource:SqsLambdaStackmachinemessagequeueEC1E3DCB/Resource"
+   }
+  },
+  "machineiottosqsiotactionsroleA9673EFE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "iot.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-iot-to-sqs/iot-actions-role/Resource"
+   }
+  },
+  "machineiottosqsiotactionsroleDefaultPolicyC3514454": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "sqs:GetQueueAttributes",
+        "sqs:GetQueueUrl",
+        "sqs:SendMessage"
+       ],
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "machinemessagequeueC5D99B30",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "machineiottosqsiotactionsroleDefaultPolicyC3514454",
+    "Roles": [
+     {
+      "Ref": "machineiottosqsiotactionsroleA9673EFE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-iot-to-sqs/iot-actions-role/DefaultPolicy/Resource"
+   }
+  },
+  "machineiottosqsIotTopicRule01B9DAD9": {
+   "Type": "AWS::IoT::TopicRule",
+   "Properties": {
+    "TopicRulePayload": {
+     "Actions": [
+      {
+       "Sqs": {
+        "QueueUrl": {
+         "Ref": "machinemessagequeueC5D99B30"
+        },
+        "RoleArn": {
+         "Fn::GetAtt": [
+          "machineiottosqsiotactionsroleA9673EFE",
+          "Arn"
+         ]
+        }
+       }
+      }
+     ],
+     "Description": "Testing the IotToSqs Pattern",
+     "RuleDisabled": false,
+     "Sql": "SELECT * as message, topic() from '+/+/data'"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/machine-iot-to-sqs/IotTopicRule"
+   }
+  },
+  "CDKMetadata": {
+   "Type": "AWS::CDK::Metadata",
+   "Properties": {
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/7VUS08bMRD+LeyxcgwBVW05NUEgIQGiSSQOCCHHngSD1974EUhX+9+Z8e4mIC5VBZf1zvub5yGvhz+/84M98RwGUj0NjJ7zehqFfGLIuq/DKvD6T4IEt3WxovdKlFAcF98KVqx10HNtdNzMdAkuxY7vQYJewyWEIJZwI3QkeRY27FPcsEKBUBcQI/iMrjiui1K8TFqTE5ds72XViil2c8dOFjbrN8yIcq7EvXUKHgO/ys9ZsjJqZzFXjx520cBGv+n+H4RVBnxHzRNS2i4JAPm6dCoZCL3dCwK0wrzlNqyQqLgtxxdGwoS1KHk9cYb6J0JIJajxhlxUXlupK2FGUr4pV6tDBqNcih5yKSw2QV07o6Um/7f1O95m5DvdO0pKKDVz132IVoNsOmnECXs4t5gObGVo+w/C/07hy1DloaJorOUTd2swcyT54OcjWyncuggl9j/0kD7LUUbYgmtYOLrHAkEMfEQP0nyc5BPEsQhwe9ftBa/RpF8HdrpGb1OXvIRLUVU4hNj9KPwS+prPRZQPU/23H2PcxTGxUPVGW+Wed/wTZ2XyHqzcbBe9cj5m/XNEfia0SX432VbMDaie2kHpJ44VC21w+sM76tRKv6m2/cfQEL2WAcMv9LIbVSrMx+Qapl3kKJq5SssJ7lPDJhCySu4uFZvl8mGtl9nixy8+3PtNZzQ4kygsHlT8RJ9kDPskoGM66Mo7XYWZu8j/FGxAd/bcxZlDAY4q7Td/DPvrwyM+PMD7/Bi0HnSXgk/a9xUl7QIrvQUAAA=="
+   },
+   "Metadata": {
+    "aws:cdk:path": "SqsLambdaStack/CDKMetadata/Default"
+   }
+  }
+ },
+ "Parameters": {
+  "BootstrapVersion": {
+   "Type": "AWS::SSM::Parameter::Value<String>",
+   "Default": "/cdk-bootstrap/hnb659fds/version",
+   "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+  }
+ },
+ "Rules": {
+  "CheckBootstrapVersion": {
+   "Assertions": [
+    {
+     "Assert": {
+      "Fn::Not": [
+       {
+        "Fn::Contains": [
+         [
+          "1",
+          "2",
+          "3",
+          "4",
+          "5"
+         ],
+         {
+          "Ref": "BootstrapVersion"
+         }
+        ]
+       }
+      ]
+     },
+     "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+    }
+   ]
+  }
+ }
+}

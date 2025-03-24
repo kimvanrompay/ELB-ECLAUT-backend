@@ -37,6 +37,15 @@ export class SqsLambdaStack extends cdk.Stack {
 			handler: 'handler',
 			bundling: {
 				nodeModules: ['@aws-sdk/client-sqs'],
+				externalModules: [
+					'pg-query-stream',
+					'mysql2',
+					'mysql',
+					'oracledb',
+					'sqlite3',
+					'better-sqlite3',
+					'tedious',
+				],
 			},
 		});
 
