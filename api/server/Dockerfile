@@ -31,6 +31,7 @@ WORKDIR /app
 RUN corepack enable && corepack prepare yarn@${YARN_VERSION}
 
 COPY --from=prebuilder /app/out/full/ .
+COPY tsconfig.json ./tsconfig.json
 COPY --from=installer /app/node_modules ./node_modules
 RUN yarn workspace api-server build
 

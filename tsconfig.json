@@ -3,6 +3,7 @@
     "target": "esnext",
     "module": "esnext",
     "moduleResolution": "bundler",
+    "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -17,7 +18,7 @@
     "useUnknownInCatchVariables": false,
     "verbatimModuleSyntax": true,
     "noImplicitOverride": true,
-    "noEmit": true,
+    "noEmit": false,
     "lib": [
       "ES2020"
     ],

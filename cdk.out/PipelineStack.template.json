@@ -81,7 +81,18 @@
        }
       },
       {
-       "Action": "*",
+       "Action": [
+        "cloudformation:CreateStack",
+        "cloudformation:DeleteStack",
+        "cloudformation:DescribeStacks",
+        "cloudformation:UpdateStack",
+        "codebuild:BatchGetBuilds",
+        "codebuild:StartBuild",
+        "codepipeline:PutJobFailureResult",
+        "codepipeline:PutJobSuccessResult",
+        "iam:PassRole",
+        "s3:*"
+       ],
        "Effect": "Allow",
        "Resource": "*"
       },
@@ -365,8 +376,8 @@
          "Version": "1"
         },
         "Configuration": {
-         "ConnectionArn": "arn:aws:codestar-connections:eu-west-1:<account-id>:connection/<connection-id>",
-         "FullRepositoryId": "your-bitbucket-username/your-repo-name",
+         "ConnectionArn": "arn:aws:codeconnections:eu-west-1:084828585414:connection/b611d909-e309-43f2-8d24-a4e220310671",
+         "FullRepositoryId": "elaut/eclaut-backend",
          "BranchName": "master"
         },
         "Name": "BitbucketSource",
@@ -465,7 +476,7 @@
       {
        "Action": "codestar-connections:UseConnection",
        "Effect": "Allow",
-       "Resource": "arn:aws:codestar-connections:eu-west-1:<account-id>:connection/<connection-id>"
+       "Resource": "arn:aws:codeconnections:eu-west-1:084828585414:connection/b611d909-e309-43f2-8d24-a4e220310671"
       },
       {
        "Action": [

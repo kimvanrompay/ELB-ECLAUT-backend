@@ -16,11 +16,11 @@ export class PipelineStack extends cdk.Stack {
 		const bitbucketSourceAction =
 			new codepipeline_actions.CodeStarConnectionsSourceAction({
 				actionName: 'BitbucketSource',
-				owner: 'your-bitbucket-username',
-				repo: 'your-repo-name',
+				owner: 'elaut',
+				repo: 'eclaut-backend',
 				branch: 'master',
 				connectionArn:
-					'arn:aws:codestar-connections:eu-west-1:<account-id>:connection/<connection-id>',
+					'arn:aws:codeconnections:eu-west-1:084828585414:connection/b611d909-e309-43f2-8d24-a4e220310671',
 				output: sourceArtifact,
 			});
 
@@ -41,20 +41,31 @@ export class PipelineStack extends cdk.Stack {
 					build: {
 						commands: [
 							'cdk synth',
-							'cdk deploy --all --require-approval never'
-						]
-					}
+							'cdk deploy --all --require-approval never',
+						],
+					},
 				},
 				artifacts: {
 					files: ['**/*'],
-				}
-			})
+				},
+			}),
 		});
 
 		project.addToRolePolicy(
 			new iam.PolicyStatement({
-				actions: ['*'],
-				resources: ['*'],
+				actions: [
+					'cloudformation:CreateStack',
+					'cloudformation:UpdateStack',
+					'cloudformation:DescribeStacks',
+					'cloudformation:DeleteStack',
+					'iam:PassRole',
+					's3:*', // Adjust if you only need specific S3 permissions
+					'codebuild:StartBuild',
+					'codebuild:BatchGetBuilds',
+					'codepipeline:PutJobSuccessResult',
+					'codepipeline:PutJobFailureResult',
+				],
+				resources: ['*'], // Further restrict if possible
 			})
 		);
 

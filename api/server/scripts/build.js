@@ -23,6 +23,11 @@ esbuild.buildSync({
 		'tedious',
 		'mssql',
 		'better-sqlite3',
+		'aws-sdk',
+		'nock',
+		'mock-aws-s3',
+		'@mapbox/node-pre-gyp',
+		'*.html',
 	],
 	entryPoints: ['./src/server.ts'],
 	banner: {
