@@ -47,6 +47,24 @@ class TenantRepository extends KnexRepository implements ITenantRepository {
 		}
 	}
 
+	async countTenants(filters: DatabaseQueryFilters): Promise<number> {
+		try {
+			const query = KnexFilterAdapter.applyFilters(this.db('tenant'), {
+				...filters,
+				limit: undefined,
+				offset: undefined,
+				orderBy: undefined,
+			});
+
+			const result = await query.count('* as count').first();
+
+			return result?.count ? Number(result.count) : 0;
+		} catch (e) {
+			this.logger.error(e);
+			throw new DatabaseRetrieveError('Error retrieving tenant count');
+		}
+	}
+
 	async getTenantById(tenantId: string): Promise<Tenant | undefined> {
 		try {
 			const result = await this.db<TenantDBType>('tenant')

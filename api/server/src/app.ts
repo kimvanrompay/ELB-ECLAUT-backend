@@ -29,7 +29,13 @@ const cookieAuthRegistry = app.openAPIRegistry.registerComponent(
 	}
 );
 
-app.use(cors());
+app.use(
+	cors({
+		origin: ['http://localhost:3000', 'http://localhost:3001'],
+		credentials: true,
+		// maxAge: 600,
+	})
+);
 app.use(csrf());
 app.onError(apiErrorHandler);
 app.use(requestId());

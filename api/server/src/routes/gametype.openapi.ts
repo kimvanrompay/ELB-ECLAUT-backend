@@ -18,8 +18,8 @@ const findGametypesRoute = createPrivateAppRoute(
 	request: {
 		query: z.object({
 			'name[like]': z.string().optional(),
-			limit: z.string().optional(),
-			offset: z.string().optional(),
+			limit: z.coerce.number().min(1).max(1000),
+			offset: z.coerce.number().min(0),
 			order_by: z.string().optional(),
 		}),
 	},
@@ -28,13 +28,10 @@ const findGametypesRoute = createPrivateAppRoute(
 			description: 'Successful response',
 			content: {
 				'application/json': {
-					schema: z.array(
-						z.object({
-							id: z.string(),
-							name: z.string(),
-							description: z.string().optional(),
-						})
-					),
+					schema: z.object({
+						entries: z.array(Gametype.schemas.GametypeDTOSchema),
+						totalEntries: z.number(),
+					}),
 				},
 			},
 		},

@@ -1,7 +1,10 @@
 import {Playfield} from '@lib/models/playfield';
 import type {IPlayfieldRepository} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 import {AuthorizationService} from '../authorization-service/authorization.service';
 import type {AuthenticatedAppContext} from '../types';
@@ -44,6 +47,29 @@ class PlayfieldService implements IPlayfieldService {
 			filters,
 			...this.getTenantAndLocationFromContext()
 		);
+	}
+
+	async findPaginatedPlayfields(
+		filters?: PaginatedDatabaseQueryFilters
+	): Promise<{entries: Playfield[]; totalEntries: number}> {
+		const [tenantId, locationIds] = this.getTenantAndLocationFromContext();
+
+		const playfields = await this.playfieldRepository.findPlayfields(
+			filters,
+			tenantId,
+			locationIds
+		);
+
+		const total = await this.playfieldRepository.countPlayfields(
+			filters,
+			tenantId,
+			locationIds
+		);
+
+		return {
+			entries: playfields,
+			totalEntries: total,
+		};
 	}
 
 	async getPlayfieldById(id: string): Promise<Playfield | undefined> {

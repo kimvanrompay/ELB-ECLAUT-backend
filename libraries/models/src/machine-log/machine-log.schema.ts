@@ -1,14 +1,16 @@
 import {z} from '@hono/zod-openapi';
 
-const MachineLogDTOSchema = z.object({
-	level: z.string(),
-	timestamp: z.string(),
-	serialNumber: z.string(),
-	playfieldId: z.string().optional(),
-	type: z.string(),
-	data: z.object({}).passthrough().optional(),
-	userId: z.string().optional(),
-});
+const MachineLogDTOSchema = z
+	.object({
+		level: z.string(),
+		timestamp: z.string(),
+		serialNumber: z.string(),
+		playfieldId: z.string().optional(),
+		type: z.string(),
+		data: z.object({}).passthrough().optional(),
+		userId: z.string().optional(),
+	})
+	.openapi('MachineLog');
 
 const MachineLogDBSchema = z.object({
 	id: z.string(),

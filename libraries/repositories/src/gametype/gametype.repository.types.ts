@@ -16,6 +16,8 @@ interface IGametypeRepository extends IKnexRepository {
 
 	findGametypes(filters: DatabaseQueryFilters): Promise<Gametype[]>;
 
+	countGametypes(filters: DatabaseQueryFilters): Promise<number>;
+
 	getGametypeById(id: string): Promise<Gametype | undefined>;
 
 	getGametypeByIdForUpdate(id: string): Promise<Gametype | undefined>;

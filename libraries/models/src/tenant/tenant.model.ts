@@ -19,7 +19,7 @@ class Tenant {
 	createdAt: Date;
 	updatedAt: Date;
 
-	schemas = {
+	static schemas = {
 		tenantDTOSchema,
 		tenantDBSchema,
 		tenantCreateDTOSchema,

@@ -17,7 +17,10 @@
     "./email": "./src/email-service/email.service.ts",
     "./machine-message": "./src/machine-message-service/machine-message.service.ts",
     "./database-transaction": "./src/database-service/database.service.ts",
-    "./tenant-location": "./src/tenant-location-service/tenant-location.service.ts"
+    "./tenant-location": "./src/tenant-location-service/tenant-location.service.ts",
+    "./game-session": "./src/game-session-service/game-session.service.ts",
+    "./machine-log": "./src/machine-log-service/machine-log.service.ts",
+    "./tenant": "./src/tenant-service/tenant.service.ts"
   },
   "scripts": {
     "test": "yarn test:unit",

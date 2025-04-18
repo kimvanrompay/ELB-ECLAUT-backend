@@ -9,6 +9,9 @@ export type {ILoginVerificationCodeService} from './login-verification-code-serv
 export type {IPlayfieldService} from './playfield-service/playfield.service.types';
 export type {ICabinetService} from './cabinet-service/cabinet.service.types';
 export type {IMachineMessageService} from './machine-message-service/machine-message.service.types';
+export type {IMachineLogService} from './machine-log-service/machine-log.service.types';
+export type {ITenantLocationService} from './tenant-location-service/tenant-location.service.types';
+export type {ITenantService} from './tenant-service/tenant.service.types';
 
 export type AppContext = {
 	auth?: {

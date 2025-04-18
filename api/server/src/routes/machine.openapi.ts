@@ -24,8 +24,8 @@ const findMachinesRoute = createPrivateAppRoute(
 			'machine_name[like]': z.string().optional(),
 			'status[eq]': z.string().optional(),
 			'gametype_id[eq]': z.string().optional(),
-			limit: z.string().optional(),
-			offset: z.string().optional(),
+			limit: z.string(),
+			offset: z.string(),
 			order_by: z.string().optional(),
 		}),
 	},
@@ -34,7 +34,10 @@ const findMachinesRoute = createPrivateAppRoute(
 			description: 'Successful response',
 			content: {
 				'application/json': {
-					schema: z.array(Machine.schemas.DTOSchema),
+					schema: z.object({
+						entries: z.array(Machine.schemas.DTOSchema),
+						totalEntries: z.number(),
+					}),
 				},
 			},
 		},

@@ -3,10 +3,17 @@ import type {
 	GametypeCreateDTOType,
 	GametypeUpdateDTOType,
 } from '@lib/models/gametype';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 interface IGametypeService {
 	findGametypes(filters: DatabaseQueryFilters): Promise<Gametype[]>;
+
+	findPaginatedGametypes(
+		filters: PaginatedDatabaseQueryFilters
+	): Promise<PaginatedResult<Gametype>>;
 
 	getGametypeById(id: string): Promise<Gametype | undefined>;
 

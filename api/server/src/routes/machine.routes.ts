@@ -6,6 +6,7 @@ import {PlayfieldRepository} from '@lib/repositories/playfield';
 import {MachineService} from '@lib/services/machine';
 import {type AuthenticatedAppContext} from '@lib/services/types';
 import {defaultValidationHook} from '@lib/utils';
+import type {PaginatedDatabaseQueryFilters} from '@lib/utils/db/filters';
 import {renameProperties} from '@lib/utils/object';
 import {parseQueryParamsToDatabaseFilters} from '@lib/utils/query-params';
 
@@ -56,11 +57,19 @@ const createMachineApi = () => {
 
 		const filters = parseQueryParamsToDatabaseFilters(renamedQueryParams);
 
-		const machines = await machineService.findMachines(filters);
+		const data = await machineService.findPaginatedMachines(
+			filters as PaginatedDatabaseQueryFilters
+		);
 
-		const machineDTOs = machines.map((machine) => machine.toJSON());
+		const machineDTOs = data.entries.map((machine) => machine.toJSON());
 
-		return ctx.json(machineDTOs, 200);
+		return ctx.json(
+			{
+				entries: machineDTOs,
+				totalEntries: data.totalEntries,
+			},
+			200
+		);
 	});
 
 	machinesApp.openapi(createMachineRoute, async (ctx) => {

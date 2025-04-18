@@ -40,7 +40,7 @@ class MachineLog {
 	}
 
 	static schemas = {
-		InputSchema: MachineLogDTOSchema,
+		DTOSchema: MachineLogDTOSchema,
 		DBSchema: MachineLogDBSchema,
 		InsertDBSchema: MachineLogInsertDBSchema,
 	};

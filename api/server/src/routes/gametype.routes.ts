@@ -4,6 +4,7 @@ import {NotFoundError} from '@lib/errors';
 import {GametypeRepository} from '@lib/repositories/gametype';
 import {GametypeService} from '@lib/services/gametype';
 import {defaultValidationHook} from '@lib/utils';
+import type {PaginatedDatabaseQueryFilters} from '@lib/utils/db/filters';
 import {parseQueryParamsToDatabaseFilters} from '@lib/utils/query-params';
 
 import {db} from '../database';
@@ -29,13 +30,21 @@ const createGametypeApi = () => {
 
 		const queryParams = ctx.req.valid('query');
 
-		const filters = parseQueryParamsToDatabaseFilters(queryParams);
+		const filters = parseQueryParamsToDatabaseFilters(
+			queryParams
+		) as PaginatedDatabaseQueryFilters;
 
-		const gametypes = await gametypeService.findGametypes(filters);
+		const gametypes = await gametypeService.findPaginatedGametypes(filters);
 
-		const gametypeDTOs = gametypes.map((gametype) => gametype.toJSON());
+		const gametypeDTOs = gametypes.entries.map((gametype) => gametype.toJSON());
 
-		return ctx.json(gametypeDTOs, 200);
+		return ctx.json(
+			{
+				entries: gametypeDTOs,
+				totalEntries: gametypes.totalEntries,
+			},
+			200
+		);
 	});
 
 	app.openapi(getGametypeRoute, async (ctx) => {

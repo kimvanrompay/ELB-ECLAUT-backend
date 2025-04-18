@@ -5,7 +5,10 @@ import type {
 	IMachineRepository,
 	IPlayfieldRepository,
 } from '@lib/repositories/types';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 import type {PinoLogger} from '@lib/utils/logger';
 
 import {AuthorizationService} from '../authorization-service/authorization.service';
@@ -53,6 +56,25 @@ class MachineService implements IMachineService {
 			filters ?? {},
 			...this.getTenantAndLocationFromContext()
 		);
+	}
+
+	async findPaginatedMachines(
+		filters: PaginatedDatabaseQueryFilters
+	): Promise<{entries: Machine[]; totalEntries: number}> {
+		const [tenantId, locationIds] = this.getTenantAndLocationFromContext();
+
+		const machines = await this.machineRepository.findMachines(
+			filters ?? {},
+			tenantId,
+			locationIds
+		);
+		const total = await this.machineRepository.countMachines(
+			filters ?? {},
+			tenantId,
+			locationIds
+		);
+
+		return {entries: machines, totalEntries: total};
 	}
 
 	/**

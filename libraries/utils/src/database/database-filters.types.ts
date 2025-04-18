@@ -131,6 +131,13 @@ type DatabaseQueryFilters = {
 	orderBy?: Omit<OrderByFilter, 'type'>[];
 };
 
+type PaginatedDatabaseQueryFilters = {
+	limit: LimitFilter['value'];
+	offset: OffsetFilter['value'];
+	where?: WhereFilter[];
+	orderBy?: Omit<OrderByFilter, 'type'>[];
+};
+
 type WhereFilterFunction<QueryType = string, Value = any> = (
 	query: QueryType,
 	columnName: string,
@@ -197,4 +204,5 @@ export type {
 	WhereFilterType,
 	LimitFilterType,
 	OrderByFilterType,
+	PaginatedDatabaseQueryFilters,
 };

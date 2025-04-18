@@ -32,6 +32,26 @@ interface IMachineLogRepository extends IKnexRepository {
 		tenantId?: string,
 		locationIds?: string[]
 	): Promise<MachineLog[]>;
+
+	countMachineLogs(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
+
+	countMachineLogsForCabinet(
+		serialNumber: string,
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
+
+	countMachineLogsForPlayfield(
+		playfieldId: string,
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
 }
 
 export type {IMachineLogRepository};

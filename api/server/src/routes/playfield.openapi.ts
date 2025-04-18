@@ -1,5 +1,7 @@
 import {z} from '@hono/zod-openapi';
 
+import {GameSession} from '@lib/models/game-session';
+import {MachineLog} from '@lib/models/machine-log';
 import {Playfield} from '@lib/models/playfield';
 import {AppSecurityScopes} from '@lib/services/authorization';
 
@@ -46,8 +48,8 @@ const findPlayfieldsRoute = createPrivateAppRoute(
 		query: z.object({
 			'name[like]': z.string().optional(),
 			'serial_number[like]': z.string().optional(),
-			limit: z.string().optional(),
-			offset: z.string().optional(),
+			limit: z.coerce.number().min(1).optional(),
+			offset: z.coerce.number().min(0).optional(),
 			order_by: z.string().optional(),
 		}),
 	},
@@ -69,4 +71,81 @@ const findPlayfieldsRoute = createPrivateAppRoute(
 	},
 });
 
-export {getPlayfieldRoute, findPlayfieldsRoute};
+const findPlayfieldGameSessionsRoute = createPrivateAppRoute(
+	[AppSecurityScopes.READ_MACHINES, AppSecurityScopes.READ_GAMESESSIONS],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'get',
+	summary: 'Get recent games for a playfield',
+	path: '/{id}/sessions',
+	tags: ['Machines'],
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		query: z.object({
+			limit: z.coerce.number().min(1).max(100),
+			offset: z.coerce.number().min(0),
+			order_by: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: z.object({
+						entries: z.array(GameSession.schemas.DTOSchema),
+						totalEntries: z.number(),
+					}),
+				},
+			},
+		},
+	},
+});
+
+const findPlayfieldLogsRoute = createPrivateAppRoute(
+	[AppSecurityScopes.READ_MACHINES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'get',
+	summary: 'Get playfield logs',
+	tags: ['Machines'],
+	path: '/{id}/logs',
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		query: z.object({
+			'level[eq]': z.string().optional(),
+			'type[eq]': z.string().optional(),
+			limit: z.coerce.number().min(1).max(100),
+			offset: z.coerce.number().min(0),
+			order_by: z.string().optional(),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: z.object({
+						entries: z.array(MachineLog.schemas.DTOSchema),
+						totalEntries: z.number(),
+					}),
+				},
+			},
+		},
+	},
+});
+
+export {
+	getPlayfieldRoute,
+	findPlayfieldsRoute,
+	findPlayfieldGameSessionsRoute,
+	findPlayfieldLogsRoute,
+};

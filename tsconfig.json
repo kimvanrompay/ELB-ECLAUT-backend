@@ -27,7 +27,8 @@
       "vitest/globals"
     ],
     "typeRoots": [
-      "node_modules"
+      "node_modules",
+      "./libraries/types"
     ]
   },
   "rootDir": "./",

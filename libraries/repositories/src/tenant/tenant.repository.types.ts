@@ -14,6 +14,8 @@ interface ITenantRepository extends IKnexRepository {
 
 	findTenants(filters: DatabaseQueryFilters): Promise<Tenant[]>;
 
+	countTenants(filters: DatabaseQueryFilters): Promise<number>;
+
 	getTenantById(tenantId: string): Promise<Tenant | undefined>;
 
 	createTenant(tenant: TenantInsertDBType): Promise<Tenant>;

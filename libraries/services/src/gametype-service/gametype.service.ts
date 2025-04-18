@@ -7,7 +7,10 @@ import type {
 } from '@lib/models/gametype';
 import type {IGametypeRepository} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 import type {IGametypeService} from './gametype.service.types';
 
@@ -21,6 +24,15 @@ class GametypeService implements IGametypeService {
 
 	async findGametypes(filters: DatabaseQueryFilters): Promise<Gametype[]> {
 		return this.gametypeRepository.findGametypes(filters);
+	}
+
+	async findPaginatedGametypes(
+		filters: PaginatedDatabaseQueryFilters
+	): Promise<{entries: Gametype[]; totalEntries: number}> {
+		const gametypes = await this.gametypeRepository.findGametypes(filters);
+		const totalEntries = await this.gametypeRepository.countGametypes(filters);
+
+		return {entries: gametypes, totalEntries};
 	}
 
 	async getGametypeById(id: string): Promise<Gametype | undefined> {

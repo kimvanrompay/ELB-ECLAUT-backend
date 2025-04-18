@@ -9,6 +9,7 @@ import {createMachineApi} from './routes/machine.routes';
 import {addOpenAPI} from './routes/openapi.routes';
 import {createPlayfieldApi} from './routes/playfield.routes';
 import {createTenantLocationApi} from './routes/tenant-location.routes';
+import {createTenantApi} from './routes/tenant.routes';
 
 /**
  * Routes
@@ -35,6 +36,8 @@ app.route('/machine', createMachineApi());
 app.route('/machine/playfield', createPlayfieldApi());
 
 app.route('/machine/cabinet', createCabinetApi());
+
+app.route('/tenant', createTenantApi());
 
 /**
  * OpenAPI  swagger routes (needs to be last)

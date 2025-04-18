@@ -118,6 +118,70 @@ class MachineLogRepository
 		return this.findMachineLogs(_filters, tenantId, locationIds);
 	}
 
+	async countMachineLogs(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number> {
+		try {
+			const query = KnexFilterAdapter.applyFilters(this.db('machine_log'), {
+				...filters,
+				orderBy: undefined,
+				limit: undefined,
+				offset: undefined,
+			})
+				.count('machine_log.id as count')
+				.first();
+
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			);
+
+			return result?.count ? Number(result.count) : 0;
+		} catch (e) {
+			this.logger.error(e);
+			throw new DatabaseRetrieveError('Error retrieving machine logs');
+		}
+	}
+
+	async countMachineLogsForCabinet(
+		serialNumber: string,
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number> {
+		const _filters = filters ?? {};
+		_filters.where = _filters.where ?? [];
+
+		_filters.where.push({
+			type: 'eq',
+			columnName: 'machine_log.serial_number',
+			value: serialNumber,
+		});
+
+		return this.countMachineLogs(_filters, tenantId, locationIds);
+	}
+
+	async countMachineLogsForPlayfield(
+		playfieldId: string,
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number> {
+		const _filters = filters ?? {};
+		_filters.where = _filters.where ?? [];
+
+		_filters.where.push({
+			type: 'eq',
+			columnName: 'machine_log.playfield_id',
+			value: playfieldId,
+		});
+
+		return this.countMachineLogs(_filters, tenantId, locationIds);
+	}
+
 	async getMachineLogById(id: string): Promise<MachineLog | undefined> {
 		try {
 			const result = await this.db
@@ -153,6 +217,28 @@ class MachineLogRepository
 		} catch (e) {
 			this.logger.error(e);
 			throw new DatabaseInsertError('Error creating machine log');
+		}
+	}
+
+	async getLastActiveStatusMessageForPlayfield(
+		playfieldId: string
+	): Promise<MachineLog | undefined> {
+		try {
+			const result = await this.db
+				.select<MachineLogDBType[]>('*')
+				.from('machine_log')
+				.where({playfield_id: playfieldId})
+				.andWhere('type', 'STATUS')
+				.andWhere(this.db.raw(`data->>'s' = 'ACTIVE'`))
+				.orderBy('created_at', 'desc')
+				.first();
+
+			return result ? MachineLog.fromDBType(result) : undefined;
+		} catch (e) {
+			this.logger.error(e);
+			throw new DatabaseRetrieveError(
+				`Error retrieving machine log with playfield id: ${playfieldId}`
+			);
 		}
 	}
 }

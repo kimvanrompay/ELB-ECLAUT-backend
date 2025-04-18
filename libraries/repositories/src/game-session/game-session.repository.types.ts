@@ -26,6 +26,12 @@ interface IGameSessionRepository extends IKnexRepository {
 		tenantId?: string,
 		locationIds?: string[]
 	): Promise<GameSession[]>;
+
+	countGameSessions(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
 }
 
 export type {IGameSessionRepository};

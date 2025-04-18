@@ -15,6 +15,7 @@
     "./playfield": "./src/playfield/playfield.repository.ts",
     "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
     "./tenant-location": "./src/tenant-location/tenant-location.repository.ts",
+    "./tenant": "./src/tenant/tenant.repository.ts",
     "./types": "./src/types.ts"
   },
   "scripts": {

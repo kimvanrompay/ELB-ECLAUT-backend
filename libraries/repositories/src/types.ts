@@ -8,3 +8,4 @@ export type {ICabinetRepository} from './cabinet/cabinet.repository.types';
 export type {IMachineRepository} from './machine/machine.repository.types';
 export type {IGameSessionRepository} from './game-session/game-session.repository.types';
 export type {IMachineLogRepository} from './machine-log/machine-log.repository.types';
+export type {ITenantRepository} from './tenant/tenant.repository.types';

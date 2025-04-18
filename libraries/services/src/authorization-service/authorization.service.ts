@@ -25,39 +25,67 @@ enum AppSecurityScopes {
 	CREATE_GAMESESSIONS = 'create:gamesessions',
 	UPDATE_GAMESESSIONS = 'update:gamesessions',
 	DELETE_GAMESESSIONS = 'delete:gamesessions',
+	INITIALIZE_GAMESESSIONS = 'initialize:gamesessions',
+
+	READ_TENANTS = 'read:tenants',
+	CREATE_TENANTS = 'create:tenants',
+	UPDATE_TENANTS = 'update:tenants',
+	DELETE_TENANTS = 'delete:tenants',
 }
 
 const AppRoleToSecurityClaims: Record<AppUserRole, AppSecurityScopes[]> = {
 	[AppUserRole.ELAUT_ADMIN]: [...Object.values(AppSecurityScopes)],
-	[AppUserRole.ELAUT_SERVICE]: [AppSecurityScopes.READ_USERS],
+	[AppUserRole.ELAUT_SERVICE]: [
+		AppSecurityScopes.READ_USERS,
+		AppSecurityScopes.READ_TENANT_LOCATIONS,
+		AppSecurityScopes.READ_MACHINES,
+		AppSecurityScopes.READ_TENANTS,
+	],
 	[AppUserRole.ELAUT_DEVELOPER]: [...Object.values(AppSecurityScopes)],
-	[AppUserRole.ELAUT_QC]: [AppSecurityScopes.READ_USERS],
+	[AppUserRole.ELAUT_QC]: [
+		AppSecurityScopes.READ_USERS,
+		AppSecurityScopes.READ_MACHINES,
+	],
 	[AppUserRole.DISTRIBUTOR]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
 		AppSecurityScopes.DELETE_USERS,
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
 	],
 	[AppUserRole.TENANT_ADMIN]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
 		AppSecurityScopes.DELETE_USERS,
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
 	],
 	[AppUserRole.TENANT_GLOBAL_MANAGER]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
 		AppSecurityScopes.DELETE_USERS,
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
 	],
 	[AppUserRole.TENANT_ARCADE_MANAGER]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
 		AppSecurityScopes.DELETE_USERS,
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
 	],
-	[AppUserRole.TENANT_ARCADE_TECHNICIAN]: [],
-	[AppUserRole.TENANT_ARCADE_EMPLOYEE]: [],
+	[AppUserRole.TENANT_ARCADE_TECHNICIAN]: [
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
+	],
+	[AppUserRole.TENANT_ARCADE_EMPLOYEE]: [
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
+	],
 };
 
 class AuthorizationService {
