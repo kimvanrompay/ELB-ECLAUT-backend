@@ -39,6 +39,8 @@ app.route('/machine/cabinet', createCabinetApi());
 
 app.route('/tenant', createTenantApi());
 
+app.route('/playerzone', createPlayerZoneApi());
+
 /**
  * OpenAPI  swagger routes (needs to be last)
  */

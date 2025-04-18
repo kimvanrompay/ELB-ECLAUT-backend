@@ -88,7 +88,7 @@ const parseQueryParamsToDatabaseFilters = (queryParams: {
 		}
 
 		if (key === 'orderBy' || key === 'order_by') {
-			const rules = (value as string).split(',');
+			const rules = (value as string).split(';');
 
 			filters.orderBy = rules.map((rule) => {
 				const [columnName, order] = rule.split(':');
