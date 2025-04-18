@@ -6,8 +6,14 @@ const PlayfieldDTOSchema = z
 		cabinet: z.object({
 			serialNumber: z.string(),
 			name: z.string(),
-			tenantId: z.string(),
-			tenantLocationId: z.string(),
+			tenant: z.object({
+				id: z.string(),
+				name: z.string(),
+			}),
+			location: z.object({
+				id: z.string(),
+				name: z.string(),
+			}),
 			playfields: z
 				.array(
 					z.object({
@@ -19,8 +25,19 @@ const PlayfieldDTOSchema = z
 				.min(1),
 		}),
 		name: z.string(),
-		gametypeId: z.string(),
+		gametype: z.object({
+			id: z.string(),
+			name: z.string(),
+		}),
 		status: z.string(),
+		lastMessageAt: z.date().optional(),
+		error: z
+			.object({
+				isActive: z.boolean(),
+				code: z.string(),
+				eventData: z.string().optional(),
+			})
+			.optional(),
 	})
 	.openapi('Playfield');
 
@@ -29,20 +46,34 @@ const PlayfieldDBSchema = z.object({
 	serial_number: z.string(), // cabinet serial number
 	name: z.string(),
 	game_type_id: z.string(),
+	gametype_name: z.string(),
 	tenant_id: z.string(),
+	tenant_name: z.string(),
 	tenant_location_id: z.string(),
+	tenant_location_name: z.string(),
 	status: z.string().optional(),
+	last_machine_message: z.date().optional(),
+	error_code: z.string().optional(),
+	error_event_data: z.string().optional(),
+	error_is_active: z.string().optional(),
 });
 
 const PlayfieldWithCabinetDBSchema = z.object({
 	id: z.string(),
 	serial_number: z.string(), // cabinet serial number
 	name: z.string(),
-	game_type_id: z.string(),
+	gametype_id: z.string(),
+	gametype_name: z.string(),
 	tenant_id: z.string(),
+	tenant_name: z.string(),
 	tenant_location_id: z.string(),
+	tenant_location_name: z.string(),
 	status: z.string().optional(),
 	cabinet: z.string(),
+	last_machine_message: z.date().optional(),
+	error_code: z.string().optional(),
+	error_event_data: z.string().optional(),
+	error_is_active: z.string().optional(),
 });
 
 const PlayfieldInsertDBSchema = z.object({

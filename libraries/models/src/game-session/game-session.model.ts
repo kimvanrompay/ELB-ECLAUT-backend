@@ -123,6 +123,25 @@ class GameSession {
 			);
 		});
 	}
+
+	toJSON(): GameSessionDTOType {
+		return {
+			id: this.id,
+			playfieldId: this.playfieldId,
+			tenantId: this.tenantId,
+			tenantLocationId: this.tenantLocationId,
+			startedAt: this.startedAt,
+			endedAt: this.endedAt,
+			result: this.result ?? {},
+			amountMoneyIn: this.amountMoneyIn,
+			amountCredits: this.amountCredits,
+			amountMoneyOut: this.amountMoneyOut,
+			paymentMethod: (this.paymentMethod ??
+				GamePaymentMethod.OTHER) as GamePaymentMethod,
+			createdAt: this.createdAt,
+			updatedAt: this.updatedAt,
+		};
+	}
 }
 
 export {GameSession, GamePaymentMethod};

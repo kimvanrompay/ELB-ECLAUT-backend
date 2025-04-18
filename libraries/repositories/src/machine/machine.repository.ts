@@ -50,6 +50,18 @@ class MachineRepository extends KnexRepository implements IMachineRepository {
 			throw new DatabaseRetrieveError('Error finding machines');
 		}
 	}
+
+	countMachines(
+		filters: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number> {
+		return this.playfieldRepository.countPlayfields(
+			filters,
+			tenantId,
+			locationIds
+		);
+	}
 }
 
 export {MachineRepository};

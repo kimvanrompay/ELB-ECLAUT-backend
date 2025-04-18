@@ -201,6 +201,43 @@ class CabinetRepository extends KnexRepository implements ICabinetRepository {
 			throw new DatabaseRetrieveError('Could not retrieve cabinet');
 		}
 	}
+
+	async updateCabinetLastMessageAt(
+		serialNumber: string,
+		lastMessageAt: Date,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Cabinet> {
+		try {
+			const query = this.db<CabinetDBType>('cabinet')
+				.where('cabinet.serial_number', serialNumber)
+				.andWhere((qb) => {
+					qb.whereNull('cabinet.last_machine_message').orWhere(
+						'cabinet.last_machine_message',
+						'<',
+						lastMessageAt
+					);
+				})
+				.update({
+					last_machine_message: lastMessageAt,
+				});
+
+			await this.applyTenantAndLocationFilters(query, tenantId, locationIds);
+
+			const updated = await this.getCabinetById(serialNumber);
+
+			if (!updated) {
+				throw new Error('Could not find updated cabinet');
+			}
+
+			return updated;
+		} catch (error) {
+			this.logger.error(
+				`Error updating cabinet with serial number: ${serialNumber}, error: ${error?.message}`
+			);
+			throw new DatabaseUpdateError('Error updating cabinet');
+		}
+	}
 }
 
 export {CabinetRepository};

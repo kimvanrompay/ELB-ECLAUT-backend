@@ -3,10 +3,13 @@ import {z} from 'zod';
 const CabinetDBSchema = z.object({
 	serial_number: z.string(),
 	tenant_id: z.string(),
+	tenant_name: z.string(),
 	tenant_location_id: z.string(),
+	tenant_location_name: z.string(),
 	name: z.string(),
 	created_at: z.date(),
 	updated_at: z.date(),
+	last_machine_message: z.date().optional(),
 });
 
 const CabinetWithPlayfieldsDBSchema = CabinetDBSchema.extend({
@@ -16,9 +19,16 @@ const CabinetWithPlayfieldsDBSchema = CabinetDBSchema.extend({
 const CabinetDTOSchema = z
 	.object({
 		serialNumber: z.string(),
-		tenantId: z.string(),
-		locationId: z.string(),
+		tenant: z.object({
+			id: z.string(),
+			name: z.string(),
+		}),
+		location: z.object({
+			id: z.string(),
+			name: z.string(),
+		}),
 		name: z.string(),
+		lastMessageAt: z.date().optional(),
 		playfields: z
 			.array(
 				z.object({

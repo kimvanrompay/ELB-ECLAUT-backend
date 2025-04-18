@@ -32,7 +32,7 @@ class LogMessagesService {
 			return false;
 		}
 
-		const {data, messageId, timestamp, serial_number, playfieldId} = message;
+		const {data, messageId, timestamp, serialNumber, playfieldId} = message;
 
 		const validated = MachineMessage.schemas.LogInputDataSchema.safeParse(data);
 
@@ -57,7 +57,7 @@ class LogMessagesService {
 				id: messageId,
 				level: logLevel,
 				type: 'LOG',
-				serial_number,
+				serial_number: serialNumber,
 				playfield_id: playfieldId,
 				timestamp: new Date(timestamp),
 				data,

@@ -18,6 +18,12 @@ interface IPlayfieldRepository extends IKnexRepository {
 		locationIds?: string[]
 	): Promise<Playfield[]>;
 
+	countPlayfields(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
+
 	findPlayfieldsByCabinetId(
 		cabinetId: string,
 		tenantId?: string,
@@ -33,6 +39,13 @@ interface IPlayfieldRepository extends IKnexRepository {
 	updatePlayfield(
 		playfieldId: string,
 		playfield: PlayfieldUpdateDBType,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Playfield>;
+
+	updatePlayfieldLastMessageAt(
+		playfieldId: string,
+		lastMessageAt: Date,
 		tenantId?: string,
 		locationIds?: string[]
 	): Promise<Playfield>;

@@ -65,7 +65,7 @@ class MachineMessageRepository extends KnexRepository {
 		} catch (e) {
 			this.logger.error(e);
 			throw new DatabaseInsertError(
-				`Error creating machine message for machine serial_number: ${message.serial_number}, playfield: ${message.playfieldId}, and message: ${message}`
+				`Error creating machine message for machine serial_number: ${message.serialNumber}, playfield: ${message.playfieldId}, and message: ${message}`
 			);
 		}
 	}

@@ -15,12 +15,21 @@ import {
 class Machine {
 	id: string;
 	type: 'CABINET' | 'PLAYFIELD';
-	gametypeId: string;
+	gametype: {
+		id: string;
+		name: string;
+	};
 	cabinet: {
 		serialNumber: string;
 		name: string;
-		tenantId: string;
-		tenantLocationId: string;
+		tenant: {
+			id: string;
+			name: string;
+		};
+		location: {
+			id: string;
+			name: string;
+		};
 		playfields: {
 			id: string;
 			name: string;
@@ -39,10 +48,19 @@ class Machine {
 		id: string,
 		serialNumber: string,
 		name: string,
-		gametypeId: string,
-		tenantId: string,
+		gametype: {
+			id: string;
+			name: string;
+		},
+		tenant: {
+			id: string;
+			name: string;
+		},
 		type: 'CABINET' | 'PLAYFIELD',
-		tenantLocationId: string,
+		location: {
+			id: string;
+			name: string;
+		},
 		status: string,
 		playfields: {
 			id: string;
@@ -52,14 +70,15 @@ class Machine {
 	) {
 		this.id = id;
 		this.type = type;
+		this.name = name;
 		this.cabinet = {
 			serialNumber,
 			name,
-			tenantId,
-			tenantLocationId,
+			tenant,
 			playfields,
+			location,
 		};
-		this.gametypeId = gametypeId;
+		this.gametype = gametype;
 		this.status = status;
 	}
 
@@ -70,11 +89,14 @@ class Machine {
 			cabinet: {
 				serialNumber: this.cabinet.serialNumber,
 				name: this.cabinet.name,
-				tenantId: this.cabinet.tenantId,
-				tenantLocationId: this.cabinet.tenantLocationId,
+				tenant: this.cabinet.tenant,
+				location: this.cabinet.location,
 				playfields: this.cabinet.playfields,
 			},
-			gametypeId: this.gametypeId,
+			gametype: {
+				id: this.gametype.id,
+				name: this.gametype.name,
+			},
 			status: this.status,
 			name: this.name,
 		};
@@ -90,10 +112,10 @@ class Machine {
 				item.id,
 				item.cabinet.serialNumber,
 				item.name,
-				item.gametypeId,
-				item.cabinet.tenantId,
+				item.gametype,
+				item.cabinet.tenant,
 				'PLAYFIELD',
-				item.cabinet.tenantLocationId,
+				item.cabinet.location,
 				item.status,
 				item.cabinet.playfields
 			);
@@ -108,10 +130,13 @@ class Machine {
 				item.serialNumber,
 				item.serialNumber,
 				item.name,
-				item.playfields[0]?.gametypeId ?? 'UNKNOWN',
-				item.tenantId,
+				{
+					id: item.playfields[0]?.gametypeId ?? 'UNKNOWN',
+					name: 'UNKNOWN', // TODO: Get gametype name from playfields?
+				},
+				item.tenant,
 				'CABINET',
-				item.locationId,
+				item.location,
 				'UNKNOWN', // TODO: Get aggregated status from playfields
 				item.playfields
 			);

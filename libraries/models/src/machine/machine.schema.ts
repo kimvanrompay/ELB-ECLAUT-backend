@@ -7,8 +7,14 @@ const MachineDTOSchema = z
 		cabinet: z.object({
 			serialNumber: z.string(),
 			name: z.string(),
-			tenantId: z.string(),
-			tenantLocationId: z.string(),
+			tenant: z.object({
+				id: z.string(),
+				name: z.string(),
+			}),
+			location: z.object({
+				id: z.string(),
+				name: z.string(),
+			}),
 			playfields: z
 				.array(
 					z.object({
@@ -20,7 +26,10 @@ const MachineDTOSchema = z
 				.min(1),
 		}),
 		name: z.string(),
-		gametypeId: z.string(),
+		gametype: z.object({
+			id: z.string(),
+			name: z.string(),
+		}),
 		status: z.string(),
 	})
 	.openapi('Machine', {

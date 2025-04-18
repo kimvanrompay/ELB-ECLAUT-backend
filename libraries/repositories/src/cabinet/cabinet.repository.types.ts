@@ -38,6 +38,13 @@ interface ICabinetRepository extends IKnexRepository {
 		tenantId?: string,
 		locationIds?: string[]
 	): Promise<Cabinet>;
+
+	updateCabinetLastMessageAt(
+		cabinetId: string,
+		lastMessageAt: Date,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Cabinet>;
 }
 
 export type {ICabinetRepository};

@@ -21,8 +21,14 @@ class Playfield {
 	cabinet: {
 		serialNumber: string;
 		name: string;
-		tenantId: string;
-		tenantLocationId: string;
+		tenant: {
+			id: string;
+			name: string;
+		};
+		location: {
+			id: string;
+			name: string;
+		};
 		playfields: {
 			id: string;
 			name: string;
@@ -30,8 +36,17 @@ class Playfield {
 		}[];
 	};
 	name: string;
-	gametypeId: string;
+	gametype: {
+		id: string;
+		name: string;
+	};
 	status: string;
+	lastMessageAt?: Date;
+	error?: {
+		isActive: boolean;
+		code: string;
+		eventData?: string;
+	};
 
 	static schemas = {
 		DTOSchema: PlayfieldDTOSchema,
@@ -46,8 +61,14 @@ class Playfield {
 		cabinet: {
 			serialNumber: string;
 			name: string;
-			tenantId: string;
-			tenantLocationId: string;
+			tenant: {
+				id: string;
+				name: string;
+			};
+			location: {
+				id: string;
+				name: string;
+			};
 			playfields: {
 				id: string;
 				name: string;
@@ -55,14 +76,25 @@ class Playfield {
 			}[];
 		},
 		name: string,
-		gametypeId: string,
-		status: string
+		gametype: {
+			id: string;
+			name: string;
+		},
+		status: string,
+		lastMessageAt?: Date,
+		error?: {
+			isActive: boolean;
+			code: string;
+			eventData?: string;
+		}
 	) {
 		this.id = id;
 		this.cabinet = cabinet;
 		this.name = name;
-		this.gametypeId = gametypeId;
+		this.gametype = gametype;
 		this.status = status;
+		this.lastMessageAt = lastMessageAt;
+		this.error = error;
 	}
 
 	static fromJSON(data: PlayfieldDTOType[]): Playfield[];
@@ -76,13 +108,18 @@ class Playfield {
 				{
 					serialNumber: item.cabinet.serialNumber,
 					name: item.cabinet.name,
-					tenantId: item.cabinet.tenantId,
-					tenantLocationId: item.cabinet.tenantLocationId,
+					tenant: item.cabinet.tenant,
+					location: {
+						id: item.cabinet.location.id,
+						name: item.cabinet.location.name,
+					},
 					playfields: item.cabinet.playfields,
 				},
 				item.name,
-				item.gametypeId,
-				item.status
+				item.gametype,
+				item.status,
+				item.lastMessageAt,
+				item.error
 			);
 		});
 	}
@@ -98,8 +135,14 @@ class Playfield {
 				{
 					serialNumber: item.serial_number,
 					name: item.name,
-					tenantId: item.tenant_id,
-					tenantLocationId: item.tenant_location_id,
+					tenant: {
+						id: item.tenant_id,
+						name: item.tenant_name,
+					},
+					location: {
+						id: item.tenant_location_id,
+						name: item.tenant_location_name,
+					},
 					playfields: [
 						{
 							id: item.id,
@@ -109,8 +152,21 @@ class Playfield {
 					],
 				},
 				item.name,
-				item.game_type_id,
-				item.status ?? 'UNKNOWN'
+				{
+					id: item.game_type_id,
+					name: item.gametype_name,
+				},
+				item.status ?? 'UNKNOWN',
+				item.last_machine_message
+					? new Date(item.last_machine_message)
+					: undefined,
+				item.error_code
+					? {
+							isActive: item.error_is_active !== 'false',
+							code: item.error_code,
+							eventData: item.error_event_data,
+						}
+					: undefined
 			);
 		});
 	}
@@ -131,7 +187,9 @@ class Playfield {
 					serial_number: z.string(),
 					name: z.string(),
 					tenant_id: z.string(),
+					tenant_name: z.string(),
 					tenant_location_id: z.string(),
+					tenant_location_name: z.string(),
 					playfields: z
 						.array(
 							z.object({
@@ -150,8 +208,14 @@ class Playfield {
 				{
 					serialNumber: validatedCabinet.serial_number,
 					name: validatedCabinet.name,
-					tenantId: validatedCabinet.tenant_id,
-					tenantLocationId: validatedCabinet.tenant_location_id,
+					tenant: {
+						id: validatedCabinet.tenant_id,
+						name: validatedCabinet.tenant_name,
+					},
+					location: {
+						id: validatedCabinet.tenant_location_id,
+						name: validatedCabinet.tenant_location_name,
+					},
 					playfields: validatedCabinet.playfields.map((playfield) => ({
 						id: playfield.id,
 						name: playfield.name,
@@ -160,8 +224,21 @@ class Playfield {
 					})),
 				},
 				item.name,
-				item.game_type_id,
-				item.status ?? 'UNKNOWN'
+				{
+					id: item.gametype_id,
+					name: item.gametype_name,
+				},
+				item.status ?? 'UNKNOWN',
+				item.last_machine_message
+					? new Date(item.last_machine_message)
+					: undefined,
+				item.error_code
+					? {
+							isActive: item.error_is_active !== 'false',
+							code: item.error_code,
+							eventData: item.error_event_data,
+						}
+					: undefined
 			);
 		});
 	}
@@ -172,13 +249,24 @@ class Playfield {
 			cabinet: {
 				serialNumber: this.cabinet.serialNumber,
 				name: this.cabinet.name,
-				tenantId: this.cabinet.tenantId,
-				tenantLocationId: this.cabinet.tenantLocationId,
+				tenant: {
+					id: this.cabinet.tenant.id,
+					name: this.cabinet.tenant.name,
+				},
+				location: {
+					id: this.cabinet.location.id,
+					name: this.cabinet.location.name,
+				},
 				playfields: this.cabinet.playfields,
 			},
 			name: this.name,
-			gametypeId: this.gametypeId,
+			gametype: {
+				id: this.gametype.id,
+				name: this.gametype.name,
+			},
 			status: this.status,
+			lastMessageAt: this.lastMessageAt,
+			error: this.error,
 		};
 	}
 }

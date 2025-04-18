@@ -13,6 +13,12 @@ interface IMachineRepository extends IKnexRepository {
 		tenantId?: string,
 		locationIds?: string[]
 	): Promise<Machine[]>;
+
+	countMachines(
+		filters: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
 }
 
 export type {IMachineRepository};

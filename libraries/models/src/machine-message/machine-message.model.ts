@@ -27,7 +27,7 @@ import {
 class MachineMessage {
 	messageId: string;
 	eventType: MachineMessageEventType;
-	serial_number: string;
+	serialNumber: string;
 	playfieldId?: string; // Message can be for a cabinet or a playfield
 	timestamp: Date;
 	data?: Record<string, unknown>;
@@ -47,7 +47,7 @@ class MachineMessage {
 		data?: Record<string, unknown>
 	) {
 		this.messageId = messageId;
-		this.serial_number = serial_number;
+		this.serialNumber = serial_number;
 		this.timestamp = new Date(timestamp);
 		this.eventType = eventType;
 		this.data = data;
@@ -93,7 +93,7 @@ class MachineMessage {
 	toDBType(): MachineMessageDBType {
 		return {
 			id: this.messageId,
-			serial_number: this.serial_number,
+			serial_number: this.serialNumber,
 			playfield_id: this.playfieldId,
 			timestamp: this.timestamp,
 			type: this.eventType,
@@ -105,7 +105,7 @@ class MachineMessage {
 	toJSON(): MachineMessageInputType {
 		return {
 			u: this.messageId,
-			c: this.serial_number,
+			c: this.serialNumber,
 			p: this.playfieldId,
 			t: this.timestamp.getTime(),
 			e: this.eventType,
@@ -114,9 +114,9 @@ class MachineMessage {
 	}
 
 	updateFromCabinet(cabinet: Cabinet): void {
-		this.tenantId = cabinet.tenantId;
-		this.tenantLocationId = cabinet.locationId;
-		this.serial_number = cabinet.serialNumber;
+		this.tenantId = cabinet.tenant.id;
+		this.tenantLocationId = cabinet.location.id;
+		this.serialNumber = cabinet.serialNumber;
 	}
 
 	static fromMachineInput(input: MachineMessageInputType[]): MachineMessage[];

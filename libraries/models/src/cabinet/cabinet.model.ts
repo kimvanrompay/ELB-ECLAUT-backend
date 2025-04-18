@@ -17,8 +17,14 @@ import {
 
 class Cabinet {
 	serialNumber: string;
-	tenantId: string;
-	locationId: string;
+	tenant: {
+		id: string;
+		name: string;
+	};
+	location: {
+		id: string;
+		name: string;
+	};
 	name: string;
 	playfields: {
 		id: string;
@@ -26,6 +32,7 @@ class Cabinet {
 		status: string;
 		gametypeId: string;
 	}[];
+	lastMessageAt?: Date;
 
 	static schemas = {
 		DTOSchema: CabinetDTOSchema,
@@ -37,21 +44,29 @@ class Cabinet {
 
 	constructor(
 		serialNumber: string,
-		tenantId: string,
-		locationId: string,
+		tenant: {
+			id: string;
+			name: string;
+		},
+		location: {
+			id: string;
+			name: string;
+		},
 		name: string,
 		playfields: {
 			id: string;
 			name: string;
 			status: string;
 			gametypeId: string;
-		}[]
+		}[],
+		lastMessageAt?: Date
 	) {
 		this.serialNumber = serialNumber;
-		this.tenantId = tenantId;
-		this.locationId = locationId;
+		this.tenant = tenant;
+		this.location = location;
 		this.name = name;
 		this.playfields = playfields;
+		this.lastMessageAt = lastMessageAt;
 	}
 
 	static fromJSON(dto: CabinetDTOType[]): Cabinet[];
@@ -60,8 +75,8 @@ class Cabinet {
 		return mapArrayOrSingleItem(dto, (item) => {
 			return new Cabinet(
 				item.serialNumber,
-				item.tenantId,
-				item.locationId,
+				item.tenant,
+				item.location,
 				item.name,
 				item.playfields
 			);
@@ -94,15 +109,22 @@ class Cabinet {
 
 				return new Cabinet(
 					item.serial_number,
-					item.tenant_id,
-					item.tenant_location_id,
+					{
+						id: item.tenant_id,
+						name: item.tenant_name,
+					},
+					{
+						id: item.tenant_location_id,
+						name: item.tenant_location_name,
+					},
 					item.name,
 					validatedPlayfields.map((playfield) => ({
 						id: playfield.id,
 						name: playfield.name,
 						status: playfield.status,
 						gametypeId: playfield.gametype_id,
-					}))
+					})),
+					item.last_machine_message
 				);
 			} catch (e) {
 				console.error(e);
@@ -114,10 +136,14 @@ class Cabinet {
 	toJSON(): CabinetDTOType {
 		return {
 			serialNumber: this.serialNumber,
-			tenantId: this.tenantId,
-			locationId: this.locationId,
+			tenant: {
+				id: this.tenant.id,
+				name: this.tenant.name,
+			},
+			location: this.location,
 			name: this.name,
 			playfields: this.playfields,
+			lastMessageAt: this.lastMessageAt,
 		};
 	}
 }

@@ -58,6 +58,7 @@ class MachineMessageService implements IMachineMessageService {
 		this.statusMessagesService = new StatusMessagesService(
 			this.cabinetRepository,
 			this.playfieldRepository,
+			this.machineLogRepository,
 			context
 		);
 	}
@@ -80,6 +81,10 @@ class MachineMessageService implements IMachineMessageService {
 			);
 
 		if (existingMessage && existingMessage.status !== 'failed') {
+			this.logger.warn(
+				'Message already processed, ignoring',
+				message.messageId
+			);
 			return true;
 		}
 
@@ -96,39 +101,51 @@ class MachineMessageService implements IMachineMessageService {
 		}
 		message.updateFromCabinet(cabinet);
 
-		await this.machineMessageRepository.createMachineMessage(message);
+		if (existingMessage) {
+			await this.machineMessageRepository.updateMachineMessage(
+				message.messageId,
+				0
+			);
+		} else {
+			await this.machineMessageRepository.createMachineMessage(message);
+		}
 
+		let result = false;
 		// // Handle different message types
 		switch (message.eventType) {
 			case MachineMessageEventType.INTERNET:
 				this.logger.info(
-					`Internet message received from ${message.serial_number}:${message.playfieldId}`
+					`Internet message received from ${message.serialNumber}:${message.playfieldId}`
 				);
+				result = true;
 				break;
 			case MachineMessageEventType.PCB_CHANGE:
 				this.logger.info(
-					`PCB change message received from ${message.serial_number}:${message.playfieldId}`
+					`PCB change message received from ${message.serialNumber}:${message.playfieldId}`
 				);
+				result = true;
 				break;
 			case MachineMessageEventType.POWER:
 				this.logger.info(
-					`Power message received from ${message.serial_number}:${message.playfieldId}`
+					`Power message received from ${message.serialNumber}:${message.playfieldId}`
 				);
+				result = true;
 				break;
 			case MachineMessageEventType.HEARTBEAT:
 				this.logger.info(
-					`Heartbeat message received from ${message.serial_number}:${message.playfieldId}`
+					`Heartbeat message received from ${message.serialNumber}:${message.playfieldId}`
 				);
+				result = true;
 				break;
 			case MachineMessageEventType.MONEY_IN:
 			case MachineMessageEventType.SESSION_END:
-				await this.gameMessagesService.handleMessage(message);
+				result = await this.gameMessagesService.handleMessage(message);
 				break;
 			case MachineMessageEventType.LOG:
-				await this.logMessagesService.handleMessage(message);
+				result = await this.logMessagesService.handleMessage(message);
 				break;
 			case MachineMessageEventType.STATUS:
-				await this.statusMessagesService.handleMessage(message);
+				result = await this.statusMessagesService.handleMessage(message);
 				break;
 			default:
 				this.logger.warn('Unknown machine message type', message);
@@ -137,16 +154,35 @@ class MachineMessageService implements IMachineMessageService {
 
 		await this.updateCabinetAndPlayfieldLastMessage(message);
 
-		await this.machineMessageRepository.updateMachineMessage(
-			message.messageId,
-			1
-		);
+		if (result) {
+			await this.machineMessageRepository.updateMachineMessage(
+				message.messageId,
+				1
+			);
+		}
 
-		return true;
+		return result;
 	}
 
 	public async handleFailedMessage(message: MachineMessage): Promise<void> {
 		this.logger.error(`Failed message:  ${JSON.stringify(message)}`);
+
+		const existingMessage =
+			await this.machineMessageRepository.findMachineMessageById(
+				message.messageId
+			);
+
+		if (!existingMessage) {
+			return;
+		}
+
+		if (existingMessage.status !== 'pending') {
+			this.logger.warn(
+				'Message already processed, ignoring',
+				message.messageId
+			);
+			return;
+		}
 
 		try {
 			// TODO: update message in Redis instead to allow for retries
@@ -166,16 +202,15 @@ class MachineMessageService implements IMachineMessageService {
 			await this.cabinetRepository.transaction(async (trx) => {
 				await this.cabinetRepository
 					.withTransaction(trx)
-					.updateCabinet(message.serial_number, {
-						last_machine_message: message.timestamp,
-					});
+					.updateCabinetLastMessageAt(message.serialNumber, message.timestamp);
 
 				if (message.playfieldId) {
 					await this.playfieldRepository
 						.withTransaction(trx)
-						.updatePlayfield(message.playfieldId, {
-							last_machine_message: message.timestamp,
-						});
+						.updatePlayfieldLastMessageAt(
+							message.playfieldId,
+							message.timestamp
+						);
 				}
 			});
 		} catch (error) {

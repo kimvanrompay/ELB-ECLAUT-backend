@@ -1,4 +1,8 @@
-import {Playfield} from '../../src/playfield/playfield.model';
+import {
+	Playfield,
+	type PlayfieldDBType,
+	type PlayfieldDTOType,
+} from '../../src/playfield/playfield.model';
 
 describe('Playfield Model', () => {
 	it('should return a Playfield object', () => {
@@ -7,8 +11,14 @@ describe('Playfield Model', () => {
 			{
 				serialNumber: '1234',
 				name: 'Playfield 1',
-				tenantId: '1',
-				tenantLocationId: '1',
+				tenant: {
+					id: '1',
+					name: 'Tenant 1',
+				},
+				location: {
+					id: '1',
+					name: 'Tenant 1 Location 1',
+				},
 				playfields: [
 					{
 						id: '1',
@@ -18,17 +28,26 @@ describe('Playfield Model', () => {
 				],
 			},
 			'Playfield 1',
-			'1',
+			{
+				id: '1',
+				name: 'Gametype 1',
+			},
 			'status'
 		);
 
-		expect(playfield).toEqual({
+		const expectedPlayfield: PlayfieldDTOType = {
 			id: '1',
 			cabinet: {
 				serialNumber: '1234',
 				name: 'Playfield 1',
-				tenantId: '1',
-				tenantLocationId: '1',
+				tenant: {
+					id: '1',
+					name: 'Tenant 1',
+				},
+				location: {
+					id: '1',
+					name: 'Tenant 1 Location 1',
+				},
 				playfields: [
 					{
 						id: '1',
@@ -38,9 +57,14 @@ describe('Playfield Model', () => {
 				],
 			},
 			name: 'Playfield 1',
-			gametypeId: '1',
+			gametype: {
+				id: '1',
+				name: 'Gametype 1',
+			},
 			status: 'status',
-		});
+		};
+
+		expect(playfield).toEqual(expectedPlayfield);
 	});
 
 	it('should return a Playfield object from JSON', () => {
@@ -49,8 +73,14 @@ describe('Playfield Model', () => {
 			cabinet: {
 				serialNumber: '1234',
 				name: 'Playfield 1',
-				tenantId: '1',
-				tenantLocationId: '1',
+				tenant: {
+					id: '1',
+					name: 'Tenant 1',
+				},
+				location: {
+					id: '1',
+					name: 'Tenant 1 Location 1',
+				},
 				playfields: [
 					{
 						id: '1',
@@ -60,17 +90,26 @@ describe('Playfield Model', () => {
 				],
 			},
 			name: 'Playfield 1',
-			gametypeId: '1',
+			gametype: {
+				id: '1',
+				name: 'Gametype 1',
+			},
 			status: 'status',
 		});
 
-		expect(playfield).toEqual({
+		const expectedPlayfield: PlayfieldDTOType = {
 			id: '1',
 			cabinet: {
 				serialNumber: '1234',
 				name: 'Playfield 1',
-				tenantId: '1',
-				tenantLocationId: '1',
+				tenant: {
+					id: '1',
+					name: 'Tenant 1',
+				},
+				location: {
+					id: '1',
+					name: 'Tenant 1 Location 1',
+				},
 				playfields: [
 					{
 						id: '1',
@@ -80,9 +119,14 @@ describe('Playfield Model', () => {
 				],
 			},
 			name: 'Playfield 1',
-			gametypeId: '1',
+			gametype: {
+				id: '1',
+				name: 'Gametype 1',
+			},
 			status: 'status',
-		});
+		};
+
+		expect(playfield).toEqual(expectedPlayfield);
 	});
 
 	it('should return an array of Playfield objects from JSON', () => {
@@ -92,8 +136,14 @@ describe('Playfield Model', () => {
 				cabinet: {
 					serialNumber: '1234',
 					name: 'Playfield 1',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '1',
@@ -103,7 +153,10 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 1',
-				gametypeId: '1',
+				gametype: {
+					id: '1',
+					name: 'Gametype 1',
+				},
 				status: 'status',
 			},
 			{
@@ -111,8 +164,14 @@ describe('Playfield Model', () => {
 				cabinet: {
 					serialNumber: '5678',
 					name: 'Playfield 2',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '2',
@@ -122,19 +181,28 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 2',
-				gametypeId: '2',
+				gametype: {
+					id: '2',
+					name: 'Gametype 2',
+				},
 				status: 'status',
 			},
 		]);
 
-		expect(playfields).toEqual([
+		const expectedPlayfields: PlayfieldDTOType[] = [
 			{
 				id: '1',
 				cabinet: {
 					serialNumber: '1234',
 					name: 'Playfield 1',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '1',
@@ -144,7 +212,10 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 1',
-				gametypeId: '1',
+				gametype: {
+					id: '1',
+					name: 'Gametype 1',
+				},
 				status: 'status',
 			},
 			{
@@ -152,8 +223,14 @@ describe('Playfield Model', () => {
 				cabinet: {
 					serialNumber: '5678',
 					name: 'Playfield 2',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '2',
@@ -163,10 +240,15 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 2',
-				gametypeId: '2',
+				gametype: {
+					id: '2',
+					name: 'Gametype 2',
+				},
 				status: 'status',
 			},
-		]);
+		];
+
+		expect(playfields).toEqual(expectedPlayfields);
 	});
 
 	it('should return a Playfield object from DBType', () => {
@@ -177,15 +259,29 @@ describe('Playfield Model', () => {
 			game_type_id: '1',
 			tenant_id: '1',
 			tenant_location_id: '1',
+			last_machine_message: undefined,
+			gametype_name: 'Gametype 1',
+			tenant_name: 'Tenant 1',
+			tenant_location_name: 'Tenant 1 Location 1',
+			status: undefined,
+			error_code: undefined,
+			error_event_data: undefined,
+			error_is_active: undefined,
 		});
 
-		expect(playfield).toEqual({
+		const expectedPlayfield: PlayfieldDTOType = {
 			id: '1',
 			cabinet: {
 				serialNumber: '1234',
 				name: 'Playfield 1',
-				tenantId: '1',
-				tenantLocationId: '1',
+				tenant: {
+					id: '1',
+					name: 'Tenant 1',
+				},
+				location: {
+					id: '1',
+					name: 'Tenant 1 Location 1',
+				},
 				playfields: [
 					{
 						id: '1',
@@ -195,9 +291,14 @@ describe('Playfield Model', () => {
 				],
 			},
 			name: 'Playfield 1',
-			gametypeId: '1',
+			gametype: {
+				id: '1',
+				name: 'Gametype 1',
+			},
 			status: 'UNKNOWN',
-		});
+		};
+
+		expect(playfield).toEqual(expectedPlayfield);
 	});
 
 	it('should return an array of Playfield objects from DBType', () => {
@@ -209,6 +310,14 @@ describe('Playfield Model', () => {
 				game_type_id: '1',
 				tenant_id: '1',
 				tenant_location_id: '1',
+				last_machine_message: undefined,
+				gametype_name: 'Gametype 1',
+				tenant_name: 'Tenant 1',
+				tenant_location_name: 'Tenant 1 Location 1',
+				status: undefined,
+				error_code: undefined,
+				error_event_data: undefined,
+				error_is_active: undefined,
 			},
 			{
 				id: '2',
@@ -217,17 +326,31 @@ describe('Playfield Model', () => {
 				game_type_id: '2',
 				tenant_id: '1',
 				tenant_location_id: '1',
+				last_machine_message: undefined,
+				gametype_name: 'Gametype 2',
+				tenant_name: 'Tenant 1',
+				tenant_location_name: 'Tenant 1 Location 1',
+				status: undefined,
+				error_code: undefined,
+				error_event_data: undefined,
+				error_is_active: undefined,
 			},
 		]);
 
-		expect(playfields).toEqual([
+		const expectedPlayfields: PlayfieldDTOType[] = [
 			{
 				id: '1',
 				cabinet: {
 					serialNumber: '1234',
 					name: 'Playfield 1',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '1',
@@ -237,7 +360,10 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 1',
-				gametypeId: '1',
+				gametype: {
+					id: '1',
+					name: 'Gametype 1',
+				},
 				status: 'UNKNOWN',
 			},
 			{
@@ -245,8 +371,14 @@ describe('Playfield Model', () => {
 				cabinet: {
 					serialNumber: '5678',
 					name: 'Playfield 2',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '2',
@@ -256,10 +388,15 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 2',
-				gametypeId: '2',
+				gametype: {
+					id: '2',
+					name: 'Gametype 2',
+				},
 				status: 'UNKNOWN',
 			},
-		]);
+		];
+
+		expect(playfields).toEqual(expectedPlayfields);
 	});
 
 	it('should return a Playfield object from DBType with cabinet', () => {
@@ -267,14 +404,24 @@ describe('Playfield Model', () => {
 			id: '1',
 			serial_number: '1234',
 			name: 'Playfield 1',
-			game_type_id: '1',
+			gametype_id: '1',
 			tenant_id: '1',
 			tenant_location_id: '1',
+			last_machine_message: undefined,
+			gametype_name: 'Gametype 1',
+			tenant_name: 'Tenant 1',
+			tenant_location_name: 'Tenant 1 Location 1',
+			status: undefined,
+			error_code: undefined,
+			error_event_data: undefined,
+			error_is_active: undefined,
 			cabinet: JSON.stringify({
 				serial_number: '1234',
 				name: 'Playfield 1',
 				tenant_id: '1',
 				tenant_location_id: '1',
+				tenant_name: 'Tenant 1',
+				tenant_location_name: 'Tenant 1 Location 1',
 				playfields: [
 					{
 						id: '1',
@@ -292,13 +439,25 @@ describe('Playfield Model', () => {
 			}),
 		});
 
-		expect(playfield).toEqual({
+		const expectedPlayfield = {
 			id: '1',
+			name: 'Playfield 1',
+			gametype: {
+				id: '1',
+				name: 'Gametype 1',
+			},
+			status: 'UNKNOWN',
 			cabinet: {
 				serialNumber: '1234',
 				name: 'Playfield 1',
-				tenantId: '1',
-				tenantLocationId: '1',
+				tenant: {
+					id: '1',
+					name: 'Tenant 1',
+				},
+				location: {
+					id: '1',
+					name: 'Tenant 1 Location 1',
+				},
 				playfields: [
 					{
 						id: '1',
@@ -314,10 +473,9 @@ describe('Playfield Model', () => {
 					},
 				],
 			},
-			name: 'Playfield 1',
-			gametypeId: '1',
-			status: 'UNKNOWN',
-		});
+		};
+
+		expect(playfield).toEqual(expectedPlayfield);
 	});
 
 	it('should return an array of Playfield objects from DBType with cabinet', () => {
@@ -326,14 +484,24 @@ describe('Playfield Model', () => {
 				id: '1',
 				serial_number: '1234',
 				name: 'Playfield 1',
-				game_type_id: '1',
+				gametype_id: '1',
 				tenant_id: '1',
 				tenant_location_id: '1',
+				last_machine_message: undefined,
+				gametype_name: 'Gametype 1',
+				tenant_name: 'Tenant 1',
+				tenant_location_name: 'Tenant 1 Location 1',
+				status: undefined,
+				error_code: undefined,
+				error_event_data: undefined,
+				error_is_active: undefined,
 				cabinet: JSON.stringify({
 					serial_number: '1234',
 					name: 'Playfield 1',
 					tenant_id: '1',
 					tenant_location_id: '1',
+					tenant_name: 'Tenant 1',
+					tenant_location_name: 'Tenant 1 Location 1',
 					playfields: [
 						{
 							id: '1',
@@ -354,14 +522,24 @@ describe('Playfield Model', () => {
 				id: '2',
 				serial_number: '5678',
 				name: 'Playfield 2',
-				game_type_id: '2',
+				gametype_id: '2',
 				tenant_id: '1',
 				tenant_location_id: '1',
+				last_machine_message: undefined,
+				gametype_name: 'Gametype 2',
+				tenant_name: 'Tenant 1',
+				tenant_location_name: 'Tenant 1 Location 1',
+				status: undefined,
+				error_code: undefined,
+				error_event_data: undefined,
+				error_is_active: undefined,
 				cabinet: JSON.stringify({
 					serial_number: '5678',
 					name: 'Playfield 2',
 					tenant_id: '1',
 					tenant_location_id: '1',
+					tenant_name: 'Tenant 1',
+					tenant_location_name: 'Tenant 1 Location 1',
 					playfields: [
 						{
 							id: '3',
@@ -380,31 +558,40 @@ describe('Playfield Model', () => {
 			},
 		]);
 
-		expect(playfields).toEqual([
+		const expectedPlayfields = [
 			{
 				id: '1',
 				cabinet: {
 					serialNumber: '1234',
 					name: 'Playfield 1',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
+							gametypeId: '1',
 							id: '1',
 							name: 'Playfield 1',
 							status: 'status',
-							gametypeId: '1',
 						},
 						{
+							gametypeId: '1',
 							id: '2',
 							name: 'Playfield 2',
 							status: 'status',
-							gametypeId: '1',
 						},
 					],
 				},
 				name: 'Playfield 1',
-				gametypeId: '1',
+				gametype: {
+					id: '1',
+					name: 'Gametype 1',
+				},
 				status: 'UNKNOWN',
 			},
 			{
@@ -412,8 +599,14 @@ describe('Playfield Model', () => {
 				cabinet: {
 					serialNumber: '5678',
 					name: 'Playfield 2',
-					tenantId: '1',
-					tenantLocationId: '1',
+					tenant: {
+						id: '1',
+						name: 'Tenant 1',
+					},
+					location: {
+						id: '1',
+						name: 'Tenant 1 Location 1',
+					},
 					playfields: [
 						{
 							id: '3',
@@ -430,9 +623,14 @@ describe('Playfield Model', () => {
 					],
 				},
 				name: 'Playfield 2',
-				gametypeId: '2',
+				gametype: {
+					id: '2',
+					name: 'Gametype 2',
+				},
 				status: 'UNKNOWN',
 			},
-		]);
+		];
+
+		expect(playfields).toEqual(expectedPlayfields);
 	});
 });
