@@ -35,7 +35,8 @@ const defaultValidationHook: Hook<any, any, any, any> = async (result, ctx) => {
 	if (!result.success) {
 		const errorKey = mapValidationTargetToError(result.target);
 		const errors = ValidationError.fromZodError(result.error);
-		return ctx.json(new ApiError(400, 'Bad request', errorKey, errors));
+
+		return ctx.json(new ApiError(400, 'Bad request', errorKey, errors), 400);
 	}
 };
 
