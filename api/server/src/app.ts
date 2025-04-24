@@ -37,6 +37,9 @@ const machineService = new MachineService(machineRepository);
  */
 
 app.route('/machines', createMachineApi(machineService));
+app.get('/health', (c) => {
+	return c.json({status: 'ok'});
+});
 
 /**
  * OpenAPI  swagger routes (needs to be last)
