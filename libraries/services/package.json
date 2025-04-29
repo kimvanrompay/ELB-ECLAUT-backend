@@ -22,6 +22,7 @@
     "./machine-log": "./src/machine-log-service/machine-log.service.ts",
     "./tenant": "./src/tenant-service/tenant.service.ts"
     "./tenant": "./src/tenant-service/tenant.service.ts",
+    "./mqtt": "./src/mqtt-service/mqtt.service.ts",
     "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts"
   },
   "scripts": {
