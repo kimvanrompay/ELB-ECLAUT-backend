@@ -1,0 +1,14 @@
+{
+  "name": "@lib/utils",
+  "version": "1.0.0",
+  "main": "src/index.ts",
+  "type": "module",
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@hono/zod-openapi": "^0.18.3",
+    "@lib/errors": "workspace:^",
+    "hono": "^4.6.19",
+    "uuid": "^11.0.5",
+    "zod": "^3.24.1"
+  }
+}
