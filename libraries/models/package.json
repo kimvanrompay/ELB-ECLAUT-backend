@@ -21,6 +21,8 @@
     "./refresh-token": "./src/refresh-token/refresh-token.model.ts",
     "./tenant": "./src/tenant/tenant.model.ts",
     "./tenant-location": "./src/tenant-location/tenant-location.model.ts"
+    "./tenant-location": "./src/tenant-location/tenant-location.model.ts",
+    "./playfield-stats": "./src/playfield-stats/playfield-stats.model.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",

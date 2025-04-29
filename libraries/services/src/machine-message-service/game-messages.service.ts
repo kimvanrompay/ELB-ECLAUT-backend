@@ -6,6 +6,7 @@ import {
 import type {
 	IGameSessionRepository,
 	IMachineLogRepository,
+	IPlayfieldStatsRepository,
 } from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
 import type {WithRequired} from '@lib/utils/types';
@@ -16,6 +17,7 @@ class GameMessagesService {
 	constructor(
 		private gameSessionRepository: IGameSessionRepository,
 		private machineLogRepository: IMachineLogRepository,
+		private playfieldStatsRepository: IPlayfieldStatsRepository,
 		context: {logger: PinoLogger}
 	) {
 		this.logger = context.logger.getChildLogger(
@@ -24,6 +26,23 @@ class GameMessagesService {
 			},
 			{}
 		);
+	}
+
+	private async updatePlayfieldStats(playfieldId: string, date?: Date) {
+		try {
+			await this.playfieldStatsRepository.generateAndSavePlayfieldStatsForDate(
+				playfieldId,
+				date ?? new Date()
+			);
+		} catch (error) {
+			// Don't fail the message processing if we can't update the stats.
+			// We can always retry later or fix it manually. Having to retry the message is not ideal.
+			// At the moment, the playfield stats are re-generated every time a message is processed. So it may automatically fix itself on the next game session message.
+			this.logger.error(
+				'Failed to update playfield stats after processing message',
+				error
+			);
+		}
 	}
 
 	private getPaymentMethod(data: string): GamePaymentMethod {
@@ -103,6 +122,8 @@ class GameMessagesService {
 			return false;
 		}
 
+		await this.updatePlayfieldStats(playfieldId!, new Date(timestamp));
+
 		return true;
 	}
 
@@ -173,6 +194,8 @@ class GameMessagesService {
 			this.logger.error('Error handling session end event', error);
 			return false;
 		}
+
+		await this.updatePlayfieldStats(playfieldId!, new Date(timestamp));
 
 		return true;
 	}

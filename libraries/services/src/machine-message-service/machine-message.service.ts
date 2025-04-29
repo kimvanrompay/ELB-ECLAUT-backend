@@ -9,6 +9,7 @@ import type {
 	IGameSessionRepository,
 	IMachineLogRepository,
 	IPlayfieldRepository,
+	IPlayfieldStatsRepository,
 } from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
 
@@ -33,6 +34,7 @@ class MachineMessageService implements IMachineMessageService {
 		private machineLogRepository: IMachineLogRepository,
 		private cabinetRepository: ICabinetRepository,
 		private playfieldRepository: IPlayfieldRepository,
+		private playfieldStatsRepository: IPlayfieldStatsRepository,
 		context: {logger: PinoLogger}
 	) {
 		this.logger = context.logger.getChildLogger(
@@ -45,6 +47,7 @@ class MachineMessageService implements IMachineMessageService {
 		this.gameMessagesService = new GameMessagesService(
 			this.gameSessionRepository,
 			this.machineLogRepository,
+			this.playfieldStatsRepository,
 			context
 		);
 

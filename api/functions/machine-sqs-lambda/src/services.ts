@@ -4,6 +4,7 @@ import {GameSessionRepository} from '@lib/repositories/game-session';
 import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {MachineMessageRepository} from '@lib/repositories/machine-message';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {PlayfieldStatsRepository} from '@lib/repositories/playfield-stats';
 import {MachineMessageService} from '@lib/services/machine-message';
 import {PinoLogger} from '@lib/utils';
 
@@ -35,12 +36,18 @@ const createServices = async (logger: PinoLogger) => {
 		contextForRepositories
 	);
 
+	const playfieldStatsRepository = new PlayfieldStatsRepository(
+		db,
+		contextForRepositories
+	);
+
 	const machineMessagesService = new MachineMessageService(
 		machineMessagesRepository,
 		gameSessionRepository,
 		machineLogRepository,
 		cabinetRepository,
 		playfieldRepository,
+		playfieldStatsRepository,
 		contextForRepositories
 	);
 
