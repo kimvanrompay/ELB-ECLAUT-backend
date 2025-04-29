@@ -20,10 +20,10 @@
     "./tenant-location": "./src/tenant-location-service/tenant-location.service.ts",
     "./game-session": "./src/game-session-service/game-session.service.ts",
     "./machine-log": "./src/machine-log-service/machine-log.service.ts",
-    "./tenant": "./src/tenant-service/tenant.service.ts"
     "./tenant": "./src/tenant-service/tenant.service.ts",
     "./mqtt": "./src/mqtt-service/mqtt.service.ts",
     "./mqtt-credentials": "./src/mqtt-service/mqtt-credentials.service.ts",
+    "./player-zone": "./src/player-zone-service/player-zone.service.ts",
     "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts"
   },
   "scripts": {

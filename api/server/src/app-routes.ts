@@ -8,6 +8,7 @@ import {healthCheckRoute} from './routes/health.openapi';
 import {createMachineApi} from './routes/machine.routes';
 import {createMqttApi} from './routes/mqtt.routes';
 import {addOpenAPI} from './routes/openapi.routes';
+import {createPlayerZoneApi} from './routes/playerzone.routes';
 import {createPlayfieldApi} from './routes/playfield.routes';
 import {createTenantLocationApi} from './routes/tenant-location.routes';
 import {createTenantApi} from './routes/tenant.routes';
@@ -19,8 +20,6 @@ import {createTenantApi} from './routes/tenant.routes';
 app.openapi(healthCheckRoute, (ctx) => {
 	return ctx.text('OK', 200);
 });
-
-// TODO: prefix most routes with /{tenantId}? in case of multi tenant users?
 
 app.route('/auth', createAuthApi());
 

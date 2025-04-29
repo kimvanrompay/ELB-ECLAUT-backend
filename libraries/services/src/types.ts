@@ -12,6 +12,7 @@ export type {IMachineMessageService} from './machine-message-service/machine-mes
 export type {IMachineLogService} from './machine-log-service/machine-log.service.types';
 export type {ITenantLocationService} from './tenant-location-service/tenant-location.service.types';
 export type {ITenantService} from './tenant-service/tenant.service.types';
+export type {IPlayerZoneService} from './player-zone-service/player-zone.service.types';
 
 export type AppContext = {
 	auth?: {
