@@ -16,8 +16,8 @@
     "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
     "./tenant-location": "./src/tenant-location/tenant-location.repository.ts",
     "./tenant": "./src/tenant/tenant.repository.ts",
-    "./types": "./src/types.ts"
     "./types": "./src/types.ts",
+    "./playfield-stats": "./src/playfield-stats/playfield-stats.repository.ts"
   },
   "scripts": {
     "test": "yarn test:integration",

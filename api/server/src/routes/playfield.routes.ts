@@ -4,9 +4,11 @@ import {NotFoundError} from '@lib/errors';
 import {GameSessionRepository} from '@lib/repositories/game-session';
 import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {PlayfieldStatsRepository} from '@lib/repositories/playfield-stats';
 import {GameSessionService} from '@lib/services/game-session';
 import {MachineLogService} from '@lib/services/machine-log';
 import {PlayfieldService} from '@lib/services/playfield';
+import {PlayfieldStatsReportService} from '@lib/services/playfield-stats-report';
 import type {AuthenticatedAppContext} from '@lib/services/types';
 import {defaultValidationHook} from '@lib/utils';
 import type {PaginatedDatabaseQueryFilters} from '@lib/utils/db/filters';
@@ -20,6 +22,7 @@ import {
 	findPlayfieldLogsRoute,
 	findPlayfieldsRoute,
 	getPlayfieldRoute,
+	getPlayfieldStatsReportRoute,
 } from './playfield.openapi';
 
 const createPlayfieldApi = () => {
@@ -150,6 +153,34 @@ const createPlayfieldApi = () => {
 		);
 
 		return ctx.json(data, 200);
+	});
+
+	app.openapi(getPlayfieldStatsReportRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const {id} = ctx.req.valid('param');
+
+		const {start_date, range, unit} = ctx.req.valid('query');
+
+		const {playfieldService} = createServices(appContext);
+
+		const playfieldStatsRepository = new PlayfieldStatsRepository(
+			db,
+			appContext
+		);
+		const playfieldReportService = new PlayfieldStatsReportService(
+			playfieldStatsRepository,
+			playfieldService,
+			appContext
+		);
+
+		const result = await playfieldReportService.getStatisticsReportByPlayfield(
+			id,
+			start_date ?? new Date(),
+			range,
+			unit ?? 'DAY'
+		);
+
+		return ctx.json(result.toJSON(), 200);
 	});
 
 	return app;

@@ -3,6 +3,7 @@ import {z} from '@hono/zod-openapi';
 import {GameSession} from '@lib/models/game-session';
 import {MachineLog} from '@lib/models/machine-log';
 import {Playfield} from '@lib/models/playfield';
+import {PlayfieldStatsReportModel} from '@lib/models/playfield-stats-report';
 import {AppSecurityScopes} from '@lib/services/authorization';
 
 import {createPrivateAppRoute} from '../utils/create-private-app-route';
@@ -143,9 +144,42 @@ const findPlayfieldLogsRoute = createPrivateAppRoute(
 	},
 });
 
+const getPlayfieldStatsReportRoute = createPrivateAppRoute(
+	[AppSecurityScopes.READ_MACHINES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'get',
+	summary: 'Get playfield stats report',
+	tags: ['Machines'],
+	path: '/{id}/stats',
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		query: z.object({
+			start_date: z.coerce.date().optional(),
+			range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
+			unit: z.enum(['HOUR', 'DAY']).optional(),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: PlayfieldStatsReportModel.schemas.DTOSchema,
+				},
+			},
+		},
+	},
+});
+
 export {
 	getPlayfieldRoute,
 	findPlayfieldsRoute,
 	findPlayfieldGameSessionsRoute,
 	findPlayfieldLogsRoute,
+	getPlayfieldStatsReportRoute,
 };

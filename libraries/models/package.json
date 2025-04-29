@@ -20,8 +20,9 @@
     "./playfield": "./src/playfield/playfield.model.ts",
     "./refresh-token": "./src/refresh-token/refresh-token.model.ts",
     "./tenant": "./src/tenant/tenant.model.ts",
-    "./tenant-location": "./src/tenant-location/tenant-location.model.ts"
     "./tenant-location": "./src/tenant-location/tenant-location.model.ts",
+    "./mqtt-credentials": "./src/mqtt-credentials/mqtt-credentials.model.ts",
+    "./playfield-stats-report": "./src/playfield-stats-report/playfield-stats-report.model.ts",
     "./playfield-stats": "./src/playfield-stats/playfield-stats.model.ts"
   },
   "dependencies": {

@@ -21,6 +21,8 @@
     "./game-session": "./src/game-session-service/game-session.service.ts",
     "./machine-log": "./src/machine-log-service/machine-log.service.ts",
     "./tenant": "./src/tenant-service/tenant.service.ts"
+    "./tenant": "./src/tenant-service/tenant.service.ts",
+    "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts"
   },
   "scripts": {
     "test": "yarn test:unit",

@@ -13,3 +13,4 @@ export * from './location-not-allowed-error';
 export * from './tenant-not-allowed-error';
 export * from './missing-location-error';
 export * from './user-already-exists-error';
+export * from './stats-unit-unsupported-error';
