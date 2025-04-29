@@ -6,6 +6,7 @@ import {createCabinetApi} from './routes/cabinet.routes';
 import {createGametypeApi} from './routes/gametype.routes';
 import {healthCheckRoute} from './routes/health.openapi';
 import {createMachineApi} from './routes/machine.routes';
+import {createMqttApi} from './routes/mqtt.routes';
 import {addOpenAPI} from './routes/openapi.routes';
 import {createPlayfieldApi} from './routes/playfield.routes';
 import {createTenantLocationApi} from './routes/tenant-location.routes';
@@ -40,6 +41,8 @@ app.route('/machine/cabinet', createCabinetApi());
 app.route('/tenant', createTenantApi());
 
 app.route('/playerzone', createPlayerZoneApi());
+
+app.route('/mqtt', createMqttApi());
 
 /**
  * OpenAPI  swagger routes (needs to be last)

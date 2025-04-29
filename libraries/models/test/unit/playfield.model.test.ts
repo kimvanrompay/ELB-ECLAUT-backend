@@ -1,6 +1,5 @@
 import {
 	Playfield,
-	type PlayfieldDBType,
 	type PlayfieldDTOType,
 } from '../../src/playfield/playfield.model';
 
