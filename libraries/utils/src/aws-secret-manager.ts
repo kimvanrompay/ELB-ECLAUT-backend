@@ -8,11 +8,10 @@ const AWS_PROFILE = process.env.AWS_PROFILE ?? 'elaut';
 
 let awsSecretClient: SecretsManagerClient;
 
-const getAwsSecretClient = () => {
+const getAwsSecretClient = (): SecretsManagerClient => {
 	if (!awsSecretClient) {
 		awsSecretClient = new SecretsManagerClient({
 			region: AWS_REGION,
-			profile: AWS_PROFILE,
 		});
 	}
 	return awsSecretClient;
