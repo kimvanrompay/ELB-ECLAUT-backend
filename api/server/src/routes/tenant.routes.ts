@@ -57,7 +57,15 @@ const createTenantApi = () => {
 
 		const tenants = await tenantService.findPaginatedTenants(filters);
 
-		return ctx.json(tenants, 200);
+		const tenantDTOs = tenants.entries.map((tenant) => tenant.toJSON());
+
+		return ctx.json(
+			{
+				entries: tenantDTOs,
+				totalEntries: tenants.totalEntries,
+			},
+			200
+		);
 	});
 
 	app.openapi(updateTenantRoute, async (ctx) => {
