@@ -1,4 +1,4 @@
-import {AppUserRole} from '@lib/models/app-user';
+import {AppSecurityGroup} from '@lib/models/app-user';
 import {PinoLogger} from '@lib/utils';
 
 export type {IMachineService} from './machine-service/machine.service.types';
@@ -14,15 +14,29 @@ export type {ITenantLocationService} from './tenant-location-service/tenant-loca
 export type {ITenantService} from './tenant-service/tenant.service.types';
 export type {IPlayerZoneService} from './player-zone-service/player-zone.service.types';
 
+type AppContextPlayerAuth = {
+	userId: string;
+	clientId: undefined;
+	securityGroup: AppSecurityGroup;
+	email: string;
+	tenantId: string;
+	locationIds: string[];
+	isElaut: boolean;
+	type: 'USER';
+};
+
+type AppContextClientAuth = {
+	clientId: string;
+	userId: undefined;
+	securityGroup: AppSecurityGroup;
+	tenantId: string;
+	locationIds: string[];
+	isElaut: boolean;
+	type: 'CLIENT';
+};
+
 export type AppContext = {
-	auth?: {
-		userId: string;
-		role: AppUserRole;
-		email: string;
-		tenantId: string;
-		locationIds: string[];
-		isElaut: boolean;
-	};
+	auth?: AppContextPlayerAuth | AppContextClientAuth;
 	isAuthenticated?: boolean;
 	requestId?: string;
 	logger: PinoLogger;

@@ -30,7 +30,13 @@ class TenantLocationService implements ITenantLocationService {
 	}
 
 	private getLoggedInTenantId(): string | undefined {
-		if (AuthorizationService.isTenantBound(this.appContext.auth.role)) {
+		if (!this.appContext.auth) {
+			return undefined;
+		}
+
+		if (
+			AuthorizationService.isTenantBound(this.appContext.auth.securityGroup)
+		) {
 			return this.appContext.auth.tenantId;
 		}
 		return undefined;

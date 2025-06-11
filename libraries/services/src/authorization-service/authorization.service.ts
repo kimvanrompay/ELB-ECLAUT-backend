@@ -1,4 +1,7 @@
-import {AppUser, AppUserRole} from '@lib/models/app-user';
+import {AppSecurityGroup, AppUser} from '@lib/models/app-user';
+import {Client} from '@lib/models/client';
+
+import {type AuthenticatedAppContext} from '../types';
 
 enum AppSecurityScopes {
 	READ_USERS = 'read:users',
@@ -31,30 +34,30 @@ enum AppSecurityScopes {
 	CREATE_TENANTS = 'create:tenants',
 	UPDATE_TENANTS = 'update:tenants',
 	DELETE_TENANTS = 'delete:tenants',
+
+	READ_PRIZES = 'read:prizes',
+	CREATE_PRIZES = 'create:prizes',
+	UPDATE_PRIZES = 'update:prizes',
+	DELETE_PRIZES = 'delete:prizes',
 }
 
-const AppRoleToSecurityClaims: Record<AppUserRole, AppSecurityScopes[]> = {
-	[AppUserRole.ELAUT_ADMIN]: [...Object.values(AppSecurityScopes)],
-	[AppUserRole.ELAUT_SERVICE]: [
+const AppSecurityGroupToSecurityClaims: Record<
+	AppSecurityGroup,
+	AppSecurityScopes[]
+> = {
+	[AppSecurityGroup.ELAUT_ADMIN]: [...Object.values(AppSecurityScopes)],
+	[AppSecurityGroup.ELAUT_SERVICE]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.READ_TENANT_LOCATIONS,
 		AppSecurityScopes.READ_MACHINES,
 		AppSecurityScopes.READ_TENANTS,
 	],
-	[AppUserRole.ELAUT_DEVELOPER]: [...Object.values(AppSecurityScopes)],
-	[AppUserRole.ELAUT_QC]: [
+	[AppSecurityGroup.ELAUT_DEVELOPER]: [...Object.values(AppSecurityScopes)],
+	[AppSecurityGroup.ELAUT_QC]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.READ_MACHINES,
 	],
-	[AppUserRole.DISTRIBUTOR]: [
-		AppSecurityScopes.READ_USERS,
-		AppSecurityScopes.CREATE_USERS,
-		AppSecurityScopes.UPDATE_USERS,
-		AppSecurityScopes.DELETE_USERS,
-		AppSecurityScopes.READ_TENANTS,
-		AppSecurityScopes.READ_MACHINES,
-	],
-	[AppUserRole.TENANT_ADMIN]: [
+	[AppSecurityGroup.DISTRIBUTOR]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
@@ -62,7 +65,7 @@ const AppRoleToSecurityClaims: Record<AppUserRole, AppSecurityScopes[]> = {
 		AppSecurityScopes.READ_TENANTS,
 		AppSecurityScopes.READ_MACHINES,
 	],
-	[AppUserRole.TENANT_GLOBAL_MANAGER]: [
+	[AppSecurityGroup.TENANT_ADMIN]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
@@ -70,7 +73,7 @@ const AppRoleToSecurityClaims: Record<AppUserRole, AppSecurityScopes[]> = {
 		AppSecurityScopes.READ_TENANTS,
 		AppSecurityScopes.READ_MACHINES,
 	],
-	[AppUserRole.TENANT_ARCADE_MANAGER]: [
+	[AppSecurityGroup.TENANT_GLOBAL_MANAGER]: [
 		AppSecurityScopes.READ_USERS,
 		AppSecurityScopes.CREATE_USERS,
 		AppSecurityScopes.UPDATE_USERS,
@@ -78,109 +81,150 @@ const AppRoleToSecurityClaims: Record<AppUserRole, AppSecurityScopes[]> = {
 		AppSecurityScopes.READ_TENANTS,
 		AppSecurityScopes.READ_MACHINES,
 	],
-	[AppUserRole.TENANT_ARCADE_TECHNICIAN]: [
+	[AppSecurityGroup.TENANT_ARCADE_MANAGER]: [
+		AppSecurityScopes.READ_USERS,
+		AppSecurityScopes.CREATE_USERS,
+		AppSecurityScopes.UPDATE_USERS,
+		AppSecurityScopes.DELETE_USERS,
 		AppSecurityScopes.READ_TENANTS,
 		AppSecurityScopes.READ_MACHINES,
 	],
-	[AppUserRole.TENANT_ARCADE_EMPLOYEE]: [
+	[AppSecurityGroup.TENANT_ARCADE_TECHNICIAN]: [
 		AppSecurityScopes.READ_TENANTS,
 		AppSecurityScopes.READ_MACHINES,
+	],
+	[AppSecurityGroup.TENANT_ARCADE_EMPLOYEE]: [
+		AppSecurityScopes.READ_TENANTS,
+		AppSecurityScopes.READ_MACHINES,
+	],
+
+	// Client security groups
+	[AppSecurityGroup.MACHINE]: [
+		AppSecurityScopes.READ_MACHINES,
+		AppSecurityScopes.READ_GAMESESSIONS,
+		AppSecurityScopes.CREATE_GAMESESSIONS,
+		AppSecurityScopes.READ_TENANT_LOCATIONS,
+	],
+	[AppSecurityGroup.INITIALIZE_GAMESESSION]: [
+		AppSecurityScopes.INITIALIZE_GAMESESSIONS,
 	],
 };
 
 class AuthorizationService {
 	static hasAccessToScope(
-		roleOrUser: AppUserRole | AppUser,
+		securityGroupOrUserOrClient: AppSecurityGroup | AppUser | Client,
 		claim: AppSecurityScopes
 	): boolean {
-		if (roleOrUser instanceof AppUser) {
-			return AppRoleToSecurityClaims[roleOrUser.role].includes(claim);
+		if (
+			securityGroupOrUserOrClient instanceof Client ||
+			securityGroupOrUserOrClient instanceof AppUser
+		) {
+			return AppSecurityGroupToSecurityClaims[
+				securityGroupOrUserOrClient.securityGroup
+			].includes(claim);
 		}
 
-		return AppRoleToSecurityClaims[roleOrUser].includes(claim);
+		const doesGroupExist = Object.values(AppSecurityGroup).includes(
+			securityGroupOrUserOrClient as AppSecurityGroup
+		);
+
+		if (doesGroupExist) {
+			return AppSecurityGroupToSecurityClaims[
+				securityGroupOrUserOrClient as AppSecurityGroup
+			].includes(claim);
+		}
+
+		return false;
 	}
 
 	static hasAccessToScopes(
-		roleOrUser: AppUserRole | AppUser,
+		roleOrUser: AppUser | AppSecurityGroup | Client,
 		claims: AppSecurityScopes[]
 	): boolean {
 		return claims.every((claim) => this.hasAccessToScope(roleOrUser, claim));
 	}
 
 	static hasAccessToSomeScope(
-		roleOrUser: AppUserRole | AppUser,
+		roleOrUser: AppUser | AppSecurityGroup | Client,
 		claims: AppSecurityScopes[]
 	): boolean {
 		return claims.some((claim) => this.hasAccessToScope(roleOrUser, claim));
 	}
 
-	static isTenantBound(role: AppUserRole): boolean {
+	static isTenantBound(securityGroup: AppSecurityGroup): boolean {
 		// Warning: write this in negative form to avoid accidentally not updating this function
 		return ![
-			AppUserRole.ELAUT_ADMIN,
-			AppUserRole.ELAUT_SERVICE,
-			AppUserRole.ELAUT_DEVELOPER,
-			// AppUserRole.ELAUT_QC,
-		].includes(role);
+			AppSecurityGroup.ELAUT_ADMIN,
+			AppSecurityGroup.ELAUT_SERVICE,
+			AppSecurityGroup.ELAUT_DEVELOPER,
+			// AppSecurityGroup.ELAUT_QC,
+
+			// Client security groups
+			AppSecurityGroup.INITIALIZE_GAMESESSION,
+		].includes(securityGroup);
 	}
 
-	static isLocationBound(role: AppUserRole): boolean {
+	static isLocationBound(securityGroup: AppSecurityGroup): boolean {
 		// Warning: write this in negative form to avoid accidentally not updating this function
 		return ![
-			AppUserRole.ELAUT_ADMIN,
-			AppUserRole.ELAUT_SERVICE,
-			AppUserRole.ELAUT_DEVELOPER,
-			// AppUserRole.ELAUT_QC,
-			AppUserRole.DISTRIBUTOR,
-			AppUserRole.TENANT_GLOBAL_MANAGER,
-			AppUserRole.TENANT_ADMIN,
-		].includes(role);
+			AppSecurityGroup.ELAUT_ADMIN,
+			AppSecurityGroup.ELAUT_SERVICE,
+			AppSecurityGroup.ELAUT_DEVELOPER,
+			// AppSecurityGroup.ELAUT_QC,
+			AppSecurityGroup.DISTRIBUTOR,
+			AppSecurityGroup.TENANT_GLOBAL_MANAGER,
+			AppSecurityGroup.TENANT_ADMIN,
+
+			// Client security groups
+			AppSecurityGroup.INITIALIZE_GAMESESSION,
+		].includes(securityGroup);
 	}
 
 	static isAllowedToEditUserRole(
-		loggedInUserRole: AppUserRole,
-		userRole: AppUserRole
+		loggedInUserRole: AppSecurityGroup,
+		userRole: AppSecurityGroup
 	): boolean {
 		const isElautRole = userRole.startsWith('ELAUT');
-		const isDistributorRole = userRole === AppUserRole.DISTRIBUTOR;
+		const isDistributorRole = userRole === AppSecurityGroup.DISTRIBUTOR;
 
 		if (
-			loggedInUserRole === AppUserRole.ELAUT_ADMIN ||
-			loggedInUserRole === AppUserRole.ELAUT_DEVELOPER
+			loggedInUserRole === AppSecurityGroup.ELAUT_ADMIN ||
+			loggedInUserRole === AppSecurityGroup.ELAUT_DEVELOPER
 		) {
 			return true;
 		}
 
-		if (loggedInUserRole === AppUserRole.ELAUT_SERVICE) {
+		if (loggedInUserRole === AppSecurityGroup.ELAUT_SERVICE) {
 			return !isElautRole;
 		}
 
-		if (loggedInUserRole === AppUserRole.DISTRIBUTOR) {
+		if (loggedInUserRole === AppSecurityGroup.DISTRIBUTOR) {
 			return !isElautRole;
 		}
 
-		if (loggedInUserRole === AppUserRole.TENANT_ADMIN) {
+		if (loggedInUserRole === AppSecurityGroup.TENANT_ADMIN) {
 			return !isElautRole && !isDistributorRole;
 		}
 
-		if (loggedInUserRole === AppUserRole.TENANT_GLOBAL_MANAGER) {
-			return (
-				!isElautRole &&
-				!isDistributorRole &&
-				![AppUserRole.TENANT_ADMIN, AppUserRole.TENANT_GLOBAL_MANAGER].includes(
-					userRole
-				)
-			);
-		}
-
-		if (loggedInUserRole === AppUserRole.TENANT_ARCADE_MANAGER) {
+		if (loggedInUserRole === AppSecurityGroup.TENANT_GLOBAL_MANAGER) {
 			return (
 				!isElautRole &&
 				!isDistributorRole &&
 				![
-					AppUserRole.TENANT_ADMIN,
-					AppUserRole.TENANT_GLOBAL_MANAGER,
-					AppUserRole.TENANT_ARCADE_MANAGER,
+					AppSecurityGroup.TENANT_ADMIN,
+					AppSecurityGroup.TENANT_GLOBAL_MANAGER,
+				].includes(userRole)
+			);
+		}
+
+		if (loggedInUserRole === AppSecurityGroup.TENANT_ARCADE_MANAGER) {
+			return (
+				!isElautRole &&
+				!isDistributorRole &&
+				![
+					AppSecurityGroup.TENANT_ADMIN,
+					AppSecurityGroup.TENANT_GLOBAL_MANAGER,
+					AppSecurityGroup.TENANT_ARCADE_MANAGER,
 				].includes(userRole)
 			);
 		}
@@ -191,12 +235,12 @@ class AuthorizationService {
 	// TODO: distributors will have a list of tenants they can access
 	static isAllowedToAccessTenant(
 		loggedInUser: {
-			role: AppUserRole;
+			securityGroup: AppSecurityGroup;
 			tenantId: string | undefined;
 		},
 		tenantId: string
 	) {
-		if (this.isTenantBound(loggedInUser.role)) {
+		if (this.isTenantBound(loggedInUser.securityGroup)) {
 			return loggedInUser.tenantId === tenantId;
 		}
 
@@ -205,12 +249,12 @@ class AuthorizationService {
 
 	static isAllowedToAccessLocation(
 		loggedInUser: {
-			role: AppUserRole;
+			securityGroup: AppSecurityGroup;
 			locationIds: string[];
 		},
 		locationId: string
 	) {
-		if (this.isLocationBound(loggedInUser.role)) {
+		if (this.isLocationBound(loggedInUser.securityGroup)) {
 			return loggedInUser.locationIds.includes(locationId);
 		}
 
@@ -219,18 +263,35 @@ class AuthorizationService {
 
 	static isAllowedToAccessLocations(
 		loggedInUser: {
-			role: AppUserRole;
+			securityGroup: AppSecurityGroup;
 			locationIds: string[];
 		},
 		locations: string[]
 	) {
-		if (this.isLocationBound(loggedInUser.role)) {
+		if (this.isLocationBound(loggedInUser.securityGroup)) {
 			return locations.every((location) =>
 				loggedInUser.locationIds.includes(location)
 			);
 		}
 
 		return true;
+	}
+
+	static getTenantAndLocationFromContext(context: AuthenticatedAppContext) {
+		const auth = context.auth;
+
+		if (!auth) {
+			return [undefined, undefined] as const;
+		}
+
+		return [
+			AuthorizationService.isTenantBound(auth.securityGroup)
+				? auth.tenantId
+				: undefined,
+			AuthorizationService.isLocationBound(auth.securityGroup)
+				? auth.locationIds
+				: undefined,
+		] as const;
 	}
 }
 
