@@ -8,10 +8,13 @@ import {
 } from '@lib/models/tenant-location';
 import type {ITenantLocationRepository} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 import {AuthorizationService} from '../authorization-service/authorization.service';
-import type {AuthenticatedAppContext} from '../types';
+import type {AppContext} from '../types';
 import type {ITenantLocationService} from './tenant-location.service.types';
 
 class TenantLocationService implements ITenantLocationService {
@@ -19,7 +22,7 @@ class TenantLocationService implements ITenantLocationService {
 
 	constructor(
 		private readonly tenantLocationRepository: ITenantLocationRepository,
-		private readonly appContext: AuthenticatedAppContext
+		private readonly appContext: AppContext
 	) {
 		this.logger = appContext.logger.getChildLogger(
 			{
@@ -51,9 +54,36 @@ class TenantLocationService implements ITenantLocationService {
 		);
 	}
 
+	async findPaginatedTenantLocations(
+		filters: PaginatedDatabaseQueryFilters
+	): Promise<PaginatedResult<TenantLocation>> {
+		const entries = await this.tenantLocationRepository.findTenantLocations(
+			filters,
+			this.getLoggedInTenantId()
+		);
+
+		const totalEntries =
+			await this.tenantLocationRepository.countTenantLocations(
+				filters,
+				this.getLoggedInTenantId()
+			);
+
+		return {
+			entries,
+			totalEntries,
+		};
+	}
+
 	findTenantLocationsByUserId(userId: string): Promise<TenantLocation[]> {
 		return this.tenantLocationRepository.findTenantLocationsByUserId(
 			userId,
+			this.getLoggedInTenantId()
+		);
+	}
+
+	findTenantLocationsByClientId(clientId: string): Promise<TenantLocation[]> {
+		return this.tenantLocationRepository.findTenantLocationsByClientId(
+			clientId,
 			this.getLoggedInTenantId()
 		);
 	}
