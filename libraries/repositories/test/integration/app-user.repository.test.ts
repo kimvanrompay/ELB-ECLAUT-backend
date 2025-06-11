@@ -6,7 +6,7 @@ import {
 	DatabaseRetrieveError,
 	DatabaseUpdateError,
 } from '@lib/errors';
-import {AppUser, AppUserRole} from '@lib/models/app-user';
+import {AppSecurityGroup, AppUser} from '@lib/models/app-user';
 import {PinoLogger} from '@lib/utils';
 import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
 
@@ -34,7 +34,7 @@ const ADMIN_TEST_USER = AppUser.fromJSON({
 	isBlocked: false,
 	lastLogin: undefined,
 	lastSeen: undefined,
-	role: AppUserRole.ELAUT_ADMIN,
+	role: AppSecurityGroup.ELAUT_ADMIN,
 	tenant: {
 		id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
 		name: 'Elaut Group',
@@ -50,7 +50,7 @@ const DEVELOPER_TEST_USER = AppUser.fromJSON({
 	isBlocked: false,
 	lastLogin: undefined,
 	lastSeen: undefined,
-	role: AppUserRole.ELAUT_DEVELOPER,
+	role: AppSecurityGroup.ELAUT_DEVELOPER,
 	tenant: {
 		id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
 		name: 'Elaut Group',
@@ -84,7 +84,7 @@ describe('AppUserRepository', () => {
 
 			expect(admin).toBeDefined();
 			expect(admin instanceof AppUser).toBe(true);
-			expect(admin?.toJSON()).toEqual(ADMIN_TEST_USER);
+			expect(admin?.toJSON()).toEqual(ADMIN_TEST_USER.toJSON());
 
 			const developer = users.find(
 				(user) => user.id === '00000000-0000-0000-0000-000000000002'
@@ -92,7 +92,7 @@ describe('AppUserRepository', () => {
 
 			expect(developer).toBeDefined();
 			expect(developer instanceof AppUser).toBe(true);
-			expect(developer?.toJSON()).toEqual(DEVELOPER_TEST_USER);
+			expect(developer?.toJSON()).toEqual(DEVELOPER_TEST_USER.toJSON());
 		});
 
 		it('should return an empty array if no users are found', async () => {
@@ -125,7 +125,7 @@ describe('AppUserRepository', () => {
 					{
 						type: 'eq',
 						columnName: 'role',
-						value: AppUserRole.ELAUT_ADMIN,
+						value: AppSecurityGroup.ELAUT_ADMIN,
 					},
 				],
 			});
@@ -328,7 +328,7 @@ describe('AppUserRepository', () => {
 					{
 						type: 'eq',
 						columnName: 'role',
-						value: AppUserRole.ELAUT_ADMIN,
+						value: AppSecurityGroup.ELAUT_ADMIN,
 					},
 					{
 						type: 'like',
@@ -354,7 +354,7 @@ describe('AppUserRepository', () => {
 					{
 						type: 'eq',
 						columnName: 'role',
-						value: AppUserRole.ELAUT_ADMIN,
+						value: AppSecurityGroup.ELAUT_ADMIN,
 					},
 				],
 			};
@@ -389,7 +389,7 @@ describe('AppUserRepository', () => {
 					{
 						type: 'eq',
 						columnName: 'role',
-						value: AppUserRole.ELAUT_ADMIN,
+						value: AppSecurityGroup.ELAUT_ADMIN,
 					},
 					{
 						type: 'eq',
@@ -404,7 +404,7 @@ describe('AppUserRepository', () => {
 					{
 						type: 'eq',
 						columnName: 'role',
-						value: AppUserRole.ELAUT_ADMIN,
+						value: AppSecurityGroup.ELAUT_ADMIN,
 					},
 					{
 						type: 'eq',
@@ -447,7 +447,7 @@ describe('AppUserRepository', () => {
 
 			expect(user).toBeDefined();
 			expect(user instanceof AppUser).toBe(true);
-			expect(user?.toJSON()).toEqual(ADMIN_TEST_USER);
+			expect(user?.toJSON()).toEqual(ADMIN_TEST_USER.toJSON());
 		});
 
 		it('should return undefined if no user is found', async () => {
@@ -505,7 +505,7 @@ describe('AppUserRepository', () => {
 
 			expect(user).toBeDefined();
 			expect(user instanceof AppUser).toBe(true);
-			expect(user?.toJSON()).toEqual(ADMIN_TEST_USER);
+			expect(user?.toJSON()).toEqual(ADMIN_TEST_USER.toJSON());
 		});
 
 		it('should return undefined if no user is found', async () => {
@@ -621,7 +621,7 @@ describe('AppUserRepository', () => {
 				email: 'new@example.com',
 				username: 'new',
 				id: '00000000-0000-0000-0000-000000000099',
-				role: AppUserRole.ELAUT_ADMIN,
+				role: AppSecurityGroup.ELAUT_ADMIN,
 				tenant_id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
 			});
 
@@ -646,7 +646,7 @@ describe('AppUserRepository', () => {
 					email: 'new@example.com',
 					username: 'new',
 					id: '00000000-0000-0000-0000-000000000003',
-					role: AppUserRole.ELAUT_ADMIN,
+					role: AppSecurityGroup.ELAUT_ADMIN,
 					tenant_id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
 				})
 			).rejects.toThrowError(DatabaseInsertError);
