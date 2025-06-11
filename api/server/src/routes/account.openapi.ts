@@ -1,4 +1,5 @@
 import {AppUser} from '@lib/models/app-user';
+import {Client} from '@lib/models/client';
 
 import {createPrivateAppRoute} from '../utils/create-private-app-route';
 
@@ -14,7 +15,7 @@ const loggedInUserRoute = createPrivateAppRoute([], {
 			description: 'Successful response',
 			content: {
 				'application/json': {
-					schema: AppUser.schema.AppUserDTOSchema,
+					schema: AppUser.schema.AppUserDTOSchema.or(Client.schemas.DTOSchema),
 				},
 			},
 		},
