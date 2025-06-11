@@ -85,6 +85,20 @@ class RefreshTokenRepository implements IRefreshTokenRepository {
 		}
 	}
 
+	async invalidateAllRefreshTokensForClient(clientId: string) {
+		try {
+			await this.db<RefreshTokenDBType>('refresh_token')
+				.where('client_id', clientId)
+				.andWhere('usage_count', 0)
+				.update({
+					usage_count: 1,
+				});
+		} catch (e) {
+			this.logger.error(e);
+			throw new DatabaseUpdateError('Error invalidating client refresh tokens');
+		}
+	}
+
 	async createRefreshToken(refreshToken: RefreshToken) {
 		try {
 			await this.db<RefreshTokenDBType>('refresh_token').insert({

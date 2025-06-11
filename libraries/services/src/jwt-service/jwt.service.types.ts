@@ -1,9 +1,11 @@
 import type {RefreshToken} from '@lib/models/refresh-token';
 
 interface IJwtService {
-	authenticate<Data extends {userId: string}>(jwtToken: string): Promise<Data>;
+	authenticate<Data extends {userId: string} | {clientId: string}>(
+		jwtToken: string
+	): Promise<Data>;
 
-	createTokens<Data extends {userId: string}>(
+	createTokens<Data extends {userId: string} | {clientId: string}>(
 		data: Data
 	): Promise<{
 		accessToken: string;
@@ -12,17 +14,23 @@ interface IJwtService {
 
 	getRefreshTokenById(id: string): Promise<RefreshToken | undefined>;
 
-	createAccessToken<Data extends {userId: string}>(data: Data): Promise<string>;
+	createAccessToken<Data extends {userId: string} | {clientId: string}>(
+		data: Data
+	): Promise<string>;
 
-	createRefreshToken<Data extends {userId: string}>(
+	createRefreshToken<Data extends {userId: string} | {clientId: string}>(
 		data: Data
 	): Promise<string>;
 
 	invalidateAllRefreshTokensForUser(userId: string): Promise<void>;
 
+	invalidateAllRefreshTokensForClient(clientId: string): Promise<void>;
+
 	invalidateRefreshToken(refreshToken: string): Promise<void>;
 
-	authenticateRefreshToken<Data extends {userId: string; id: string}>(
+	authenticateRefreshToken<
+		Data extends {userId: string; id: string} | {clientId: string; id: string},
+	>(
 		token: string
 	): Promise<{
 		dbToken: RefreshToken;

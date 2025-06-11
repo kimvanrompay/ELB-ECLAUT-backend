@@ -16,7 +16,7 @@ const findUsersRoute = createPrivateAppRoute([AppSecurityScopes.READ_USERS])({
 			'username[like]': z.string().optional(),
 			'email[like]': z.string().optional(),
 			'tenant_id[eq]': z.string().optional(),
-			'role[eq]': z.string().optional(),
+			'role[eq]': z.string().optional(), // TODO: check if this needs to changed to security group
 			'is_blocked[eq]': z
 				.string()
 				.optional()

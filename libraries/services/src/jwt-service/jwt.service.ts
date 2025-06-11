@@ -1,6 +1,7 @@
 import {v4 as uuid} from 'uuid';
 
 import {NotFoundError} from '@lib/errors';
+import {RefreshToken} from '@lib/models/refresh-token';
 import type {IRefreshTokenRepository} from '@lib/repositories/types';
 import {generateJwtToken, verifyJwtToken} from '@lib/utils/jwt';
 
@@ -41,13 +42,15 @@ class JwtAuthService implements IJwtService {
 		this.refreshTokenExpiration = refreshTokenExpiration;
 	}
 
-	async authenticate<Data extends {userId: string}>(jwtToken: string) {
+	async authenticate<Data extends {userId: string} | {clientId: string}>(
+		jwtToken: string
+	) {
 		return this.verifyJwtToken<Data>(jwtToken);
 	}
 
-	async authenticateRefreshToken<Data extends {userId: string; id: string}>(
-		token: string
-	) {
+	async authenticateRefreshToken<
+		Data extends {userId: string; id: string} | {clientId: string; id: string},
+	>(token: string) {
 		const verifiedToken = await this.verifyJwtToken<Data>(token);
 		const refreshToken = await this.getRefreshTokenById(verifiedToken.id);
 
@@ -61,14 +64,20 @@ class JwtAuthService implements IJwtService {
 		};
 	}
 
-	async createTokens(data: {userId: string; [key: string]: string}) {
+	async createTokens(
+		data:
+			| {userId: string; [key: string]: string}
+			| {clientId: string; [key: string]: string}
+	) {
 		const accessToken = await this.createAccessToken(data);
 		const refreshToken = await this.createRefreshToken(data);
 
 		return {accessToken, refreshToken};
 	}
 
-	async createAccessToken<Data extends {userId: string}>(data: Data) {
+	async createAccessToken<Data extends {userId: string} | {clientId: string}>(
+		data: Data
+	) {
 		return this.generateJwtToken(data, {
 			expiresIn: this.accessTokenExpiration,
 		});
@@ -83,7 +92,9 @@ class JwtAuthService implements IJwtService {
 		}
 	}
 
-	async createRefreshToken<Data extends {userId: string}>(data: Data) {
+	async createRefreshToken<Data extends {userId: string} | {clientId: string}>(
+		data: Data
+	) {
 		const id = uuid();
 
 		const token = await this.generateJwtToken(
@@ -96,12 +107,12 @@ class JwtAuthService implements IJwtService {
 			}
 		);
 
-		await this.refreshTokenRepository.createRefreshToken({
-			id,
-			userId: data.userId,
-			usageCount: 0,
-			createdAt: new Date(),
-		});
+		const userId = 'userId' in data ? data.userId : undefined;
+		const clientId = 'clientId' in data ? data.clientId : undefined;
+
+		await this.refreshTokenRepository.createRefreshToken(
+			new RefreshToken(id, userId, clientId, 0, new Date())
+		);
 
 		return token;
 	}
@@ -122,7 +133,15 @@ class JwtAuthService implements IJwtService {
 		);
 	}
 
-	private async generateJwtToken<Data extends {userId: string}>(
+	async invalidateAllRefreshTokensForClient(clientId: string) {
+		return this.refreshTokenRepository.invalidateAllRefreshTokensForClient(
+			clientId
+		);
+	}
+
+	private async generateJwtToken<
+		Data extends {userId: string} | {clientId: string},
+	>(
 		data: Data,
 		options: {
 			expiresIn: string;
@@ -137,7 +156,9 @@ class JwtAuthService implements IJwtService {
 		});
 	}
 
-	private async verifyJwtToken<Data extends {userId: string}>(token: string) {
+	private async verifyJwtToken<
+		Data extends {userId: string} | {clientId: string},
+	>(token: string) {
 		return await verifyJwtToken<Data>(
 			token,
 			this.secretKey,
