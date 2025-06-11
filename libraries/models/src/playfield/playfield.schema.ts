@@ -104,12 +104,18 @@ const PlayfieldUpdateDBSchema = z.object({
 	prize_id: z.string().optional(),
 });
 
+const PlayfieldUpdateDTOSchema = z.object({
+	name: z.string(),
+	tenantLocationId: z.string(),
+});
+
 type PlayfieldDTOType = z.infer<typeof PlayfieldDTOSchema>;
 
 type PlayfieldDBType = z.infer<typeof PlayfieldDBSchema>;
 type PlayfieldWithCabinetDBType = z.infer<typeof PlayfieldWithCabinetDBSchema>;
 type PlayfieldInsertDBType = z.infer<typeof PlayfieldInsertDBSchema>;
 type PlayfieldUpdateDBType = z.infer<typeof PlayfieldUpdateDBSchema>;
+type PlayfieldUpdateDTOType = z.infer<typeof PlayfieldUpdateDTOSchema>;
 
 export {
 	PlayfieldDTOSchema,
@@ -117,6 +123,7 @@ export {
 	PlayfieldInsertDBSchema,
 	PlayfieldUpdateDBSchema,
 	PlayfieldWithCabinetDBSchema,
+	PlayfieldUpdateDTOSchema,
 };
 export type {
 	PlayfieldDTOType,
@@ -124,4 +131,5 @@ export type {
 	PlayfieldInsertDBType,
 	PlayfieldUpdateDBType,
 	PlayfieldWithCabinetDBType,
+	PlayfieldUpdateDTOType,
 };

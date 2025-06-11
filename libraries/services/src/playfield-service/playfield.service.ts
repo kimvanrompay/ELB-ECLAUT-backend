@@ -1,5 +1,12 @@
-import {Playfield} from '@lib/models/playfield';
-import type {IPlayfieldRepository} from '@lib/repositories/types';
+import {v4 as uuid} from 'uuid';
+
+import {NotFoundError} from '@lib/errors';
+import {Playfield, type PlayfieldUpdateDTOType} from '@lib/models/playfield';
+import type {
+	IMachineLogRepository,
+	IPlayfieldRepository,
+	IPrizeRepository,
+} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
 import type {
 	DatabaseQueryFilters,
@@ -15,6 +22,8 @@ class PlayfieldService implements IPlayfieldService {
 
 	constructor(
 		private playfieldRepository: IPlayfieldRepository,
+		private prizeRepository: IPrizeRepository,
+		private machineLogRepository: IMachineLogRepository,
 		private context: AuthenticatedAppContext
 	) {
 		this.playfieldRepository = playfieldRepository;
@@ -70,6 +79,76 @@ class PlayfieldService implements IPlayfieldService {
 			serial,
 			...AuthorizationService.getTenantAndLocationFromContext(this.context)
 		);
+	}
+
+	async updatePlayfield(
+		id: string,
+		playfield: PlayfieldUpdateDTOType
+	): Promise<Playfield> {
+		try {
+			return this.playfieldRepository.updatePlayfield(
+				id,
+				Playfield.getUpdateDBFromUpdateDTO(playfield),
+				...AuthorizationService.getTenantAndLocationFromContext(this.context)
+			);
+		} catch (error) {
+			this.logger.error(error);
+			throw new Error('Could not update playfield'); // TODO: Create a custom error
+		}
+	}
+
+	async updatePlayfieldPrize(
+		id: string,
+		prizeId: string | null
+	): Promise<Playfield> {
+		const playfield = await this.playfieldRepository.getPlayfieldById(
+			id,
+			...AuthorizationService.getTenantAndLocationFromContext(this.context)
+		);
+
+		if (!playfield) {
+			throw new NotFoundError('Playfield not found');
+		}
+
+		const prize = prizeId
+			? await this.prizeRepository.getPrizeById(
+					prizeId,
+					AuthorizationService.getTenantAndLocationFromContext(this.context)[0]
+				)
+			: undefined;
+
+		if (!prize && prizeId) {
+			throw new NotFoundError('Prize not found');
+		}
+
+		await this.prizeRepository.transaction(async (trx) => {
+			const scopedPrizeRepository = this.prizeRepository.withTransaction(trx);
+			const scopedMachineLogRepository =
+				this.machineLogRepository.withTransaction(trx);
+
+			await Promise.all([
+				scopedPrizeRepository.addPrizeToPlayfield(
+					prizeId,
+					id,
+					AuthorizationService.getTenantAndLocationFromContext(this.context)[0]
+				),
+				scopedMachineLogRepository.createMachineLog({
+					id: uuid(),
+					playfield_id: id,
+					serial_number: playfield.cabinet.serialNumber,
+					level: 'INFO',
+					timestamp: new Date(),
+					app_user_id: this.context.auth.userId,
+					type: 'PRIZE_UPDATE',
+					data: {
+						prizeId: prizeId,
+						prizeName: prize?.name,
+					},
+				}),
+			]);
+		});
+
+		return this.getPlayfieldById(id) as Promise<Playfield>;
 	}
 }
 

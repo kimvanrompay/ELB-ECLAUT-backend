@@ -12,6 +12,8 @@ import {
 	type PlayfieldInsertDBType,
 	PlayfieldUpdateDBSchema,
 	type PlayfieldUpdateDBType,
+	PlayfieldUpdateDTOSchema,
+	type PlayfieldUpdateDTOType,
 	PlayfieldWithCabinetDBSchema,
 	type PlayfieldWithCabinetDBType,
 } from './playfield.schema';
@@ -58,6 +60,7 @@ class Playfield {
 		InsertDBSchema: PlayfieldInsertDBSchema,
 		UpdateDBSchema: PlayfieldUpdateDBSchema,
 		WithCabinetDBSchema: PlayfieldWithCabinetDBSchema,
+		UpdateDTOSchema: PlayfieldUpdateDTOSchema,
 	};
 
 	public constructor(
@@ -302,6 +305,15 @@ class Playfield {
 				: undefined,
 		};
 	}
+
+	static getUpdateDBFromUpdateDTO(
+		data: PlayfieldUpdateDTOType
+	): PlayfieldUpdateDBType {
+		return {
+			name: data.name,
+			tenant_location_id: data.tenantLocationId,
+		};
+	}
 }
 
 export {Playfield};
@@ -311,4 +323,5 @@ export type {
 	PlayfieldInsertDBType,
 	PlayfieldUpdateDBType,
 	PlayfieldWithCabinetDBType,
+	PlayfieldUpdateDTOType,
 };
