@@ -11,6 +11,7 @@ import {addOpenAPI} from './routes/openapi.routes';
 import {createPlayerZoneApi} from './routes/playerzone.routes';
 import {createPlayfieldApi} from './routes/playfield.routes';
 import {createPrizeApi} from './routes/prize.routes';
+import {createStatisticsApi} from './routes/statistics.routes';
 import {createTenantLocationApi} from './routes/tenant-location.routes';
 import {createTenantApi} from './routes/tenant.routes';
 
@@ -49,6 +50,8 @@ app.route('/playerzone', createPlayerZoneApi());
 app.route('/mqtt', createMqttApi());
 
 app.route('/prize', createPrizeApi());
+
+app.route('/statistics', createStatisticsApi());
 
 /**
  * OpenAPI  swagger routes (needs to be last)
