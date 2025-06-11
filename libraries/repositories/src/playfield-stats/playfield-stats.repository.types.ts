@@ -60,25 +60,6 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 		endDate: Date
 	): Promise<PlayfieldStats[] | undefined>;
 
-	getPlayfieldStatsPerDay(
-		where: {
-			playfieldId?: string;
-			tenantLocationId?: string;
-			tenantId?: string;
-			gametypeId?: string;
-		},
-		groupBy: (
-			| 'playfield_id'
-			| 'tenant_location_id'
-			| 'tenant_id'
-			| 'gametype_id'
-			| 'serial_number'
-			| 'prize_id'
-		)[],
-		startDate: Date,
-		endDate: Date
-	): Promise<PlayfieldStats[] | undefined>;
-
 	getPlayfieldStatsByUnitMoreThanADay(
 		unit: 'WEEK' | 'MONTH' | 'YEAR',
 		groupBy:

@@ -30,7 +30,7 @@
     "./gametype-stats-report": "./src/gametype-stats-report/gametype-stats-report.model.ts",
     "./tenant-location-stats-report": "./src/tenant-location-stats-report/tenant-location-stats-report.model.ts",
     "./tenant-stats-report": "./src/tenant-stats-report/tenant-stats-report.model.ts",
-    "./prize-stats-report": "./src/prize-stats-report/prize-stats-report.model.ts",
+    "./prize-stats-report": "./src/prize-stats-report/prize-stats-report.model.ts"
   },
   "devDependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",

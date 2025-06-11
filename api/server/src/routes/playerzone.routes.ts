@@ -1,7 +1,9 @@
 import {OpenAPIHono} from '@hono/zod-openapi';
 
 import {GameSessionRepository} from '@lib/repositories/game-session';
+import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {PrizeRepository} from '@lib/repositories/prize';
 import {MqttService} from '@lib/services/mqtt';
 import {PlayerZoneService} from '@lib/services/player-zone';
 import {PlayfieldService} from '@lib/services/playfield';
@@ -21,8 +23,12 @@ const createPlayerZoneApi = () => {
 	const getServices = (appContext: AuthenticatedAppContext) => {
 		const gameSessionRepository = new GameSessionRepository(db, appContext);
 		const playfieldRepository = new PlayfieldRepository(db, appContext);
+		const prizeRepository = new PrizeRepository(db, appContext);
+		const machineLogRepository = new MachineLogRepository(db, appContext);
 		const playfieldService = new PlayfieldService(
 			playfieldRepository,
+			prizeRepository,
+			machineLogRepository,
 			appContext
 		);
 
