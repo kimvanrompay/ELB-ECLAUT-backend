@@ -2,6 +2,7 @@ import type {
 	DatabaseQueryFilters,
 	WhereFilterType,
 } from './database/database-filters.types';
+import {camelToSnakeCase} from './string.utils';
 
 const parseType = (value: unknown) => {
 	if (typeof value === 'number') {
@@ -93,17 +94,19 @@ const parseQueryParamsToDatabaseFilters = (queryParams: {
 			filters.orderBy = rules.map((rule) => {
 				const [columnName, order] = rule.split(':');
 
+				const columnNameSnakeCase = camelToSnakeCase(columnName!);
+
 				if (!order) {
 					return {
 						type: 'orderBy',
-						columnName: columnName!,
+						columnName: columnNameSnakeCase!,
 						value: 'asc',
 					};
 				}
 
 				return {
 					type: 'orderBy',
-					columnName: columnName!,
+					columnName: columnNameSnakeCase!,
 					value: order as 'asc' | 'desc',
 				};
 			});
