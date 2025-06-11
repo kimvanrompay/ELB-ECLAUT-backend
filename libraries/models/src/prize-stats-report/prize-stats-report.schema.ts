@@ -1,29 +1,11 @@
 import {z} from '@hono/zod-openapi';
 
-import {PlayfieldPrizeDTOSchema} from '../playfield-prize/playfield-prize.schema';
-
-const PlayfieldStatsReportDBSchema = z.object({
-	// range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
-	unit: z.enum(['HOUR', 'DAY']),
-	start_date: z.date(),
-	end_date: z.date(),
-	serial_number: z.string(),
-	playfield_id: z.string(),
-	gametype_id: z.string(),
-	tenant_id: z.string(),
-	tenant_location_id: z.string(),
-	prize_id: z.string().optional(),
-
-	data: z.array(z.any()).optional(),
-});
-
-const PlayfieldStatsReportDTOSchema = z.object({
-	// range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
+const PrizeStatsReportDTOSchema = z.object({
 	unit: z.enum(['HOUR', 'DAY', 'WEEK', 'MONTH']),
 	startDate: z.date(),
 	endDate: z.date(),
-	playfieldId: z.string(),
-	prizeId: z.string().optional(),
+
+	prizeId: z.string(),
 
 	countGameSessions: z.number(),
 	sumMoneyIn: z.number(),
@@ -45,6 +27,16 @@ const PlayfieldStatsReportDTOSchema = z.object({
 	maxCredits: z.number(),
 	minCredits: z.number(),
 
+	paymentMethods: z
+		.record(
+			z.string(),
+			z.object({
+				moneyIn: z.number(),
+				countGameSessions: z.number(),
+			})
+		)
+		.optional(),
+
 	gameSessionsOverTime: z.array(
 		z.object({
 			date: z.date(),
@@ -60,11 +52,15 @@ const PlayfieldStatsReportDTOSchema = z.object({
 		.record(z.number().min(0).max(23), z.number())
 		.optional(),
 
-	popularPrizes: z
+	popularPlayfields: z
 		.array(
 			z.object({
-				prizeId: z.string(),
-				prizeName: z.string(),
+				playfieldId: z.string(),
+				playfieldName: z.string(),
+				serialNumber: z.string(),
+				cabinetName: z.string(),
+				gametypeId: z.string(),
+				gametypeName: z.string(),
 				sumMoneyIn: z.number(),
 				sumMoneyOut: z.number(),
 				sumProfit: z.number(),
@@ -74,25 +70,24 @@ const PlayfieldStatsReportDTOSchema = z.object({
 		)
 		.optional(),
 
-	prizeHistory: z.array(PlayfieldPrizeDTOSchema),
-
-	paymentMethods: z
-		.record(
-			z.string(),
+	popularLocations: z
+		.array(
 			z.object({
-				moneyIn: z.number(),
-				countGameSessions: z.number(),
+				tenantLocationId: z.string(),
+				tenantLocationName: z.string(),
+				tenantId: z.string(),
+				tenantName: z.string(),
+				sumMoneyIn: z.number(),
+				sumMoneyOut: z.number(),
+				sumProfit: z.number(),
+				sumPlayTime: z.number(),
+				avgPlayTime: z.number(),
 			})
 		)
 		.optional(),
 });
 
-type PlayfieldStatsReportDBType = z.infer<typeof PlayfieldStatsReportDBSchema>;
+type PrizeStatsReportDTOType = z.infer<typeof PrizeStatsReportDTOSchema>;
 
-type PlayfieldStatsReportDTOType = z.infer<
-	typeof PlayfieldStatsReportDTOSchema
->;
-
-export {PlayfieldStatsReportDBSchema, PlayfieldStatsReportDTOSchema};
-
-export type {PlayfieldStatsReportDBType, PlayfieldStatsReportDTOType};
+export {PrizeStatsReportDTOSchema};
+export type {PrizeStatsReportDTOType};

@@ -3,6 +3,10 @@ import {mapArrayOrSingleItem} from '@lib/utils';
 import {
 	PlayfieldStatsDBSchema,
 	type PlayfieldStatsDBType,
+	type PopularGametypeStats,
+	type PopularLocationStats,
+	type PopularPlayfieldStats,
+	type PopularPrizeStats,
 	type StatisticsDataDBType,
 	type StatisticsDataType,
 } from './playfield-stats.schema';
@@ -12,13 +16,14 @@ class PlayfieldStats {
 	id: string | undefined; // if generated at runtime, otherwise from DB
 	startDate: Date;
 	endDate: Date;
-	range: 'WEEK' | 'MONTH' | 'YEAR' | 'DAY'; // for now only DAY exists
+	range: 'WEEK' | 'MONTH' | 'YEAR' | 'DAY';
 
-	serialNumber: string;
-	playfieldId: string;
-	gametypeId: string;
-	tenantId: string;
-	tenantLocationId: string;
+	serialNumber?: string;
+	playfieldId?: string;
+	gametypeId?: string;
+	tenantId?: string;
+	tenantLocationId?: string;
+	prizeId?: string;
 
 	stats: StatisticsData;
 
@@ -31,11 +36,12 @@ class PlayfieldStats {
 		startDate: Date;
 		endDate: Date;
 		range: 'WEEK' | 'MONTH' | 'YEAR' | 'DAY';
-		serialNumber: string;
-		playfieldId: string;
-		gametypeId: string;
-		tenantId: string;
-		tenantLocationId: string;
+		serialNumber?: string;
+		playfieldId?: string;
+		gametypeId?: string;
+		tenantId?: string;
+		tenantLocationId?: string;
+		prizeId?: string;
 
 		stats: StatisticsData;
 	}) {
@@ -47,6 +53,7 @@ class PlayfieldStats {
 		this.serialNumber = args.serialNumber;
 		this.playfieldId = args.playfieldId;
 		this.gametypeId = args.gametypeId;
+		this.prizeId = args.prizeId;
 
 		this.tenantId = args.tenantId;
 		this.tenantLocationId = args.tenantLocationId;
@@ -66,12 +73,13 @@ class PlayfieldStats {
 				id: item.id,
 				startDate: new Date(item.start_date),
 				endDate: new Date(item.end_date),
-				range: item.range,
+				range: item.range?.toUpperCase() as 'WEEK' | 'MONTH' | 'YEAR' | 'DAY',
 				serialNumber: item.serial_number,
 				playfieldId: item.playfield_id,
 				gametypeId: item.gametype_id,
 				tenantId: item.tenant_id,
 				tenantLocationId: item.tenant_location_id,
+				prizeId: item.prize_id,
 
 				stats: new StatisticsData({
 					countGameSessions: item.count_game_sessions,
@@ -100,5 +108,13 @@ class PlayfieldStats {
 	}
 }
 
-export {PlayfieldStats};
-export type {PlayfieldStatsDBType, StatisticsDataDBType, StatisticsDataType};
+export {PlayfieldStats, StatisticsData};
+export type {
+	PlayfieldStatsDBType,
+	StatisticsDataDBType,
+	StatisticsDataType,
+	PopularPrizeStats,
+	PopularGametypeStats,
+	PopularPlayfieldStats,
+	PopularLocationStats,
+};

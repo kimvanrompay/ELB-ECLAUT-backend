@@ -7,6 +7,7 @@ import {DatabaseUpdateError} from './database-update-error';
 import {LocationNotAllowedError} from './location-not-allowed-error';
 import {MissingLocationError} from './missing-location-error';
 import {NotFoundError} from './not-found-error';
+import {StatsUnitUnsupportedError} from './stats-unit-unsupported-error';
 import {TenantNotAllowedError} from './tenant-not-allowed-error';
 import {UserAlreadyExistsError} from './user-already-exists-error';
 
@@ -118,6 +119,9 @@ class ApiError extends Error {
 		if (error instanceof UserAlreadyExistsError) {
 			return new ApiError(400, 'User already exists', 'BAD_REQUEST');
 		}
+
+		if (error instanceof StatsUnitUnsupportedError)
+			return new ApiError(400, error.message, 'BAD_REQUEST');
 
 		if (error instanceof NotFoundError) {
 			return new ApiError(404, error.message, 'NOT_FOUND');
