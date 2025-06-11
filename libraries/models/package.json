@@ -19,6 +19,7 @@
     "./machine-log": "./src/machine-log/machine-log.model.ts",
     "./machine-message": "./src/machine-message/machine-message.model.ts",
     "./playfield": "./src/playfield/playfield.model.ts",
+    "./playfield-prize": "./src/playfield-prize/playfield-prize.model.ts",
     "./prize": "./src/prize/prize.model.ts",
     "./refresh-token": "./src/refresh-token/refresh-token.model.ts",
     "./tenant": "./src/tenant/tenant.model.ts",

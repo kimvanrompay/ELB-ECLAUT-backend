@@ -5,6 +5,7 @@ const GametypeDTOSchema = z
 		id: z.string(),
 		name: z.string(),
 		description: z.string().optional(),
+		createdAt: z.date(),
 		// amountOfMachinesCreated: z.number(),
 		// amountOfMachinesRegistered: z.number(),
 		// hasCabinetSettings: z.boolean(),
@@ -16,6 +17,7 @@ const GametypeDBSchema = z.object({
 	id: z.string(),
 	name: z.string(),
 	description: z.string().optional(),
+	created_at: z.date(),
 });
 
 const GametypeCreateDTOSchema = z.object({

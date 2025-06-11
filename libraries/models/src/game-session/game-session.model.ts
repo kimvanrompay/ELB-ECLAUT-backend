@@ -15,6 +15,7 @@ class GameSession {
 	playfieldId: string;
 	tenantId: string;
 	tenantLocationId: string;
+	prizeId: string | undefined;
 	startedAt: Date | undefined;
 	endedAt: Date | undefined;
 
@@ -38,6 +39,7 @@ class GameSession {
 		playfieldId: string,
 		tenantId: string,
 		tenantLocationId: string,
+		prizeId: string | undefined,
 		startedAt: Date | undefined,
 		endedAt: Date | undefined,
 		result: Record<string, unknown> | undefined,
@@ -61,6 +63,7 @@ class GameSession {
 		this.amountCredits = amountCredits;
 		this.amountMoneyOut = amountMoneyOut;
 		this.paymentMethod = paymentMethod;
+		this.prizeId = prizeId;
 	}
 
 	static fromDBType(data: GameSessionDBType[]): GameSession[];
@@ -81,6 +84,7 @@ class GameSession {
 					item.playfield_id,
 					item.tenant_id,
 					item.tenant_location_id,
+					item.prize_id,
 					item.started_at,
 					item.ended_at,
 					parsedResult,
@@ -111,6 +115,7 @@ class GameSession {
 				item.playfieldId,
 				item.tenantId,
 				item.tenantLocationId,
+				item.prizeId,
 				item.startedAt,
 				item.endedAt,
 				item.result,
@@ -130,6 +135,7 @@ class GameSession {
 			playfieldId: this.playfieldId,
 			tenantId: this.tenantId,
 			tenantLocationId: this.tenantLocationId,
+			prizeId: this.prizeId,
 			startedAt: this.startedAt,
 			endedAt: this.endedAt,
 			result: this.result ?? {},

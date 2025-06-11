@@ -191,10 +191,18 @@ class PlayfieldRepository
 				this.selectPlayfieldWithCabinet<PlayfieldWithCabinetDBType>()
 					.where('playfield.id', id)
 					.select(
+						'prize.id as prize_id',
+						'prize.name as prize_name',
 						'machine_log.is_active as error_is_active',
 						'machine_log.code as error_code',
 						'machine_log.event_data as error_event_data'
 					)
+					.leftJoin(
+						'playfield_prize',
+						'playfield.id',
+						'playfield_prize.playfield_id'
+					)
+					.leftJoin('prize', 'playfield_prize.prize_id', 'prize.id')
 					.leftJoin(
 						this.db('machine_log')
 							.select(

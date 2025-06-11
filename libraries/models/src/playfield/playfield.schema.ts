@@ -38,6 +38,12 @@ const PlayfieldDTOSchema = z
 				eventData: z.string().optional(),
 			})
 			.optional(),
+		prize: z
+			.object({
+				id: z.string(),
+				name: z.string(),
+			})
+			.optional(),
 	})
 	.openapi('Playfield');
 
@@ -56,6 +62,8 @@ const PlayfieldDBSchema = z.object({
 	error_code: z.string().optional(),
 	error_event_data: z.string().optional(),
 	error_is_active: z.string().optional(),
+	prize_id: z.string().optional(),
+	prize_name: z.string().optional(),
 });
 
 const PlayfieldWithCabinetDBSchema = z.object({
@@ -74,6 +82,8 @@ const PlayfieldWithCabinetDBSchema = z.object({
 	error_code: z.string().optional(),
 	error_event_data: z.string().optional(),
 	error_is_active: z.string().optional(),
+	prize_id: z.string().optional(),
+	prize_name: z.string().optional(),
 });
 
 const PlayfieldInsertDBSchema = z.object({
@@ -86,12 +96,12 @@ const PlayfieldInsertDBSchema = z.object({
 });
 
 const PlayfieldUpdateDBSchema = z.object({
-	serial_number: z.string().optional(),
 	name: z.string().optional(),
 	tenant_id: z.string().optional(),
 	tenant_location_id: z.string().optional(),
 	last_machine_message: z.date().optional(),
 	status: z.string().optional(),
+	prize_id: z.string().optional(),
 });
 
 type PlayfieldDTOType = z.infer<typeof PlayfieldDTOSchema>;

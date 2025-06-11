@@ -1,3 +1,5 @@
+import {mapArrayOrSingleItem} from '@lib/utils';
+
 import {
 	GametypeCreateDTOSchema,
 	type GametypeCreateDTOType,
@@ -17,6 +19,7 @@ class Gametype {
 	id: string;
 	description: string | undefined;
 	name: string;
+	createdAt: Date;
 
 	static schemas = {
 		GametypeDTOSchema,
@@ -30,11 +33,13 @@ class Gametype {
 	public constructor(
 		id: string,
 		description: string | undefined,
-		name: string
+		name: string,
+		createdAt: Date
 	) {
 		this.id = id;
 		this.description = description;
 		this.name = name;
+		this.createdAt = createdAt;
 	}
 
 	toJSON(): GametypeDTOType {
@@ -42,6 +47,7 @@ class Gametype {
 			id: this.id,
 			description: this.description,
 			name: this.name,
+			createdAt: this.createdAt,
 		};
 	}
 
@@ -50,6 +56,7 @@ class Gametype {
 			id: this.id,
 			description: this.description,
 			name: this.name,
+			created_at: this.createdAt,
 		};
 	}
 
@@ -58,13 +65,9 @@ class Gametype {
 	static fromJSON(
 		data: GametypeDTOType | GametypeDTOType[]
 	): Gametype | Gametype[] {
-		if (Array.isArray(data)) {
-			return data.map(
-				(item) => new Gametype(item.id, item.description, item.name)
-			);
-		}
-
-		return new Gametype(data.id, data.description, data.name);
+		return mapArrayOrSingleItem(data, (item) => {
+			return new Gametype(item.id, item.description, item.name, item.createdAt);
+		});
 	}
 
 	static fromDB(data: GametypeDBType): Gametype;
@@ -72,13 +75,14 @@ class Gametype {
 	static fromDB(
 		data: GametypeDBType | GametypeDBType[]
 	): Gametype | Gametype[] {
-		if (Array.isArray(data)) {
-			return data.map(
-				(item) => new Gametype(item.id, item.description, item.name)
+		return mapArrayOrSingleItem(data, (item) => {
+			return new Gametype(
+				item.id,
+				item.description,
+				item.name,
+				item.created_at
 			);
-		}
-
-		return new Gametype(data.id, data.description, data.name);
+		});
 	}
 }
 
