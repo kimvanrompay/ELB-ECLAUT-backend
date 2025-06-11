@@ -2,7 +2,7 @@ import {type RouteConfig} from '@hono/zod-openapi';
 
 import type {AppSecurityScopes} from '@lib/services/authorization';
 
-import {cookieAuthRegistry} from '../app';
+import {bearerAuthRegistry, cookieAuthRegistry, oauth2Registry} from '../app';
 import {
 	Authenticate,
 	type AuthenticationMiddlewareOptions,
@@ -37,9 +37,19 @@ const createPrivateAppRoute =
 			...options,
 		})<P, R>({
 			...routeConfig,
-			security: {
-				[cookieAuthRegistry.name]: [claims],
-			},
+			security: [
+				// ...routeConfig.security,
+				// [cookieAuthRegistry.name]: [claims]
+				{
+					[cookieAuthRegistry.name]: [claims],
+				},
+				{
+					[oauth2Registry.name]: [claims],
+				},
+				{
+					[bearerAuthRegistry.name]: [claims],
+				},
+			],
 			middleware: [
 				Authenticate(options),
 				Authorize(...claims),

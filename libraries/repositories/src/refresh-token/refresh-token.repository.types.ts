@@ -9,6 +9,8 @@ interface IRefreshTokenRepository {
 
 	invalidateAllRefreshTokensForUser(userId: string): Promise<void>;
 
+	invalidateAllRefreshTokensForClient(clientId: string): Promise<void>;
+
 	createRefreshToken(refreshToken: RefreshToken): Promise<void>;
 }
 

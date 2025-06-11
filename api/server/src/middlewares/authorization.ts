@@ -17,7 +17,7 @@ const Authorize = (...scopes: AppSecurityScopes[]) => {
 		}
 
 		const isAuthorized = AuthorizationService.hasAccessToScopes(
-			appContext.auth.role,
+			appContext.auth.securityGroup,
 			scopes
 		);
 

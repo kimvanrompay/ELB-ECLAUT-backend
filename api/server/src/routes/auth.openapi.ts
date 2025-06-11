@@ -66,6 +66,43 @@ const authorizeCodeRoute = createRoute({
 	},
 });
 
+const startClientAuthenticationWithSecretRoute = createRoute({
+	summary: 'Method to start a login session through a secret',
+	method: 'post',
+	path: '/oauth/token',
+	tags: ['Authentication'],
+	request: {
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						client_id: z.string(),
+						client_secret: z.string(),
+						grant_type: z.literal('client_credentials'),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: 'Successful login',
+			body: {
+				content: {
+					'application/json': {
+						schema: z.object({
+							access_token: z.string(),
+							refresh_token: z.string(),
+							expires_in: z.number(),
+							refresh_expires_in: z.number(),
+						}),
+					},
+				},
+			},
+		},
+	},
+});
+
 const refreshTokenRoute = createRoute({
 	summary: 'Method to refresh a token',
 	method: 'post',
@@ -137,4 +174,5 @@ export {
 	refreshTokenRoute,
 	logoutRoute,
 	logoutAllDevicesRoute,
+	startClientAuthenticationWithSecretRoute,
 };

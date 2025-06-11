@@ -4,12 +4,19 @@ import {createMiddleware} from 'hono/factory';
 
 import {getKnexInstance} from '@lib/db';
 import {UnauthorizedError} from '@lib/errors';
-import {AppUserRole} from '@lib/models/app-user';
+import {AppSecurityGroup} from '@lib/models/app-user';
 import {AppUserRepository} from '@lib/repositories/app-user';
+import {ClientRepository} from '@lib/repositories/client';
 import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
 import {TenantLocationRepository} from '@lib/repositories/tenant-location';
 import {AppUserService} from '@lib/services/app-user';
-import {AuthService} from '@lib/services/auth';
+import {
+	AuthService,
+	type ClientTokenPayload,
+	type UserTokenPayload,
+} from '@lib/services/auth';
+import {ClientService} from '@lib/services/client';
+import {TenantLocationService} from '@lib/services/tenant-location';
 
 import type {Environment} from '../types';
 
@@ -24,7 +31,7 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 		const appContext = ctx.get('appContext');
 
 		/**
-		 * When creating a private route on an already authenticated api, we dont want to re-authenticate
+		 * When creating a private route on an already authenticated api, we don't want to re-authenticate
 		 */
 		const isAlreadyAuthenticated = appContext.isAuthenticated !== undefined;
 		if (isAlreadyAuthenticated) {
@@ -33,6 +40,11 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 
 		const accessTokenJwt = getCookie(ctx, 'eclaut-access-token');
 		const refreshTokenJwt = getCookie(ctx, 'eclaut-refresh-token');
+
+		const authorizationHeader = ctx.req.header('Authorization');
+		const headerAccessTokenJwt = authorizationHeader
+			? authorizationHeader.replace('Bearer ', '')
+			: undefined;
 
 		const logger = ctx.get('logger').getChildLogger(
 			{
@@ -57,6 +69,20 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 			contextForRepositories
 		);
 
+		const tenantLocationService = new TenantLocationService(
+			tenantLocationRepository,
+			{
+				...appContext,
+				logger,
+			}
+		);
+
+		const clientRepository = new ClientRepository(db, contextForRepositories);
+		const clientService = new ClientService(clientRepository, {
+			...appContext,
+			logger,
+		});
+
 		const appUserService = new AppUserService(
 			appUserRepository,
 			tenantLocationRepository,
@@ -70,26 +96,31 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 			'SOME_SUPER_DUPER_UNIQUE_SECRET',
 			refreshTokenRepository,
 			appUserService,
+			clientService,
+			tenantLocationService,
 			appContext
 		);
 
+		// User authentication
 		if (accessTokenJwt) {
 			try {
 				const decodedAccessToken =
-					await authService.authenticateJwtAccessToken(accessTokenJwt);
+					(await authService.authenticateJwtAccessToken(
+						accessTokenJwt
+					)) as UserTokenPayload;
 
 				const validatedTokenUser = z
 					.object({
 						userId: z.string(),
 						email: z.string(),
-						role: z.nativeEnum(AppUserRole),
+						securityGroup: z.nativeEnum(AppSecurityGroup),
 						tenantId: z.string(),
 						locationIds: z.array(z.string()),
 					})
 					.parse({
 						userId: decodedAccessToken.userId,
 						email: decodedAccessToken.email,
-						role: decodedAccessToken.role,
+						securityGroup: decodedAccessToken.securityGroup,
 						tenantId: decodedAccessToken.tenantId,
 						locationIds: decodedAccessToken.locationIds,
 					});
@@ -99,13 +130,15 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 					isAuthenticated: true,
 					auth: {
 						userId: validatedTokenUser.userId,
+						clientId: undefined,
 						email: validatedTokenUser.email,
-						role: validatedTokenUser.role,
+						securityGroup: validatedTokenUser.securityGroup,
 						tenantId: validatedTokenUser.tenantId,
 						locationIds: validatedTokenUser.locationIds,
-						isElaut: validatedTokenUser.role
+						isElaut: validatedTokenUser.securityGroup
 							.toLocaleLowerCase()
 							.startsWith('elaut'),
+						type: 'USER',
 					},
 				});
 
@@ -124,6 +157,60 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 				}
 
 				throw new UnauthorizedError('Invalid access token');
+			}
+		}
+
+		// Client authentication
+		if (headerAccessTokenJwt) {
+			try {
+				const decodedAccessToken =
+					(await authService.authenticateJwtAccessToken(
+						headerAccessTokenJwt
+					)) as ClientTokenPayload;
+
+				const validatedTokenClient = z
+					.object({
+						clientId: z.string(),
+						tenantId: z.string().optional().nullable(),
+						locationIds: z.array(z.string()).optional().nullable(),
+						securityGroup: z.nativeEnum(AppSecurityGroup),
+					})
+					.parse({
+						clientId: decodedAccessToken.clientId,
+						tenantId: decodedAccessToken.tenantId,
+						locationIds: decodedAccessToken.locationIds,
+						securityGroup: decodedAccessToken.securityGroup,
+					});
+
+				ctx.set('appContext', {
+					...appContext,
+					isAuthenticated: true,
+					auth: {
+						userId: undefined,
+						clientId: validatedTokenClient.clientId,
+						securityGroup: validatedTokenClient.securityGroup,
+						tenantId: validatedTokenClient.tenantId ?? 'NO_TENANT_CLIENT',
+						locationIds: validatedTokenClient.locationIds ?? [],
+						isElaut: false,
+						type: 'CLIENT',
+					},
+				});
+
+				return next();
+			} catch (error) {
+				logger.error(`Header access token error: ${error}`);
+
+				if (options?.passThrough) {
+					ctx.set('appContext', {
+						...appContext,
+						auth: undefined,
+						isAuthenticated: false,
+					});
+
+					return next();
+				}
+
+				throw new UnauthorizedError('Invalid header access token');
 			}
 		}
 

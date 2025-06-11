@@ -62,11 +62,17 @@ const createAppUserApi = () => {
 
 		const filters = parseQueryParamsToDatabaseFilters(renamedQueryParams);
 
-		const users = await appUserService.findUserByFilters(filters);
+		const users = await appUserService.findPaginatedUsers(filters);
 
-		const userDTOs = users.map((user) => user.toJSON());
+		const userDTOs = users.entries.map((user) => user.toJSON());
 
-		return ctx.json(userDTOs, 200);
+		return ctx.json(
+			{
+				entries: userDTOs,
+				totalEntries: users.totalEntries,
+			},
+			200
+		);
 	});
 
 	userApp.openapi(getUserRoute, async (ctx) => {
