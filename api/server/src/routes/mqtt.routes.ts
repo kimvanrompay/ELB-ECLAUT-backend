@@ -2,7 +2,9 @@ import {STSClient} from '@aws-sdk/client-sts';
 import {OpenAPIHono} from '@hono/zod-openapi';
 
 import {ForbiddenError} from '@lib/errors';
+import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {PrizeRepository} from '@lib/repositories/prize';
 import {MqttCredentialsService} from '@lib/services/mqtt-credentials';
 import {PlayfieldService} from '@lib/services/playfield';
 import type {AuthenticatedAppContext} from '@lib/services/types';
@@ -49,8 +51,13 @@ const createMqttApi = () => {
 
 	const getServices = async (appContext: AuthenticatedAppContext) => {
 		const playfieldRepository = new PlayfieldRepository(db, appContext);
+		const prizeRepository = new PrizeRepository(db, appContext);
+		const machineLogRepository = new MachineLogRepository(db, appContext);
+
 		const playfieldService = new PlayfieldService(
 			playfieldRepository,
+			prizeRepository,
+			machineLogRepository,
 			appContext
 		);
 
@@ -68,6 +75,8 @@ const createMqttApi = () => {
 
 	app.openapi(getMqttCredentialsRoute, async (ctx) => {
 		const {playfield_id, serial_number} = ctx.req.valid('query');
+
+		// return ctx.json({}, 400);
 
 		const {mqttCredentialsService} = await getServices(ctx.get('appContext'));
 
