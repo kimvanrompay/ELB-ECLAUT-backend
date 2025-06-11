@@ -83,6 +83,31 @@ class TenantLocationRepository
 		}
 	}
 
+	async countTenantLocations(
+		filters: DatabaseQueryFilters,
+		loggedInTenantId: string | undefined
+	): Promise<number> {
+		try {
+			const query = KnexFilterAdapter.applyFilters(this.db('tenant_location'), {
+				...filters,
+				limit: undefined,
+				offset: undefined,
+				orderBy: undefined,
+			});
+
+			this.applyLoggedInTenantIdFilter(query, loggedInTenantId);
+
+			const result = await query.count('* as count').first();
+
+			return result?.count ? Number(result.count) : 0;
+		} catch (e) {
+			this.logger.error(e);
+			throw new DatabaseRetrieveError(
+				'Error retrieving tenant locations count'
+			);
+		}
+	}
+
 	async getTenantLocationById(
 		id: string,
 		loggedIdTenantId: string | undefined
@@ -168,6 +193,33 @@ class TenantLocationRepository
 							'app_user_tenant_location.tenant_location_id'
 						)
 						.where('app_user_tenant_location.user_id', userId),
+					loggedInTenantId
+				)
+			);
+
+			const result = await query;
+
+			return TenantLocation.fromDB(result ?? []);
+		} catch (e) {
+			this.logger.error(e);
+			throw new DatabaseRetrieveError('Error retrieving tenant locations');
+		}
+	}
+
+	async findTenantLocationsByClientId(
+		clientId: string,
+		loggedInTenantId: string | undefined
+	): Promise<TenantLocation[]> {
+		try {
+			const query = this.withTenant<TenantLocationDBType[]>(
+				this.applyLoggedInTenantIdFilter(
+					this.db('tenant_location')
+						.join(
+							'client_tenant_location',
+							'tenant_location.id',
+							'client_tenant_location.tenant_location_id'
+						)
+						.where('client_tenant_location.client_id', clientId),
 					loggedInTenantId
 				)
 			);

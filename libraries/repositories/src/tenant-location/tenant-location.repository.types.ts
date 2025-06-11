@@ -20,8 +20,18 @@ interface ITenantLocationRepository extends IKnexRepository {
 		loggedInTenantId: string | undefined
 	): Promise<TenantLocation[]>;
 
+	countTenantLocations(
+		filters: DatabaseQueryFilters,
+		loggedInTenantId: string | undefined
+	): Promise<number>;
+
 	findTenantLocationsByUserId(
 		userId: string,
+		loggedInTenantId: string | undefined
+	): Promise<TenantLocation[]>;
+
+	findTenantLocationsByClientId(
+		clientId: string,
 		loggedInTenantId: string | undefined
 	): Promise<TenantLocation[]>;
 
