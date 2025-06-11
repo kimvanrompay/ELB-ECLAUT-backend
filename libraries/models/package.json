@@ -11,6 +11,7 @@
   "exports": {
     "./app-user": "./src/app-user/app-user.model.ts",
     "./cabinet": "./src/cabinet/cabinet.model.ts",
+    "./client": "./src/client/client.model.ts",
     "./game-session": "./src/game-session/game-session.model.ts",
     "./gametype": "./src/gametype/gametype.model.ts",
     "./login-verification-code": "./src/login-verification-code/login-verification-code.model.ts",
