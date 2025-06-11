@@ -10,3 +10,4 @@ export type {IGameSessionRepository} from './game-session/game-session.repositor
 export type {IMachineLogRepository} from './machine-log/machine-log.repository.types';
 export type {ITenantRepository} from './tenant/tenant.repository.types';
 export type {IPlayfieldStatsRepository} from './playfield-stats/playfield-stats.repository.types';
+export type {IPrizeRepository} from './prize/prize.repository.types';

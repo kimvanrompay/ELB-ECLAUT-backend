@@ -26,6 +26,7 @@
     "./mqtt-credentials": "./src/mqtt-service/mqtt-credentials.service.ts",
     "./player-zone": "./src/player-zone-service/player-zone.service.ts",
     "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts"
+    "./prize": "./src/prize-service/prize.service.ts"
   },
   "scripts": {
     "test": "yarn test:unit",
