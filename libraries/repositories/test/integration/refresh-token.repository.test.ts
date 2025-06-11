@@ -134,6 +134,9 @@ describe('RefreshTokenRepository', () => {
 				userId: '00000000-0000-0000-0000-000000000001',
 				usageCount: 0,
 				createdAt: new Date(),
+				isUserToken: () => true,
+				isClientToken: () => false,
+				clientId: undefined,
 			});
 
 			const newRefreshToken = await repo.getRefreshTokenById(
@@ -154,6 +157,9 @@ describe('RefreshTokenRepository', () => {
 				userId: '00000000-0000-0000-0000-000000000001',
 				usageCount: 0,
 				createdAt: new Date(),
+				isUserToken: () => true,
+				isClientToken: () => false,
+				clientId: undefined,
 			});
 
 			await repo.createRefreshToken({
@@ -161,6 +167,9 @@ describe('RefreshTokenRepository', () => {
 				userId: '00000000-0000-0000-0000-000000000001',
 				usageCount: 0,
 				createdAt: new Date(),
+				isUserToken: () => true,
+				isClientToken: () => false,
+				clientId: undefined,
 			});
 
 			await repo.createRefreshToken({
@@ -168,6 +177,9 @@ describe('RefreshTokenRepository', () => {
 				userId: '00000000-0000-0000-0000-000000000002',
 				usageCount: 0,
 				createdAt: new Date(),
+				isUserToken: () => true,
+				isClientToken: () => false,
+				clientId: undefined,
 			});
 
 			const refreshToken = await repo.getRefreshTokenById(

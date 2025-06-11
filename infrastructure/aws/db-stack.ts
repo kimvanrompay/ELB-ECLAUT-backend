@@ -1,14 +1,14 @@
 import * as cdk from 'aws-cdk-lib';
-import * as rds from 'aws-cdk-lib/aws-rds';
 import * as ec2 from 'aws-cdk-lib/aws-ec2';
-import { Construct } from 'constructs';
+import * as rds from 'aws-cdk-lib/aws-rds';
+import {Construct} from 'constructs';
 
 export class DbStack extends cdk.Stack {
 	constructor(scope: Construct, id: string, props?: cdk.StackProps) {
 		super(scope, id, props);
 
 		// ✅ Create a VPC
-		const vpc = new ec2.Vpc(this, 'DatabaseVPC', { maxAzs: 2 });
+		const vpc = new ec2.Vpc(this, 'DatabaseVPC', {maxAzs: 2});
 
 		// ✅ Create RDS PostgreSQL Database
 		new rds.DatabaseInstance(this, 'PostgresDB', {
