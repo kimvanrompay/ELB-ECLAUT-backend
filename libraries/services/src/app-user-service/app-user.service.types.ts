@@ -3,10 +3,17 @@ import type {
 	AppUserCreateDTOType,
 	AppUserUpdateDTOType,
 } from '@lib/models/app-user';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 interface IAppUserService {
 	findUserByFilters(filters?: DatabaseQueryFilters): Promise<AppUser[]>;
+
+	findPaginatedUsers(
+		filters?: PaginatedDatabaseQueryFilters
+	): Promise<PaginatedResult<AppUser>>;
 
 	getUserById(id: string): Promise<AppUser | undefined>;
 

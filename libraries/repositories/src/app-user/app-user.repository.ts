@@ -110,6 +110,40 @@ class AppUserRepository extends KnexRepository implements IAppUserRepository {
 		}
 	}
 
+	async countUsersByFilters(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number> {
+		this.logger.trace(
+			`Counting users by filters: ${JSON.stringify(
+				filters
+			)}, tenantId: ${tenantId}, locationIds: ${locationIds?.join(',')}`
+		);
+
+		try {
+			const query = KnexFilterAdapter.applyFilters(this.db('app_user'), {
+				...filters,
+				limit: undefined,
+				offset: undefined,
+				orderBy: undefined,
+			});
+
+			const result = await this.applyTenantAndLocationFilters(
+				query,
+				tenantId,
+				locationIds
+			)
+				.count('* as count')
+				.first();
+
+			return result?.count ? Number(result.count) : 0;
+		} catch (error) {
+			this.logger.error(error);
+			throw new DatabaseRetrieveError('Error counting users');
+		}
+	}
+
 	async getUserById(
 		id: string,
 		tenantId?: string,

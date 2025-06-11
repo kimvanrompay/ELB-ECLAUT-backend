@@ -81,6 +81,25 @@ class AppUserService implements IAppUserService {
 		}
 	}
 
+	async findPaginatedUsers(
+		filters?: DatabaseQueryFilters
+	): Promise<PaginatedResult<AppUser>> {
+		const entries = await this.appUserRepository.findUsersByFilters(
+			filters,
+			...this.getTenantAndLocationFromContext()
+		);
+
+		const totalEntries = await this.appUserRepository.countUsersByFilters(
+			filters,
+			...this.getTenantAndLocationFromContext()
+		);
+
+		return {
+			entries,
+			totalEntries,
+		};
+	}
+
 	getUserById(id: string): Promise<AppUser | undefined> {
 		return this.appUserRepository.getUserById(
 			id,

@@ -19,6 +19,12 @@ interface IAppUserRepository extends IRepository<any, any> {
 		locationIds?: string[]
 	): Promise<AppUser[]>;
 
+	countUsersByFilters(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<number>;
+
 	getUserById(
 		id: string,
 		tenantId?: string,
