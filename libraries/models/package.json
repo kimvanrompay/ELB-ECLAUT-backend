@@ -26,7 +26,11 @@
     "./tenant-location": "./src/tenant-location/tenant-location.model.ts",
     "./mqtt-credentials": "./src/mqtt-credentials/mqtt-credentials.model.ts",
     "./playfield-stats-report": "./src/playfield-stats-report/playfield-stats-report.model.ts",
-    "./playfield-stats": "./src/playfield-stats/playfield-stats.model.ts"
+    "./playfield-stats": "./src/playfield-stats/playfield-stats.model.ts",
+    "./gametype-stats-report": "./src/gametype-stats-report/gametype-stats-report.model.ts",
+    "./tenant-location-stats-report": "./src/tenant-location-stats-report/tenant-location-stats-report.model.ts",
+    "./tenant-stats-report": "./src/tenant-stats-report/tenant-stats-report.model.ts",
+    "./prize-stats-report": "./src/prize-stats-report/prize-stats-report.model.ts",
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",

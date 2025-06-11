@@ -107,75 +107,35 @@ class StatisticsData {
 				)
 			: undefined;
 
-		this.calculateReturnToPlayer();
+		this.returnToPlayer = this.calculateReturnToPlayer();
 	}
 
-	addSessionCount(): void {
-		this.countGameSessions++;
-	}
-
-	incrementalAverage(
+	private static weightedAverage(
+		currentCount: number,
 		currentAvg: number,
-		newValue: number,
-		newCount: number
+		toAddCount: number,
+		toAddValue: number
 	): number {
-		return currentAvg + (newValue - currentAvg) / newCount;
+		if (currentCount === 0) {
+			return toAddValue;
+		}
+
+		return (
+			(currentAvg * currentCount + toAddValue * toAddCount) /
+			(currentCount + toAddCount)
+		);
 	}
 
 	calculateReturnToPlayer(): number {
+		if (this.sumMoneyIn === 0) {
+			return 0;
+		}
+
 		if (this.sumMoneyOut === 0) {
 			return 0;
 		}
 
-		return this.sumMoneyOut / this.sumMoneyIn;
-
-		// return Number((this.sumMoneyIn / this.sumMoneyOut).toFixed(2));
-	}
-
-	addMoneyIn(moneyIn: number): void {
-		this.sumMoneyIn += moneyIn;
-		this.minMoneyIn = Math.min(this.minMoneyIn, moneyIn);
-		this.maxMoneyIn = Math.max(this.maxMoneyIn, moneyIn);
-		this.avgMoneyIn = this.incrementalAverage(
-			this.avgMoneyIn,
-			moneyIn,
-			this.countGameSessions
-		);
-		this.calculateReturnToPlayer();
-	}
-
-	addMoneyOut(moneyOut: number): void {
-		this.sumMoneyOut += moneyOut;
-		this.minMoneyOut = Math.min(this.minMoneyOut, moneyOut);
-		this.maxMoneyOut = Math.max(this.maxMoneyOut, moneyOut);
-		this.avgMoneyOut = this.incrementalAverage(
-			this.avgMoneyOut,
-			moneyOut,
-			this.countGameSessions
-		);
-		this.calculateReturnToPlayer();
-	}
-
-	addPlayTime(playTime: number): void {
-		this.sumPlayTime += playTime;
-		this.minPlayTime = Math.min(this.minPlayTime, playTime);
-		this.maxPlayTime = Math.max(this.maxPlayTime, playTime);
-		this.avgPlayTime = this.incrementalAverage(
-			this.avgPlayTime,
-			playTime,
-			this.countGameSessions
-		);
-	}
-
-	addCredits(credits: number): void {
-		this.sumCredits += credits;
-		this.minPlayTime = Math.min(this.minPlayTime, credits);
-		this.maxPlayTime = Math.max(this.maxPlayTime, credits);
-		this.avgPlayTime = this.incrementalAverage(
-			this.avgPlayTime,
-			credits,
-			this.countGameSessions
-		);
+		return Number(((this.sumMoneyOut / this.sumMoneyIn) * 100).toFixed(2));
 	}
 
 	toJSON(): StatisticsDataType {
@@ -245,6 +205,36 @@ class StatisticsData {
 		});
 	}
 
+	static createAllZero(): StatisticsData {
+		return new StatisticsData({
+			countGameSessions: 0,
+			sumPlayTime: 0,
+			sumMoneyIn: 0,
+			sumMoneyOut: 0,
+			sumCredits: 0,
+
+			sumProfit: 0,
+
+			avgPlayTime: 0,
+			avgMoneyIn: 0,
+			avgMoneyOut: 0,
+			avgCredits: 0,
+
+			minPlayTime: 0,
+			minMoneyIn: 0,
+			minMoneyOut: 0,
+			minCredits: 0,
+
+			maxPlayTime: 0,
+			maxMoneyIn: 0,
+			maxMoneyOut: 0,
+			maxCredits: 0,
+
+			gameSessionsPerHour: undefined,
+			paymentMethods: undefined,
+		});
+	}
+
 	static createEmpty(): StatisticsData {
 		return new StatisticsData({
 			countGameSessions: 0,
@@ -277,7 +267,7 @@ class StatisticsData {
 
 	static aggregate(data: StatisticsData[]): StatisticsData {
 		if (data.length <= 0) {
-			throw new Error('Cannot aggregate empty data');
+			return this.createAllZero();
 		}
 
 		if (data.length === 1) {
@@ -286,7 +276,13 @@ class StatisticsData {
 
 		const freshStats = StatisticsData.createEmpty();
 
-		return data.reduce((accumulator, item) => {
+		const accData = data.reduce((accumulator, item) => {
+			const currentCount = accumulator.countGameSessions;
+			const currentAvgPlayTime = accumulator.avgPlayTime;
+			const currentAvgMoneyIn = accumulator.avgMoneyIn;
+			const currentAvgMoneyOut = accumulator.avgMoneyOut;
+			const currentAvgCredits = accumulator.avgCredits;
+
 			accumulator.countGameSessions += item.countGameSessions;
 
 			accumulator.sumPlayTime += item.sumPlayTime;
@@ -296,25 +292,29 @@ class StatisticsData {
 
 			accumulator.sumProfit = accumulator.sumMoneyIn - accumulator.sumMoneyOut;
 
-			accumulator.avgPlayTime = accumulator.incrementalAverage(
-				accumulator.avgPlayTime,
-				item.avgPlayTime,
-				accumulator.countGameSessions
+			accumulator.avgPlayTime = StatisticsData.weightedAverage(
+				currentCount,
+				currentAvgPlayTime,
+				item.countGameSessions,
+				item.avgPlayTime
 			);
-			accumulator.avgMoneyIn = accumulator.incrementalAverage(
-				accumulator.avgMoneyIn,
-				item.avgMoneyIn,
-				accumulator.countGameSessions
+			accumulator.avgMoneyIn = StatisticsData.weightedAverage(
+				currentCount,
+				currentAvgMoneyIn,
+				item.countGameSessions,
+				item.avgMoneyIn
 			);
-			accumulator.avgMoneyOut = accumulator.incrementalAverage(
-				accumulator.avgMoneyOut,
-				item.avgMoneyOut,
-				accumulator.countGameSessions
+			accumulator.avgMoneyOut = StatisticsData.weightedAverage(
+				currentCount,
+				currentAvgMoneyOut,
+				item.countGameSessions,
+				item.avgMoneyOut
 			);
-			accumulator.avgCredits = accumulator.incrementalAverage(
-				accumulator.avgCredits,
-				item.avgCredits,
-				accumulator.countGameSessions
+			accumulator.avgCredits = StatisticsData.weightedAverage(
+				currentCount,
+				currentAvgCredits,
+				item.countGameSessions,
+				item.avgCredits
 			);
 
 			accumulator.minPlayTime = Math.min(
@@ -385,6 +385,10 @@ class StatisticsData {
 
 			return accumulator;
 		}, freshStats);
+
+		accData.returnToPlayer = accData.calculateReturnToPlayer();
+
+		return accData;
 	}
 }
 
