@@ -11,6 +11,7 @@ enum MachineMessageEventType {
 	INTERNET = 'i',
 	HEARTBEAT = 'h',
 	STATUS = 's',
+	GRAB_FORCE = 'f',
 
 	UNKNOWN = 'UNKNOWN',
 }
