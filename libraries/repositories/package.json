@@ -6,6 +6,7 @@
   "exports": {
     "./app-user": "./src/app-user/app-user.repository.ts",
     "./cabinet": "./src/cabinet/cabinet.repository.ts",
+    "./client": "./src/client/client.repository.ts",
     "./game-session": "./src/game-session/game-session.repository.ts",
     "./gametype": "./src/gametype/gametype.repository.ts",
     "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
