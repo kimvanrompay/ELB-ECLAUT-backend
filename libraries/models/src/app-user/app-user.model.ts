@@ -3,6 +3,7 @@ import {v4 as uuid} from 'uuid';
 import {mapArrayOrSingleItem} from '@lib/utils';
 
 import {
+	AppSecurityGroup,
 	AppUserCreateDTOSchema,
 	type AppUserCreateDTOType,
 	AppUserDBSchema,
@@ -11,7 +12,6 @@ import {
 	type AppUserDTOType,
 	AppUserInsertDBSchema,
 	type AppUserInsertDBType,
-	AppUserRole,
 	AppUserUpdateDBSchema,
 	type AppUserUpdateDBType,
 	AppUserUpdateDTOSchema,
@@ -27,7 +27,7 @@ class AppUser {
 		name: string;
 	};
 	locationIds: string[];
-	role: AppUserRole;
+	securityGroup: AppSecurityGroup;
 	isBlocked: boolean;
 	isActive: boolean;
 	lastLogin: Date | undefined;
@@ -50,7 +50,7 @@ class AppUser {
 			id: string;
 			name: string;
 		},
-		role: AppUserRole,
+		securityGroup: AppSecurityGroup,
 		locationIds: string[] = [],
 		isBlocked = false,
 		isActive = true,
@@ -60,7 +60,7 @@ class AppUser {
 		this.id = id;
 		this.email = email;
 		this.tenant = tenant;
-		this.role = role;
+		this.securityGroup = securityGroup;
 		this.locationIds = locationIds;
 		this.username = username;
 		this.isBlocked = isBlocked;
@@ -75,7 +75,7 @@ class AppUser {
 			email: this.email,
 			username: this.username,
 			tenant: this.tenant,
-			role: this.role,
+			role: this.securityGroup,
 			locationIds: this.locationIds,
 			isBlocked: this.isBlocked,
 			lastLogin: this.lastLogin?.toISOString(),
@@ -91,7 +91,7 @@ class AppUser {
 			tenant_id: this.tenant.id,
 			tenant_name: this.tenant.name,
 			username: this.username,
-			role: this.role,
+			role: this.securityGroup,
 			is_blocked: this.isBlocked,
 			last_login: this.lastLogin?.toISOString(),
 			last_seen: this.lastSeen?.toISOString(),
@@ -106,7 +106,7 @@ class AppUser {
 			email: this.email,
 			tenant_id: this.tenant.id,
 			username: this.username,
-			role: this.role,
+			role: this.securityGroup,
 		};
 	}
 
@@ -191,7 +191,7 @@ class AppUser {
 			validatedData.email,
 			validatedData.username,
 			{id: validatedData.tenantId, name: ''},
-			validatedData.role,
+			validatedData.securityGroup,
 			[],
 			false,
 			true
@@ -209,8 +209,8 @@ class AppUser {
 			updateData.username = data.username;
 		}
 
-		if (data.role) {
-			updateData.role = data.role;
+		if (data.securityGroup) {
+			updateData.role = data.securityGroup;
 		}
 
 		if (data.isBlocked) {
@@ -221,7 +221,7 @@ class AppUser {
 	}
 }
 
-export {AppUser, AppUserRole};
+export {AppUser, AppSecurityGroup};
 
 export type {
 	AppUserDBType,
