@@ -144,32 +144,70 @@ const findPlayfieldLogsRoute = createPrivateAppRoute(
 	},
 });
 
-const getPlayfieldStatsReportRoute = createPrivateAppRoute(
+const updatePlayfieldPrizeRoute = createPrivateAppRoute(
 	[AppSecurityScopes.READ_MACHINES],
 	{
 		canThrowBadRequest: true,
 	}
 )({
-	method: 'get',
-	summary: 'Get playfield stats report',
-	tags: ['Machines'],
-	path: '/{id}/stats',
+	method: 'put',
+	summary: 'Update playfield prize',
+	tags: ['Machines', 'Prizes'],
+	path: '/{id}/prize',
 	request: {
 		params: z.object({
 			id: z.string(),
 		}),
-		query: z.object({
-			start_date: z.coerce.date().optional(),
-			range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
-			unit: z.enum(['HOUR', 'DAY']).optional(),
-		}),
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						prizeId: z.string().nullable(),
+					}),
+				},
+			},
+		},
 	},
 	responses: {
 		200: {
 			description: 'Successful response',
 			content: {
 				'application/json': {
-					schema: PlayfieldStatsReportModel.schemas.DTOSchema,
+					schema: Playfield.schemas.DTOSchema,
+				},
+			},
+		},
+	},
+});
+
+const updatePlayfieldRoute = createPrivateAppRoute(
+	[AppSecurityScopes.UPDATE_MACHINES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'put',
+	summary: 'Update a playfield',
+	tags: ['Machines'],
+	path: '/{id}',
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		body: {
+			content: {
+				'application/json': {
+					schema: Playfield.schemas.UpdateDTOSchema,
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: Playfield.schemas.DTOSchema,
 				},
 			},
 		},
@@ -181,5 +219,6 @@ export {
 	findPlayfieldsRoute,
 	findPlayfieldGameSessionsRoute,
 	findPlayfieldLogsRoute,
-	getPlayfieldStatsReportRoute,
+	updatePlayfieldPrizeRoute,
+	updatePlayfieldRoute,
 };

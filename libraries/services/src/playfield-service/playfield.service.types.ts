@@ -1,4 +1,4 @@
-import type {Playfield} from '@lib/models/playfield';
+import type {Playfield, PlayfieldUpdateDTOType} from '@lib/models/playfield';
 import type {
 	DatabaseQueryFilters,
 	PaginatedDatabaseQueryFilters,
@@ -14,6 +14,13 @@ interface IPlayfieldService {
 	findPaginatedPlayfields(
 		filters?: PaginatedDatabaseQueryFilters
 	): Promise<{entries: Playfield[]; totalEntries: number}>;
+
+	updatePlayfield(
+		id: string,
+		playfield: PlayfieldUpdateDTOType
+	): Promise<Playfield>;
+
+	updatePlayfieldPrize(id: string, prize: string): Promise<Playfield>;
 }
 
 export type {IPlayfieldService};

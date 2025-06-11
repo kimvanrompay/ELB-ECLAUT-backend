@@ -4,11 +4,10 @@ import {NotFoundError} from '@lib/errors';
 import {GameSessionRepository} from '@lib/repositories/game-session';
 import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
-import {PlayfieldStatsRepository} from '@lib/repositories/playfield-stats';
+import {PrizeRepository} from '@lib/repositories/prize';
 import {GameSessionService} from '@lib/services/game-session';
 import {MachineLogService} from '@lib/services/machine-log';
 import {PlayfieldService} from '@lib/services/playfield';
-import {PlayfieldStatsReportService} from '@lib/services/playfield-stats-report';
 import type {AuthenticatedAppContext} from '@lib/services/types';
 import {defaultValidationHook} from '@lib/utils';
 import type {PaginatedDatabaseQueryFilters} from '@lib/utils/db/filters';
@@ -22,7 +21,8 @@ import {
 	findPlayfieldLogsRoute,
 	findPlayfieldsRoute,
 	getPlayfieldRoute,
-	getPlayfieldStatsReportRoute,
+	updatePlayfieldPrizeRoute,
+	updatePlayfieldRoute,
 } from './playfield.openapi';
 
 const createPlayfieldApi = () => {
@@ -33,14 +33,20 @@ const createPlayfieldApi = () => {
 
 	const createServices = (context: AuthenticatedAppContext) => {
 		const playfieldRepository = new PlayfieldRepository(db, context);
-		const playfieldService = new PlayfieldService(playfieldRepository, context);
+		const prizeRepository = new PrizeRepository(db, context);
+		const machineLogRepository = new MachineLogRepository(db, context);
+		const playfieldService = new PlayfieldService(
+			playfieldRepository,
+			prizeRepository,
+			machineLogRepository,
+			context
+		);
 		const gameSessionRepository = new GameSessionRepository(db, context);
 		const gameSessionService = new GameSessionService(
 			gameSessionRepository,
 			context
 		);
 
-		const machineLogRepository = new MachineLogRepository(db, context);
 		const machineLogService = new MachineLogService(
 			machineLogRepository,
 			context
@@ -155,32 +161,41 @@ const createPlayfieldApi = () => {
 		return ctx.json(data, 200);
 	});
 
-	app.openapi(getPlayfieldStatsReportRoute, async (ctx) => {
+	app.openapi(updatePlayfieldRoute, async (ctx) => {
 		const appContext = ctx.get('appContext');
 		const {id} = ctx.req.valid('param');
 
-		const {start_date, range, unit} = ctx.req.valid('query');
+		const body = ctx.req.valid('json');
 
 		const {playfieldService} = createServices(appContext);
 
-		const playfieldStatsRepository = new PlayfieldStatsRepository(
-			db,
-			appContext
-		);
-		const playfieldReportService = new PlayfieldStatsReportService(
-			playfieldStatsRepository,
-			playfieldService,
-			appContext
-		);
+		const playfield = await playfieldService.updatePlayfield(id, body);
 
-		const result = await playfieldReportService.getStatisticsReportByPlayfield(
+		if (!playfield) {
+			throw new NotFoundError('Cannot find playfield');
+		}
+
+		return ctx.json(playfield.toJSON(), 200);
+	});
+
+	app.openapi(updatePlayfieldPrizeRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const {id} = ctx.req.valid('param');
+
+		const body = ctx.req.valid('json');
+
+		const {playfieldService} = createServices(appContext);
+
+		const playfield = await playfieldService.updatePlayfieldPrize(
 			id,
-			start_date ?? new Date(),
-			range,
-			unit ?? 'DAY'
+			body.prizeId
 		);
 
-		return ctx.json(result.toJSON(), 200);
+		if (!playfield) {
+			throw new NotFoundError('Cannot find playfield');
+		}
+
+		return ctx.json(playfield.toJSON(), 200);
 	});
 
 	return app;
