@@ -157,6 +157,9 @@ class GameSessionRepository
 					payment_method: this.db.raw(
 						`coalesce(game_session.payment_method, excluded.payment_method)`
 					),
+					prize_id: this.db.raw(
+						`coalesce(game_session.prize_id, excluded.prize_id)`
+					),
 				});
 
 			if (result.length === 0) {

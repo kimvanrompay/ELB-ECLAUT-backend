@@ -47,6 +47,10 @@ class Playfield {
 		code: string;
 		eventData?: string;
 	};
+	prize?: {
+		id: string;
+		name: string;
+	};
 
 	static schemas = {
 		DTOSchema: PlayfieldDTOSchema,
@@ -86,6 +90,10 @@ class Playfield {
 			isActive: boolean;
 			code: string;
 			eventData?: string;
+		},
+		prize?: {
+			id: string;
+			name: string;
 		}
 	) {
 		this.id = id;
@@ -95,6 +103,7 @@ class Playfield {
 		this.status = status;
 		this.lastMessageAt = lastMessageAt;
 		this.error = error;
+		this.prize = prize;
 	}
 
 	static fromJSON(data: PlayfieldDTOType[]): Playfield[];
@@ -119,7 +128,13 @@ class Playfield {
 				item.gametype,
 				item.status,
 				item.lastMessageAt,
-				item.error
+				item.error,
+				item.prize
+					? {
+							id: item.prize.id,
+							name: item.prize.name,
+						}
+					: undefined
 			);
 		});
 	}
@@ -165,6 +180,12 @@ class Playfield {
 							isActive: item.error_is_active !== 'false',
 							code: item.error_code,
 							eventData: item.error_event_data,
+						}
+					: undefined,
+				item.prize_id && item.prize_name
+					? {
+							id: item.prize_id,
+							name: item.prize_name,
 						}
 					: undefined
 			);
@@ -238,6 +259,12 @@ class Playfield {
 							code: item.error_code,
 							eventData: item.error_event_data,
 						}
+					: undefined,
+				item.prize_id && item.prize_name
+					? {
+							id: item.prize_id,
+							name: item.prize_name,
+						}
 					: undefined
 			);
 		});
@@ -267,6 +294,12 @@ class Playfield {
 			status: this.status,
 			lastMessageAt: this.lastMessageAt,
 			error: this.error,
+			prize: this.prize
+				? {
+						id: this.prize.id,
+						name: this.prize.name,
+					}
+				: undefined,
 		};
 	}
 }

@@ -13,6 +13,7 @@ const GameSessionDBSchema = z.object({
 	playfield_id: z.string(),
 	tenant_id: z.string(),
 	tenant_location_id: z.string(),
+	prize_id: z.string().optional(),
 
 	// Messages arrive in separate events, so we need to be able to insert gamesessions with mostly optional properties.
 	started_at: z.date().optional(),
@@ -33,6 +34,7 @@ const GameSessionDTOSchema = z.object({
 	playfieldId: z.string(),
 	tenantId: z.string(),
 	tenantLocationId: z.string(),
+	prizeId: z.string().optional(),
 
 	startedAt: z.date().optional(),
 	paymentMethod: z.nativeEnum(GamePaymentMethod).optional(),
@@ -55,6 +57,7 @@ const GameSessionInsertDBSchema = z.object({
 	playfield_id: z.string(),
 	tenant_id: z.string(),
 	tenant_location_id: z.string(),
+	prize_id: z.string().optional(),
 
 	started_at: z.date().optional(),
 	ended_at: z.date().optional(),
