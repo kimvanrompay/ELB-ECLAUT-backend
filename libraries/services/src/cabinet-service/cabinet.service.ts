@@ -31,12 +31,7 @@ class CabinetService implements ICabinetService {
 			return [undefined, undefined] as const;
 		}
 
-		return [
-			AuthorizationService.isTenantBound(auth.role) ? auth.tenantId : undefined,
-			AuthorizationService.isLocationBound(auth.role)
-				? auth.locationIds
-				: undefined,
-		] as const;
+		return AuthorizationService.getTenantAndLocationFromContext(this.context);
 	}
 
 	async findCabinets(filters: DatabaseQueryFilters): Promise<Cabinet[]> {
