@@ -8,7 +8,8 @@ import {
 	UnauthorizedError,
 	UserAlreadyExistsError,
 } from '@lib/errors';
-import {AppUser, AppUserRole} from '@lib/models/app-user';
+import {AppSecurityGroup, AppUser} from '@lib/models/app-user';
+import type {TenantLocation} from '@lib/models/tenant-location';
 import type {
 	IAppUserRepository,
 	ITenantLocationRepository,
@@ -21,11 +22,13 @@ import type {AppContext, AuthenticatedAppContext} from '../../src/types';
 
 const authContext: AppContext['auth'] = {
 	userId: '00000000-0000-0000-0000-000000000001',
-	role: AppUserRole.ELAUT_ADMIN,
+	securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 	email: 'admin@example.com',
 	locationIds: [],
 	tenantId: '00000000-0000-0000-0000-000000000001',
 	isElaut: true,
+	type: 'USER',
+	clientId: undefined,
 };
 
 const context: AuthenticatedAppContext = {
@@ -48,6 +51,7 @@ const mockAppUserRepositoryBase = {
 	getUserByEmail: vi.fn(),
 	getUserByIdForUpdate: vi.fn(),
 	transaction: vi.fn((fn) => fn()),
+	countUsersByFilters: vi.fn(),
 } satisfies Omit<IAppUserRepository, 'withTransaction'>;
 
 const mockTenantLocationRepositoryBase = {
@@ -64,6 +68,8 @@ const mockTenantLocationRepositoryBase = {
 	removeUserFromTenantLocations: vi.fn(),
 	inactivateTenantLocation: vi.fn(),
 	updateTenantLocation: vi.fn(),
+	countTenantLocations: vi.fn(),
+	findTenantLocationsByClientId: vi.fn(),
 } satisfies Omit<ITenantLocationRepository, 'withTransaction'>;
 
 const mockTenantLocationRepository = {
@@ -173,7 +179,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-9999'],
 					},
@@ -208,7 +214,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.ELAUT_ADMIN,
+						securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 						isElaut: true,
 						locationIds: ['00000000-0000-0000-0000-9999'],
 					},
@@ -241,7 +247,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-9999'],
 					},
@@ -261,21 +267,21 @@ describe('AppUserService', () => {
 
 	describe('blockUser', () => {
 		it('should call the repository with the correct arguments', async () => {
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'user@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: true,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'user@example.com',
+				'user',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'user',
-				locationIds: ['00000000-0000-0000-0000-000000000009'],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				['00000000-0000-0000-0000-000000000009'],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
 			const result = await appUserService.blockUser(
@@ -300,21 +306,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'user@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: true,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'user@example.com',
+				'user',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'user',
-				locationIds: ['00000000-0000-0000-0000-000000000009'],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				['00000000-0000-0000-0000-000000000009'],
+				true,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -325,7 +331,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-9999'],
 					},
@@ -354,21 +360,21 @@ describe('AppUserService', () => {
 				true
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.TENANT_ARCADE_MANAGER,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: ['00000000-0000-0000-0000-000000000009'],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_MANAGER,
+				['00000000-0000-0000-0000-000000000009'],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -379,7 +385,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-9999'],
 					},
@@ -413,21 +419,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
@@ -451,21 +457,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
@@ -489,21 +495,21 @@ describe('AppUserService', () => {
 				true
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
@@ -531,21 +537,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
 
@@ -567,21 +573,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
 
@@ -603,21 +609,21 @@ describe('AppUserService', () => {
 				true
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
 
@@ -643,21 +649,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -684,21 +690,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -725,21 +731,21 @@ describe('AppUserService', () => {
 				true
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -770,21 +776,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -812,21 +818,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -854,21 +860,21 @@ describe('AppUserService', () => {
 				true
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -904,7 +910,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [],
@@ -930,7 +936,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					tenantId: '00000000-0000-0000-0000-000000000099',
 					locationIds: [],
@@ -959,27 +965,28 @@ describe('AppUserService', () => {
 				}
 			);
 
-			mockAppUserRepository.getUserById.mockResolvedValue(
-				AppUser.fromJSON({
-					id: '00000000-0000-0000-0000-000000000009',
-					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
-					isBlocked: false,
-					lastSeen: '2021-01-01T00:00:00.000Z',
-					isActive: true,
-					locationIds: [],
-					username: 'admin',
-					tenant: {
-						id: '00000000-0000-0000-0000-000000000001',
-						name: 'Test Tenant',
-					},
-				})
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
 			);
+
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
 			await expect(
 				appUserService.createUser({
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: ['00000000-0000-0000-0000-000000000099'],
@@ -989,7 +996,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [
@@ -1006,28 +1013,28 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.createUser.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
 			const result = await appUserService.createUser({
 				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
+				securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 				username: 'admin',
 				tenantId: '00000000-0000-0000-0000-000000000001',
 				locationIds: [],
@@ -1038,7 +1045,7 @@ describe('AppUserService', () => {
 			expect(mockAppUserRepository.createUser).toHaveBeenCalledWith({
 				id: expect.any(String),
 				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
+				role: AppSecurityGroup.ELAUT_ADMIN,
 				username: 'admin',
 				tenant_id: '00000000-0000-0000-0000-000000000001',
 			});
@@ -1051,21 +1058,21 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'admin',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.createUser.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValue(undefined);
@@ -1073,7 +1080,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [],
@@ -1098,7 +1105,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1108,7 +1115,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'newuser@example.com',
-					role: AppUserRole.TENANT_ADMIN,
+					securityGroup: AppSecurityGroup.TENANT_ADMIN,
 					username: 'newuser',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [],
@@ -1133,35 +1140,33 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-9999'],
 					},
 				}
 			);
-
-			mockAppUserRepository.getUserById.mockResolvedValue(
-				AppUser.fromJSON({
-					id: '00000000-0000-0000-0000-000000000009',
-					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-					isBlocked: false,
-					lastSeen: '2021-01-01T00:00:00.000Z',
-					lastLogin: '2021-01-01T00:00:00.000Z',
-					tenant: {
-						id: '00000000-0000-0000-0000-000000000001',
-						name: 'Test Tenant',
-					},
-					username: 'employee',
-					locationIds: [],
-					isActive: true,
-				})
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
 			);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
 			await expect(
 				appUserService.createUser({
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: ['00000000-0000-0000-0000-000000000009'],
@@ -1173,8 +1178,8 @@ describe('AppUserService', () => {
 			vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValue(false);
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockImplementation(
-				(role: AppUserRole) => {
-					return role !== AppUserRole.ELAUT_ADMIN;
+				(securityGroup: AppSecurityGroup) => {
+					return securityGroup !== AppSecurityGroup.ELAUT_ADMIN;
 				}
 			);
 
@@ -1190,7 +1195,7 @@ describe('AppUserService', () => {
 					...context,
 					auth: {
 						...authContext,
-						role: AppUserRole.ELAUT_ADMIN,
+						securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1198,28 +1203,27 @@ describe('AppUserService', () => {
 			);
 
 			mockTenantLocationRepository.findTenantLocations.mockResolvedValue([]);
-			mockAppUserRepository.getUserById.mockResolvedValue(
-				AppUser.fromJSON({
-					id: '00000000-0000-0000-0000-000000000009',
-					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-					isBlocked: false,
-					lastSeen: '2021-01-01T00:00:00.000Z',
-					lastLogin: '2021-01-01T00:00:00.000Z',
-					tenant: {
-						id: '00000000-0000-0000-0000-000000000001',
-						name: 'Test Tenant',
-					},
-					username: 'employee',
-					locationIds: [],
-					isActive: true,
-				})
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
+					id: '00000000-0000-0000-0000-000000000001',
+					name: 'Test Tenant',
+				},
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
 			);
+			mockAppUserRepository.getUserById.mockResolvedValue(user);
 
 			await expect(
 				appUserService.createUser({
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: ['00000000-0000-0000-0000-000000000009'],
@@ -1248,21 +1252,21 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
 					id: '00000000-0000-0000-0000-000000000002',
 					name: 'Test Tenant 2',
 				},
-				username: 'employee',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
@@ -1270,7 +1274,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [],
@@ -1283,21 +1287,21 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'employee',
-				locationIds: [],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
@@ -1305,7 +1309,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.createUser({
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_MANAGER,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 					username: 'employee',
 					tenantId: '00000000-0000-0000-0000-000000000001',
 					locationIds: [],
@@ -1318,47 +1322,47 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'employee',
-				locationIds: ['00000000-0000-0000-0000-000000000009'],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				['00000000-0000-0000-0000-000000000009'],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
-			const newUser = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const newUser = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'employee',
-				locationIds: [
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[
 					'00000000-0000-0000-0000-000000000009',
 					'00000000-0000-0000-0000-000000000010',
 				],
-				isActive: true,
-			});
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserByEmail.mockResolvedValue(user);
 			mockAppUserRepository.getUserById.mockResolvedValueOnce(newUser);
 
 			const result = await appUserService.createUser({
 				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 				username: 'employee',
 				tenantId: '00000000-0000-0000-0000-000000000001',
 				locationIds: ['00000000-0000-0000-0000-000000000010'],
@@ -1397,7 +1401,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					locationIds: [],
 				})
@@ -1418,7 +1422,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserByIdForUpdate.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'admin@example.com',
-				role: AppUserRole.ELAUT_ADMIN,
+				securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 				username: 'admin',
 				locationIds: [],
 			});
@@ -1426,7 +1430,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					locationIds: [],
 				})
@@ -1442,21 +1446,21 @@ describe('AppUserService', () => {
 				false
 			);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				role: AppUserRole.ELAUT_ADMIN,
-				username: 'admin',
-				locationIds: [],
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				isBlocked: false,
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
@@ -1467,7 +1471,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					locationIds: [],
 				}
@@ -1479,7 +1483,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					role: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 				},
 				undefined,
@@ -1492,21 +1496,21 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				role: AppUserRole.ELAUT_ADMIN,
-				username: 'admin',
-				locationIds: [],
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				isBlocked: false,
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				[],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
@@ -1528,7 +1532,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					locationIds: [],
 				}
@@ -1546,7 +1550,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					role: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 				},
 				context.auth.tenantId,
@@ -1559,21 +1563,21 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(true);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'admin@example.com',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'admin@example.com',
+				'admin',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				role: AppUserRole.ELAUT_ADMIN,
-				username: 'admin',
-				locationIds: ['00000000-0000-0000-0000-000000000001'],
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				isBlocked: false,
-				isActive: true,
-			});
+				AppSecurityGroup.ELAUT_ADMIN,
+				['00000000-0000-0000-0000-000000000001'],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
@@ -1599,7 +1603,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 				}
 			);
@@ -1616,7 +1620,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					role: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 				},
 				context.auth.tenantId,
@@ -1629,40 +1633,40 @@ describe('AppUserService', () => {
 
 			vi.spyOn(AuthorizationService, 'isLocationBound').mockReturnValue(false);
 
-			const user = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const user = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'employee',
-				locationIds: ['00000000-0000-0000-0000-000000000012'],
-				isActive: true,
-			});
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				['00000000-0000-0000-0000-000000000012'],
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
-			const newUser = AppUser.fromJSON({
-				id: '00000000-0000-0000-0000-000000000009',
-				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
-				isBlocked: false,
-				lastSeen: '2021-01-01T00:00:00.000Z',
-				lastLogin: '2021-01-01T00:00:00.000Z',
-				tenant: {
+			const newUser = new AppUser(
+				'00000000-0000-0000-0000-000000000009',
+				'employee@example.com',
+				'employee',
+				{
 					id: '00000000-0000-0000-0000-000000000001',
 					name: 'Test Tenant',
 				},
-				username: 'employee',
-				locationIds: [
+				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				[
 					'00000000-0000-0000-0000-000000000009',
 					'00000000-0000-0000-0000-000000000010',
 				],
-				isActive: true,
-			});
+				false,
+				true,
+				new Date('2021-01-01T00:00:00.000Z'),
+				new Date('2021-01-01T00:00:00.000Z')
+			);
 
 			mockAppUserRepository.getUserById.mockResolvedValue(user);
 			mockAppUserRepository.updateUser.mockResolvedValue(newUser);
@@ -1680,7 +1684,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					locationIds: [
 						'00000000-0000-0000-0000-000000000009',
@@ -1701,7 +1705,7 @@ describe('AppUserService', () => {
 				'00000000-0000-0000-0000-000000000009',
 				{
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					role: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 				},
 				undefined,
@@ -1758,7 +1762,7 @@ describe('AppUserService', () => {
 					isAuthenticated: true,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1768,7 +1772,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'admin@example.com',
-				role: AppUserRole.TENANT_ADMIN,
+				securityGroup: AppSecurityGroup.TENANT_ADMIN,
 				username: 'admin',
 				locationIds: [],
 				tenant: {
@@ -1780,7 +1784,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'admin@example.com',
-					role: AppUserRole.ELAUT_ADMIN,
+					securityGroup: AppSecurityGroup.ELAUT_ADMIN,
 					username: 'admin',
 					locationIds: [],
 				})
@@ -1806,7 +1810,7 @@ describe('AppUserService', () => {
 					auth: {
 						...authContext,
 						userId: '00000000-0000-0000-0000-000000000009',
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1816,7 +1820,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'admin@example.com',
-				role: AppUserRole.TENANT_ARCADE_MANAGER,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 				username: 'admin',
 				locationIds: [],
 				tenant: {
@@ -1828,7 +1832,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.updateUser.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'admin@example.com',
-				role: AppUserRole.TENANT_ARCADE_MANAGER,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 				username: 'admin2',
 				locationIds: [],
 			});
@@ -1862,7 +1866,7 @@ describe('AppUserService', () => {
 					isAuthenticated: true,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1872,7 +1876,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: authContext.userId,
 				email: 'admin@example.com',
-				role: AppUserRole.TENANT_ARCADE_MANAGER,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 				tenant: {
 					id: authContext.tenantId,
 					name: 'Test Tenant',
@@ -1884,7 +1888,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'admin@example.com',
-					role: AppUserRole.TENANT_ADMIN,
+					securityGroup: AppSecurityGroup.TENANT_ADMIN,
 					username: 'admin',
 					locationIds: [],
 				})
@@ -1911,7 +1915,7 @@ describe('AppUserService', () => {
 					isAuthenticated: true,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1921,7 +1925,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 				username: 'employee',
 				locationIds: [],
 				tenant: {
@@ -1933,7 +1937,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ADMIN,
+					securityGroup: AppSecurityGroup.TENANT_ADMIN,
 					username: 'employee',
 					locationIds: [],
 				})
@@ -1961,7 +1965,7 @@ describe('AppUserService', () => {
 					auth: {
 						...authContext,
 						tenantId: 'SOME_TENANT_ID',
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: [],
 					},
@@ -1971,7 +1975,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 				username: 'employee',
 				locationIds: [],
 				tenant: {
@@ -1983,7 +1987,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					locationIds: [],
 				})
@@ -2010,7 +2014,7 @@ describe('AppUserService', () => {
 					isAuthenticated: true,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-000000000001'],
 					},
@@ -2020,7 +2024,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 				username: 'employee',
 				locationIds: ['00000000-0000-0000-0000-000000000001'],
 				tenant: {
@@ -2034,7 +2038,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					locationIds: ['00000000-0000-0000-0000-000000000002'],
 				})
@@ -2060,8 +2064,8 @@ describe('AppUserService', () => {
 		// 	vi.spyOn(AuthorizationService, 'isTenantBound').mockReturnValueOnce(true);
 		//
 		// 	vi.spyOn(AuthorizationService, 'isLocationBound').mockImplementation(
-		// 		(role: AppUserRole) => {
-		// 			return role === AppUserRole.TENANT_ARCADE_EMPLOYEE;
+		// 		(securityGroup: AppSecurityGroup) => {
+		// 			return role === AppSecurityGroup.TENANT_ARCADE_EMPLOYEE;
 		// 		}
 		// 	);
 		//
@@ -2078,7 +2082,7 @@ describe('AppUserService', () => {
 		// 			isAuthenticated: true,
 		// 			auth: {
 		// 				...authContext,
-		// 				role: AppUserRole.TENANT_ADMIN,
+		// 				securityGroup: AppSecurityGroup.TENANT_ADMIN,
 		// 				isElaut: false,
 		// 				locationIds: [],
 		// 			},
@@ -2088,7 +2092,7 @@ describe('AppUserService', () => {
 		// 	mockAppUserRepository.getUserById.mockResolvedValue({
 		// 		id: '00000000-0000-0000-0000-000000000009',
 		// 		email: 'employee@example.com',
-		// 		role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+		// 		securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 		// 		username: 'employee',
 		// 		locationIds: ['00000000-0000-0000-0000-000000000001'],
 		// 		tenant: {
@@ -2100,7 +2104,7 @@ describe('AppUserService', () => {
 		// 	await expect(
 		// 		appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 		// 			email: 'employee@example.com',
-		// 			role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+		// 			securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 		// 			username: 'employee',
 		// 			locationIds: [],
 		// 		})
@@ -2127,7 +2131,7 @@ describe('AppUserService', () => {
 					isAuthenticated: true,
 					auth: {
 						...authContext,
-						role: AppUserRole.TENANT_ARCADE_MANAGER,
+						securityGroup: AppSecurityGroup.TENANT_ARCADE_MANAGER,
 						isElaut: false,
 						locationIds: ['00000000-0000-0000-0000-000000000001'],
 					},
@@ -2137,7 +2141,7 @@ describe('AppUserService', () => {
 			mockAppUserRepository.getUserById.mockResolvedValue({
 				id: '00000000-0000-0000-0000-000000000009',
 				email: 'employee@example.com',
-				role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+				securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 				username: 'employee',
 				locationIds: ['00000000-0000-0000-0000-000000000002'],
 				tenant: {
@@ -2149,7 +2153,7 @@ describe('AppUserService', () => {
 			await expect(
 				appUserService.updateUser('00000000-0000-0000-0000-000000000009', {
 					email: 'employee@example.com',
-					role: AppUserRole.TENANT_ARCADE_EMPLOYEE,
+					securityGroup: AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
 					username: 'employee',
 					locationIds: ['00000000-0000-0000-0000-000000000001'],
 				})
