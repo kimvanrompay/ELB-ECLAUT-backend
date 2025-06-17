@@ -42,6 +42,11 @@ const ADMIN_TEST_USER = AppUser.fromJSON({
 	username: 'admin',
 	locationIds: [],
 	isActive: true,
+	settings: {
+		language: 'en',
+		allowPasswordLogin: true,
+	},
+	hasTempPassword: false,
 });
 
 const DEVELOPER_TEST_USER = AppUser.fromJSON({
@@ -58,6 +63,11 @@ const DEVELOPER_TEST_USER = AppUser.fromJSON({
 	username: 'developer',
 	locationIds: [],
 	isActive: true,
+	settings: {
+		language: 'en',
+		allowPasswordLogin: true,
+	},
+	hasTempPassword: false,
 });
 
 const context = {
