@@ -1,3 +1,4 @@
+import {hash} from 'bcrypt';
 import type {Knex} from 'knex';
 import {v4 as uuid} from 'uuid';
 
@@ -20,6 +21,7 @@ import type {
 } from '@lib/repositories/types';
 import {doesArrayHaveAllSameItems} from '@lib/utils/array';
 import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import {getEnvVariable} from '@lib/utils/env';
 import {PinoLogger} from '@lib/utils/logger';
 
 import {AuthorizationService} from '../authorization-service/authorization.service';
@@ -367,6 +369,31 @@ class AppUserService implements IAppUserService {
 				loggedInLocationIds
 			);
 		});
+	}
+
+	async updateUserPassword(id: string, password: string): Promise<AppUser> {
+		const [loggedInTenantId, loggedInLocationIds] =
+			this.getTenantAndLocationFromContext();
+
+		const user = await this.getUserById(id);
+
+		if (!user) {
+			throw new NotFoundError('User not found');
+		}
+
+		const newHashedPassword = await hash(
+			password,
+			getEnvVariable('BCRYPT_SALT_ROUNDS', 5)
+		);
+
+		return this.appUserRepository.updateUser(
+			id,
+			{
+				hashed_password: newHashedPassword,
+			},
+			loggedInTenantId,
+			loggedInLocationIds
+		);
 	}
 
 	async addUserToLocations(

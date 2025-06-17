@@ -11,3 +11,5 @@ export type {IMachineLogRepository} from './machine-log/machine-log.repository.t
 export type {ITenantRepository} from './tenant/tenant.repository.types';
 export type {IPlayfieldStatsRepository} from './playfield-stats/playfield-stats.repository.types';
 export type {IPrizeRepository} from './prize/prize.repository.types';
+export type {IClientRepository} from './client/client.repository.types';
+export type {IPasswordResetTokenRepository} from './password-reset-token/password-reset-token.repository.types';
