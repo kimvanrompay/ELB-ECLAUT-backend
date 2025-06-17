@@ -2,33 +2,37 @@ import {z} from '@hono/zod-openapi';
 import {getCookie} from 'hono/cookie';
 import {createMiddleware} from 'hono/factory';
 
-import {getKnexInstance} from '@lib/db';
 import {UnauthorizedError} from '@lib/errors';
 import {AppSecurityGroup} from '@lib/models/app-user';
-import {AppUserRepository} from '@lib/repositories/app-user';
-import {ClientRepository} from '@lib/repositories/client';
-import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
-import {TenantLocationRepository} from '@lib/repositories/tenant-location';
-import {AppUserService} from '@lib/services/app-user';
 import {
-	AuthService,
 	type ClientTokenPayload,
 	type UserTokenPayload,
 } from '@lib/services/auth';
-import {ClientService} from '@lib/services/client';
-import {TenantLocationService} from '@lib/services/tenant-location';
+import {getAwsSecret} from '@lib/utils/aws-secret-manager';
 
 import type {Environment} from '../types';
-
-const db = await getKnexInstance();
+import {createAuthService} from '../utils/create-auth-service';
 
 type AuthenticationMiddlewareOptions = {
 	passThrough?: boolean;
 };
 
-const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
-	createMiddleware<Environment>(async (ctx, next) => {
+const Authenticate = (options?: AuthenticationMiddlewareOptions) => {
+	let secret: {seed: string} | undefined;
+
+	const getSecret = async () => {
+		if (secret) {
+			return secret;
+		}
+
+		secret = await getAwsSecret<{seed: string}>('prd/jwt-seed'); // TODO: use a different secret for dev and prod
+
+		return secret;
+	};
+
+	return createMiddleware<Environment>(async (ctx, next) => {
 		const appContext = ctx.get('appContext');
+		const jwtSecret = await getSecret();
 
 		/**
 		 * When creating a private route on an already authenticated api, we don't want to re-authenticate
@@ -56,49 +60,12 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 		logger.debug('Access token:', accessTokenJwt);
 		logger.debug('Refresh token:', refreshTokenJwt);
 
-		const contextForRepositories = {
-			logger,
-		};
-		const appUserRepository = new AppUserRepository(db, contextForRepositories);
-		const tenantLocationRepository = new TenantLocationRepository(
-			db,
-			contextForRepositories
-		);
-		const refreshTokenRepository = new RefreshTokenRepository(
-			db,
-			contextForRepositories
-		);
-
-		const tenantLocationService = new TenantLocationService(
-			tenantLocationRepository,
+		const authService = createAuthService(
 			{
 				...appContext,
 				logger,
-			}
-		);
-
-		const clientRepository = new ClientRepository(db, contextForRepositories);
-		const clientService = new ClientService(clientRepository, {
-			...appContext,
-			logger,
-		});
-
-		const appUserService = new AppUserService(
-			appUserRepository,
-			tenantLocationRepository,
-			{
-				...appContext,
-				logger,
-			}
-		);
-
-		const authService = new AuthService(
-			'SOME_SUPER_DUPER_UNIQUE_SECRET',
-			refreshTokenRepository,
-			appUserService,
-			clientService,
-			tenantLocationService,
-			appContext
+			},
+			jwtSecret
 		);
 
 		// User authentication
@@ -216,6 +183,7 @@ const Authenticate = (options?: AuthenticationMiddlewareOptions) =>
 
 		await next();
 	});
+};
 
 export {Authenticate};
 

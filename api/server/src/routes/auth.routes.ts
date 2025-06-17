@@ -2,88 +2,33 @@ import {OpenAPIHono} from '@hono/zod-openapi';
 import dayjs from 'dayjs';
 import {getCookie, setCookie} from 'hono/cookie';
 
-import {BadRequestError, UnauthorizedError} from '@lib/errors';
-import {AppUserRepository} from '@lib/repositories/app-user';
-import {ClientRepository} from '@lib/repositories/client';
-import {LoginVerificationCodeRepository} from '@lib/repositories/login-verification-code';
-import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
-import {TenantLocationRepository} from '@lib/repositories/tenant-location';
-import {AppUserService} from '@lib/services/app-user';
-import {AuthService} from '@lib/services/auth';
-import {ClientService} from '@lib/services/client';
-import {EmailService} from '@lib/services/email';
-import {LoginVerificationCodeService} from '@lib/services/login-verification-code';
-import {TenantLocationService} from '@lib/services/tenant-location';
+import {BadRequestError, NotFoundError, UnauthorizedError} from '@lib/errors';
 import type {AppContext} from '@lib/services/types';
 import {defaultValidationHook} from '@lib/utils';
 import {isDevelopmentBuild} from '@lib/utils/env';
 
-import {db} from '../database';
 import type {Environment} from '../types';
+import {createAuthService} from '../utils/create-auth-service';
+import {getJwtSecret} from '../utils/get-jwt-seed';
 import {
+	authenticateWithPasswordRoute,
 	authorizeCodeRoute,
 	logoutAllDevicesRoute,
 	logoutRoute,
 	refreshTokenRoute,
+	requestResetPasswordRoute,
 	startAuthenticationWithCodeRoute,
 	startClientAuthenticationWithSecretRoute,
+	updatePasswordRoute,
+	validateResetPasswordTokenRoute,
 } from './auth.openapi';
 
-const createServices = (appContext: AppContext) => {
-	// TODO: implement the email service
-	const emailService = new EmailService(appContext);
+const createServices = async (appContext: AppContext) => {
+	const secret = await getJwtSecret();
 
-	const tenantLocationRepository = new TenantLocationRepository(db, {
-		logger: appContext.logger,
-	});
-	const appUserCodeRepository = new AppUserRepository(db, {
-		logger: appContext.logger,
-	});
-	const appUserService = new AppUserService(
-		appUserCodeRepository,
-		tenantLocationRepository,
-		appContext
-	);
-
-	const loginVerificationCodeRepository = new LoginVerificationCodeRepository(
-		db
-	);
-	const loginVerificationCodeService = new LoginVerificationCodeService(
-		appUserService,
-		loginVerificationCodeRepository,
-		emailService,
-		appContext
-	);
-
-	const refreshTokenRepository = new RefreshTokenRepository(db, {
-		logger: appContext.logger,
-	});
-
-	const tenantLocationService = new TenantLocationService(
-		tenantLocationRepository,
-		appContext
-	);
-
-	const clientRepository = new ClientRepository(db, {
-		logger: appContext.logger,
-	});
-
-	const clientService = new ClientService(clientRepository, appContext);
-
-	const authService = new AuthService(
-		'SOME_SUPER_DUPER_UNIQUE_SECRET', // TODO: replace with a real secret from AWS Secrets Manager
-		refreshTokenRepository,
-		appUserService,
-		clientService,
-		tenantLocationService,
-		appContext
-	);
-
+	const authService = createAuthService(appContext, secret);
 	return {
-		appUserService,
-		loginVerificationCodeService,
 		authService,
-		clientService,
 	};
 };
 
@@ -93,35 +38,24 @@ const createAuthApi = () => {
 		defaultHook: defaultValidationHook,
 	});
 
+	/**
+	 * Client authentication with client_id and client_secret
+	 */
 	authApp.openapi(startClientAuthenticationWithSecretRoute, async (ctx) => {
 		const {client_id: clientId, client_secret: clientSecret} =
 			ctx.req.valid('json');
 
-		const {authService, clientService} = createServices(ctx.get('appContext'));
-
-		console.log('Client ID:', clientId);
-		console.log('Client Secret:', clientSecret);
-
-		const isVerifiedSecret = await authService.verifyClientSecret(
-			clientId,
-			clientSecret
-		);
-
-		if (!isVerifiedSecret) {
-			throw new UnauthorizedError(
-				'Either client not found or invalid credentials'
-			);
-		}
+		const {authService} = await createServices(ctx.get('appContext'));
 
 		const {
-			client,
 			accessToken,
 			accessTokenExpiration,
 			refreshToken,
 			refreshTokenExpiration,
-		} = await authService.getJwtTokensByClientId(clientId);
-
-		await clientService.updateClientLastLogin(client.id);
+		} = await authService.clientAuthService.authenticateClient(
+			clientId,
+			clientSecret
+		);
 
 		const timeBetweenNowAndAccessTokenExpiration = dayjs(
 			accessTokenExpiration
@@ -148,46 +82,29 @@ const createAuthApi = () => {
 			throw new BadRequestError('Email is required');
 		}
 
-		const {loginVerificationCodeService} = createServices(
-			ctx.get('appContext')
-		);
+		const {authService} = await createServices(ctx.get('appContext'));
 
 		const code =
-			await loginVerificationCodeService.getNewLoginVerificationCode(email);
+			await authService.userAuthService.startAuthenticationWithCode(email);
 
 		return ctx.json(code.toJSON(), 200);
 	});
 
+	/**
+	 * User authentication with code
+	 */
 	authApp.openapi(authorizeCodeRoute, async (ctx) => {
 		const {code, email} = ctx.req.valid('json');
 
-		const {loginVerificationCodeService, appUserService, authService} =
-			createServices(ctx.get('appContext'));
+		const {authService} = await createServices(ctx.get('appContext'));
 
 		try {
-			const isValid =
-				await loginVerificationCodeService.verifyLoginVerificationCode(
-					email,
-					code
-				);
-
-			if (!isValid) {
-				throw new UnauthorizedError('Invalid code');
-			}
-
 			const {
-				user,
 				accessToken,
 				accessTokenExpiration,
 				refreshToken,
 				refreshTokenExpiration,
-			} = await authService.getJwtTokensByEmail(email);
-
-			await loginVerificationCodeService.deleteUserLoginVerificationCodes(
-				email
-			);
-
-			await appUserService.updateUserLastLogin(user.id);
+			} = await authService.userAuthService.authenticateCode(email, code);
 
 			setCookie(ctx, 'eclaut-access-token', accessToken, {
 				secure: !isDevelopmentBuild(),
@@ -208,6 +125,119 @@ const createAuthApi = () => {
 		}
 	});
 
+	/**
+	 * User authentication with email and password
+	 */
+	authApp.openapi(authenticateWithPasswordRoute, async (ctx) => {
+		const {email, password} = ctx.req.valid('json');
+
+		if (!email || !password) {
+			throw new BadRequestError('Email and password are required');
+		}
+
+		const {authService} = await createServices(ctx.get('appContext'));
+
+		try {
+			const {
+				accessToken,
+				accessTokenExpiration,
+				refreshToken,
+				refreshTokenExpiration,
+			} = await authService.userAuthService.authenticateUserPassword(
+				email,
+				password
+			);
+
+			setCookie(ctx, 'eclaut-access-token', accessToken, {
+				secure: !isDevelopmentBuild(),
+				httpOnly: true,
+				expires: accessTokenExpiration,
+			});
+
+			setCookie(ctx, 'eclaut-refresh-token', refreshToken, {
+				secure: !isDevelopmentBuild(),
+				httpOnly: true,
+				expires: refreshTokenExpiration,
+			});
+
+			return ctx.newResponse(null, 204);
+		} catch (e) {
+			ctx.get('logger').error(e);
+			throw new UnauthorizedError('Invalid email or password');
+		}
+	});
+
+	authApp.openapi(requestResetPasswordRoute, async (ctx) => {
+		const {email} = ctx.req.valid('json');
+
+		if (!email) {
+			throw new BadRequestError('Email is required');
+		}
+
+		const {authService} = await createServices(ctx.get('appContext'));
+
+		try {
+			await authService.userAuthService.sendPasswordResetEmail(email);
+		} catch (e) {
+			if (!(e instanceof UnauthorizedError) && !(e instanceof NotFoundError)) {
+				throw e;
+			}
+		}
+
+		return ctx.newResponse(null, 204);
+	});
+
+	authApp.openapi(validateResetPasswordTokenRoute, async (ctx) => {
+		const {token, email} = ctx.req.valid('json');
+		const logger = ctx.get('logger');
+
+		const {authService} = await createServices(ctx.get('appContext'));
+
+		try {
+			const user = await authService.userAuthService.validatePasswordReset(
+				email,
+				token
+			);
+
+			return ctx.json(
+				{
+					username: user.username,
+				},
+				200
+			);
+		} catch (e) {
+			logger.error(e);
+			throw new BadRequestError(
+				'We could not validate the token and email combination'
+			);
+		}
+	});
+
+	authApp.openapi(updatePasswordRoute, async (ctx) => {
+		const {token, email, newPassword} = ctx.req.valid('json');
+		const logger = ctx.get('logger');
+
+		if (!token || !email || !newPassword) {
+			throw new BadRequestError('Token, email and new password are required');
+		}
+
+		const {authService} = await createServices(ctx.get('appContext'));
+
+		try {
+			await authService.userAuthService.updateUserPassword(
+				email,
+				token,
+				newPassword
+			);
+			return ctx.newResponse(null, 204);
+		} catch (e) {
+			logger.error(e);
+			throw new BadRequestError(
+				'We could not update the password with the provided token and email'
+			);
+		}
+	});
+
 	authApp.openapi(refreshTokenRoute, async (ctx) => {
 		const refreshToken = getCookie(ctx, 'eclaut-refresh-token');
 
@@ -215,7 +245,7 @@ const createAuthApi = () => {
 			throw new UnauthorizedError('No refresh token');
 		}
 
-		const {authService} = createServices(ctx.get('appContext'));
+		const {authService} = await createServices(ctx.get('appContext'));
 
 		try {
 			const {
@@ -245,7 +275,7 @@ const createAuthApi = () => {
 
 	authApp.openapi(logoutRoute, async (ctx) => {
 		const appContext = ctx.get('appContext');
-		const {authService} = createServices(appContext);
+		const {authService} = await createServices(appContext);
 
 		const tokenUser = appContext.auth;
 		const refreshToken = getCookie(ctx, 'eclaut-refresh-token');
@@ -273,7 +303,7 @@ const createAuthApi = () => {
 
 	authApp.openapi(logoutAllDevicesRoute, async (ctx) => {
 		const appContext = ctx.get('appContext');
-		const {authService} = createServices(appContext);
+		const {authService} = await createServices(appContext);
 
 		const tokenUser = appContext.auth;
 
