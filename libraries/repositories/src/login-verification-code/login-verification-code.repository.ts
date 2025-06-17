@@ -85,9 +85,11 @@ class LoginVerificationCodeRepository
 	}
 
 	async removeExpiredLoginVerificationCodes(): Promise<void> {
-		await this.db('login_verification_code')
+		const result = await this.db('login_verification_code')
 			.where('expires_at', '<', new Date().toISOString())
 			.delete();
+
+		console.debug(`Removed ${result} expired login verification codes`);
 	}
 
 	async deleteUserLoginVerificationCodes(email: string): Promise<void> {
