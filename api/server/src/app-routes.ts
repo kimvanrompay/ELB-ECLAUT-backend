@@ -4,7 +4,7 @@ import {createAppUserApi} from './routes/app-user.routes';
 import {createAuthApi} from './routes/auth.routes';
 import {createCabinetApi} from './routes/cabinet.routes';
 import {createGametypeApi} from './routes/gametype.routes';
-import {healthCheckRoute} from './routes/health.openapi';
+import {healthCheckRoute, pingCheckRoute} from './routes/health.openapi';
 import {createMachineApi} from './routes/machine.routes';
 import {createMqttApi} from './routes/mqtt.routes';
 import {addOpenAPI} from './routes/openapi.routes';
@@ -19,6 +19,10 @@ import {createTenantApi} from './routes/tenant.routes';
 
 app.openapi(healthCheckRoute, (ctx) => {
 	return ctx.text('OK', 200);
+});
+
+app.openapi(pingCheckRoute, (ctx) => {
+	return ctx.text('PONG', 200);
 });
 
 app.route('/auth', createAuthApi());
