@@ -11,6 +11,7 @@
     "./jwt": "./src/jwt-service/jwt.service.ts",
     "./auth": "./src/auth-service/auth.service.ts",
     "./login-verification-code": "./src/login-verification-code-service/login-verification-code.service.ts",
+    "./password-reset-token": "./src/password-reset-token-service/password-reset-token.service.ts",
     "./gametype": "./src/gametype-service/gametype.service.ts",
     "./machine": "./src/machine-service/machine.service.ts",
     "./playfield": "./src/playfield-service/playfield.service.ts",
@@ -38,7 +39,10 @@
     "@lib/models": "workspace:^",
     "@lib/repositories": "workspace:^",
     "@lib/utils": "workspace:^",
+    "@sendgrid/client": "^8.1.5",
+    "@sendgrid/mail": "^8.1.5",
     "bcrypt": "^5.1.1",
+    "handlebars": "^4.7.8",
     "uuid": "^11.0.3",
     "zod": "^3.24.1"
   },

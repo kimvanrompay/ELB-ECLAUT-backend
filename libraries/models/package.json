@@ -18,6 +18,7 @@
     "./machine": "./src/machine/machine.model.ts",
     "./machine-log": "./src/machine-log/machine-log.model.ts",
     "./machine-message": "./src/machine-message/machine-message.model.ts",
+    "./password-reset-token": "./src/password-reset-token/password-reset-token.model.ts",
     "./playfield": "./src/playfield/playfield.model.ts",
     "./playfield-prize": "./src/playfield-prize/playfield-prize.model.ts",
     "./prize": "./src/prize/prize.model.ts",
