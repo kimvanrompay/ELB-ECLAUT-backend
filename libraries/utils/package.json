@@ -7,6 +7,7 @@
     ".": "./src/index.ts",
     "./array": "./src/array.utils.ts",
     "./aws-secret-manager": "./src/aws-secret-manager.ts",
+    "./aws-sts": "./src/aws-security-token-service.ts",
     "./db": "./src/database/database.utils.ts",
     "./db/filters": "./src/database/database-filters.ts",
     "./env": "./src/env.utils.ts",
@@ -16,7 +17,8 @@
     "./query-params": "./src/query-params.utils.ts",
     "./sqs": "./src/sqs/sqs.utils.ts",
     "./string": "./src/string.utils.ts",
-    "./types": "./src/types.utils.ts"
+    "./types": "./src/types.utils.ts",
+    "./mqtt-publisher": "./src/mqtt-publisher.ts"
   },
   "scripts": {
     "test": "yarn test:unit",
@@ -27,9 +29,12 @@
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
-    "@aws-sdk/client-secrets-manager": "^3.744.0",
-    "@aws-sdk/client-sqs": "^3.744.0",
-    "@aws-sdk/client-ssm": "^3.744.0",
+    "@aws-sdk/client-iot": "3.744.0",
+    "@aws-sdk/client-iot-data-plane": "3.744.0",
+    "@aws-sdk/client-secrets-manager": "3.744.0",
+    "@aws-sdk/client-sqs": "3.744.0",
+    "@aws-sdk/client-ssm": "3.744.0",
+    "@aws-sdk/client-sts": "3.744.0",
     "@hono/zod-openapi": "^0.18.3",
     "@lib/errors": "workspace:^",
     "async-mutex": "^0.5.0",

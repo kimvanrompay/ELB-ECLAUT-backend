@@ -1,5 +1,7 @@
 import {z} from '@hono/zod-openapi';
 
+import {AVAILABLE_LANGUAGES} from '@lib/utils/language';
+
 enum AppSecurityGroup {
 	// User roles
 	ELAUT_ADMIN = 'ELAUT_ADMIN',
@@ -35,6 +37,11 @@ const AppUserDTOSchema = z
 		isActive: z.boolean(),
 		lastLogin: z.string().optional(),
 		lastSeen: z.string().optional(),
+		settings: z.object({
+			language: z.enum(AVAILABLE_LANGUAGES as [string, ...string[]]),
+			allowPasswordLogin: z.boolean(),
+		}),
+		hasTempPassword: z.boolean(),
 	})
 	.openapi('User');
 
@@ -50,6 +57,10 @@ const AppUserDBSchema = z.object({
 	is_active: z.boolean(),
 	last_login: z.string().optional(),
 	last_seen: z.string().optional(),
+	language: z.enum(AVAILABLE_LANGUAGES as [string, ...string[]]),
+	allow_password_login: z.boolean(),
+	hashed_password: z.string(),
+	has_temp_password: z.boolean(),
 });
 
 const AppUserCreateDTOSchema = z.object({
@@ -58,6 +69,12 @@ const AppUserCreateDTOSchema = z.object({
 	tenantId: z.string(),
 	securityGroup: z.nativeEnum(AppSecurityGroup),
 	locationIds: z.array(z.string()).optional(),
+	settings: z
+		.object({
+			allowPasswordLogin: z.boolean().optional(),
+			language: z.enum(AVAILABLE_LANGUAGES as [string, ...string[]]).optional(),
+		})
+		.optional(),
 });
 // .refine(
 // 	(data) => {
@@ -88,6 +105,10 @@ const AppUserInsertDBSchema = z.object({
 	tenant_id: z.string(),
 	username: z.string(),
 	role: z.nativeEnum(AppSecurityGroup),
+	language: z.enum(AVAILABLE_LANGUAGES as [string, ...string[]]),
+	hashed_password: z.string(),
+	has_temp_password: z.boolean(),
+	allow_password_login: z.boolean(),
 });
 
 const AppUserUpdateDTOSchema = z.object({
@@ -96,6 +117,8 @@ const AppUserUpdateDTOSchema = z.object({
 	securityGroup: z.nativeEnum(AppSecurityGroup).optional(),
 	isBlocked: z.boolean().optional(),
 	locationIds: z.array(z.string()).optional(),
+	allowPasswordLogin: z.boolean().optional(),
+	language: z.enum(AVAILABLE_LANGUAGES as [string, ...string[]]).optional(),
 });
 
 const AppUserUpdateDBSchema = z.object({
@@ -106,6 +129,10 @@ const AppUserUpdateDBSchema = z.object({
 	last_login: z.string().optional(),
 	last_seen: z.string().optional(),
 	is_active: z.boolean().optional(),
+	allow_password_login: z.boolean().optional(),
+	language: z.enum(AVAILABLE_LANGUAGES as [string, ...string[]]).optional(),
+	hashed_password: z.string().optional(),
+	has_temp_password: z.boolean().optional(),
 });
 
 type AppUserDTOType = z.infer<typeof AppUserDTOSchema>;

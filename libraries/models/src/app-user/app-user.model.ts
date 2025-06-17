@@ -1,6 +1,7 @@
 import {v4 as uuid} from 'uuid';
 
 import {mapArrayOrSingleItem} from '@lib/utils';
+import {getLanguageOrDefault} from '@lib/utils/language';
 
 import {
 	AppSecurityGroup,
@@ -19,20 +20,6 @@ import {
 } from './app-user.schema';
 
 class AppUser {
-	id: string;
-	email: string;
-	username: string;
-	tenant: {
-		id: string;
-		name: string;
-	};
-	locationIds: string[];
-	securityGroup: AppSecurityGroup;
-	isBlocked: boolean;
-	isActive: boolean;
-	lastLogin: Date | undefined;
-	lastSeen: Date | undefined;
-
 	static schema = {
 		AppUserDTOSchema,
 		AppUserDBSchema,
@@ -43,31 +30,26 @@ class AppUser {
 	};
 
 	public constructor(
-		id: string,
-		email: string,
-		username: string,
-		tenant: {
+		public id: string,
+		public email: string,
+		public username: string,
+		public tenant: {
 			id: string;
 			name: string;
 		},
-		securityGroup: AppSecurityGroup,
-		locationIds: string[] = [],
-		isBlocked = false,
-		isActive = true,
-		lastSeen: Date | undefined = undefined,
-		lastLogin: Date | undefined = undefined
-	) {
-		this.id = id;
-		this.email = email;
-		this.tenant = tenant;
-		this.securityGroup = securityGroup;
-		this.locationIds = locationIds;
-		this.username = username;
-		this.isBlocked = isBlocked;
-		this.lastSeen = lastSeen;
-		this.lastLogin = lastLogin;
-		this.isActive = isActive;
-	}
+		public securityGroup: AppSecurityGroup,
+		public settings: {
+			allowPasswordLogin: boolean;
+			language: string;
+		},
+		public locationIds: string[] = [],
+		public isBlocked = false,
+		public isActive = true,
+		public lastSeen: Date | undefined = undefined,
+		public lastLogin: Date | undefined = undefined,
+		public hasTempPassword = false,
+		public hashedPassword = ''
+	) {}
 
 	toJSON(): AppUserDTOType {
 		return {
@@ -81,6 +63,11 @@ class AppUser {
 			lastLogin: this.lastLogin?.toISOString(),
 			lastSeen: this.lastSeen?.toISOString(),
 			isActive: this.isActive,
+			hasTempPassword: this.hasTempPassword,
+			settings: {
+				allowPasswordLogin: true, // Default value, can be changed later
+				language: 'en', // Default value, can be changed later
+			},
 		};
 	}
 
@@ -97,6 +84,10 @@ class AppUser {
 			last_seen: this.lastSeen?.toISOString(),
 			location_ids: JSON.stringify(this.locationIds),
 			is_active: this.isActive,
+			hashed_password: this.hashedPassword,
+			has_temp_password: this.hasTempPassword,
+			language: this.settings.language,
+			allow_password_login: this.settings.allowPasswordLogin,
 		};
 	}
 
@@ -107,6 +98,10 @@ class AppUser {
 			tenant_id: this.tenant.id,
 			username: this.username,
 			role: this.securityGroup,
+			language: this.settings.language,
+			has_temp_password: this.hasTempPassword,
+			allow_password_login: this.settings.allowPasswordLogin,
+			hashed_password: this.hashedPassword,
 		};
 	}
 
@@ -127,6 +122,8 @@ class AppUser {
 				lastLogin,
 				locationIds,
 				isActive,
+				hasTempPassword,
+				settings,
 			} = item;
 			return new AppUser(
 				id,
@@ -134,11 +131,13 @@ class AppUser {
 				username,
 				tenant,
 				role,
+				settings,
 				locationIds,
 				isBlocked,
 				isActive,
 				lastSeen ? new Date(lastSeen) : undefined,
-				lastLogin ? new Date(lastLogin) : undefined
+				lastLogin ? new Date(lastLogin) : undefined,
+				hasTempPassword
 			);
 		});
 	}
@@ -159,6 +158,10 @@ class AppUser {
 				last_seen,
 				last_login,
 				location_ids,
+				allow_password_login,
+				has_temp_password,
+				hashed_password,
+				language,
 			} = item;
 
 			const parsed_location_ids =
@@ -172,11 +175,17 @@ class AppUser {
 				username,
 				{id: tenant_id, name: tenant_name},
 				role,
+				{
+					allowPasswordLogin: allow_password_login,
+					language: language || 'en',
+				},
 				parsed_location_ids,
 				is_blocked,
 				is_active,
 				last_seen ? new Date(last_seen) : undefined,
-				last_login ? new Date(last_login) : undefined
+				last_login ? new Date(last_login) : undefined,
+				has_temp_password,
+				hashed_password || ''
 			);
 		});
 	}
@@ -192,6 +201,10 @@ class AppUser {
 			validatedData.username,
 			{id: validatedData.tenantId, name: ''},
 			validatedData.securityGroup,
+			{
+				allowPasswordLogin: validatedData.settings?.allowPasswordLogin ?? true,
+				language: getLanguageOrDefault(validatedData.settings?.language),
+			},
 			[],
 			false,
 			true
