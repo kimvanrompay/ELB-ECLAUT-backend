@@ -46,7 +46,7 @@ RUN addgroup -S -g 1001 docker \
 
 USER nodejs
 
-COPY --from=builder --chown=node:docker /app/api/server/build/server.js ./api/server/build/server.js
+COPY --from=builder --chown=node:docker /app/api/server/build/ ./api/server/build/
 # Expose the port that the application listens on.
 
 EXPOSE 3000

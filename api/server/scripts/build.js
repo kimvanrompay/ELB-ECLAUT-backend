@@ -1,4 +1,6 @@
 import esbuild from 'esbuild';
+import {cpSync} from 'fs';
+import {resolve} from 'path';
 
 esbuild.buildSync({
 	bundle: true,
@@ -35,3 +37,10 @@ esbuild.buildSync({
 		js: "import { createRequire } from 'module'; const require = createRequire(import.meta.url);",
 	},
 });
+
+const __dirname = import.meta.dirname;
+cpSync(
+	resolve(__dirname, '../../../libraries/services/src/email-service/templates'),
+	resolve(__dirname, '../build', 'templates'),
+	{recursive: true}
+);
