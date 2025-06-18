@@ -4,7 +4,6 @@ import {
 } from '@aws-sdk/client-secrets-manager';
 
 const AWS_REGION = process.env.AWS_REGION ?? 'eu-west-1';
-const AWS_PROFILE = process.env.AWS_PROFILE ?? 'elaut';
 
 let awsSecretClient: SecretsManagerClient;
 

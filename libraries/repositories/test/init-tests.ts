@@ -1,5 +1,5 @@
 import knex from 'knex';
-import PGClient from 'knex/lib/dialects/postgres';
+import PGClient from 'knex/lib/dialects/postgres/index.js';
 
 import {runSQLFiles} from './test-utils';
 
