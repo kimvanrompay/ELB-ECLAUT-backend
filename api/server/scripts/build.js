@@ -28,6 +28,10 @@ esbuild.buildSync({
 		'mock-aws-s3',
 		'@mapbox/node-pre-gyp',
 		'*.html',
+		'pino',
+		'pino-pretty',
+		'knex',
+		'bcrypt',
 	],
 	entryPoints: ['./src/server.ts'],
 	banner: {

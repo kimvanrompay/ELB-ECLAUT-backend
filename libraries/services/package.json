@@ -36,13 +36,13 @@
     "@lib/models": "workspace:^",
     "@lib/repositories": "workspace:^",
     "@lib/utils": "workspace:^",
-    "bcrypt": "^5.1.1",
-    "uuid": "^11.0.3",
-    "zod": "^3.24.1"
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.12.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "uuid": "^11.0.3",
+    "zod": "^3.24.1"
   }
 }
