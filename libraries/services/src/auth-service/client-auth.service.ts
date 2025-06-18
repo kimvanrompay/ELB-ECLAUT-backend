@@ -13,7 +13,10 @@ import type {IClientService} from '../client-service/client.service.types';
 import {JwtAuthService} from '../jwt-service/jwt.service';
 import type {IJwtService} from '../jwt-service/jwt.service.types';
 import type {AppContext, ITenantLocationService} from '../types';
-import {ACCESS_TOKEN_EXPIRATION_MINUTES, REFRESH_TOKEN_EXPIRATION_DAYS} from './auth.service.constants';
+import {
+	ACCESS_TOKEN_EXPIRATION_MINUTES,
+	REFRESH_TOKEN_EXPIRATION_DAYS,
+} from './auth.service.constants';
 
 class ClientAuthService {
 	private logger: PinoLogger;
