@@ -13,8 +13,11 @@ export type {IMachineLogService} from './machine-log-service/machine-log.service
 export type {ITenantLocationService} from './tenant-location-service/tenant-location.service.types';
 export type {ITenantService} from './tenant-service/tenant.service.types';
 export type {IPlayerZoneService} from './player-zone-service/player-zone.service.types';
+// export type {IPlayfieldStatsService} from './playfield-stats-service/playfield-stats.service.types';
+// export type {IPrizeService} from './prize-service/prize.service.types';
 export type {IClientService} from './client-service/client.service.types';
 export type {IPasswordResetTokenService} from './password-reset-token-service/password-reset-token.service.types';
+export type {IPlayfieldCategoryService} from './playfield-category-service/playfield-category.service.types';
 
 type AppContextPlayerAuth = {
 	userId: string;
