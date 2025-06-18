@@ -633,6 +633,10 @@ describe('AppUserRepository', () => {
 				id: '00000000-0000-0000-0000-000000000099',
 				role: AppSecurityGroup.ELAUT_ADMIN,
 				tenant_id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
+				allow_password_login: true,
+				has_temp_password: false,
+				hashed_password: 'hashed-password',
+				language: 'en',
 			});
 
 			expect(newUser).toBeDefined();
@@ -658,6 +662,10 @@ describe('AppUserRepository', () => {
 					id: '00000000-0000-0000-0000-000000000003',
 					role: AppSecurityGroup.ELAUT_ADMIN,
 					tenant_id: '191e84db-b52f-46f9-bd53-b0b68241b0d2',
+					allow_password_login: true,
+					has_temp_password: false,
+					hashed_password: 'hashed-password',
+					language: 'en',
 				})
 			).rejects.toThrowError(DatabaseInsertError);
 		});
