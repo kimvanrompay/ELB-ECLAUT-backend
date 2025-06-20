@@ -1,0 +1,26 @@
+{
+  "name": "@lib/models",
+  "version": "1.0.0",
+  "description": "",
+  "type": "module",
+  "packageManager": "yarn@4.6.0",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "exports": {
+    "./schema": "./src/machine/machine.schema.ts",
+    "./machine": "./src/machine/machine.model.ts",
+    "./gametype": "./src/gametype/gametype.model.ts"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@hono/zod-openapi": "^0.18.3",
+    "hono": "^4.6.19",
+    "uuid": "^11.0.5",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.4"
+  }
+}

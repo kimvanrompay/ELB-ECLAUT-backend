@@ -1,1 +1,1 @@
-export {db} from './connection';
+export {getKnexInstance} from './connection';

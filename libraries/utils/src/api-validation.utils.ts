@@ -1,7 +1,7 @@
-import {ResponseConfig} from '@asteasolutions/zod-to-openapi';
-import {Hook, RouteConfig} from '@hono/zod-openapi';
-import {Context} from 'hono';
-import {JSONValue} from 'hono/utils/types';
+import {type ResponseConfig} from '@asteasolutions/zod-to-openapi';
+import type {Hook, RouteConfig} from '@hono/zod-openapi';
+import type {Context} from 'hono';
+import type {JSONValue} from 'hono/utils/types';
 import {ZodSchema} from 'zod';
 
 import {ApiError, ValidationError} from '@lib/errors';
@@ -35,7 +35,8 @@ const defaultValidationHook: Hook<any, any, any, any> = async (result, ctx) => {
 	if (!result.success) {
 		const errorKey = mapValidationTargetToError(result.target);
 		const errors = ValidationError.fromZodError(result.error);
-		return ctx.json(new ApiError(400, 'Bad request', errorKey, errors));
+
+		return ctx.json(new ApiError(400, 'Bad request', errorKey, errors), 400);
 	}
 };
 

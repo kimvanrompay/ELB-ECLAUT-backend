@@ -1,0 +1,31 @@
+services:
+  db-test:
+    image: postgres:17.2-alpine
+    restart: always
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_DB: elaut
+      POSTGRES_PASSWORD: example
+    networks:
+      - elaut-test
+    ports:
+      - '5433:5432'
+    expose:
+      - '5433'
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U elaut"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - pgdatatest:/var/lib/postgresql/data
+#      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+#      - ./scripts/sqs-test.sql:/docker-entrypoint-initdb.d/sqs-test.sql
+
+volumes:
+  pgdatatest:
+
+networks:
+  elaut-test:
+    external: false

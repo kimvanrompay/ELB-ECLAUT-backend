@@ -1,0 +1,36 @@
+{
+  "name": "api-server",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 0",
+    "dev": "npx tsx watch src/server.ts",
+    "build": "node scripts/build.js"
+  },
+  "dependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@hono/node-server": "^1.13.7",
+    "@hono/swagger-ui": "^0.5.0",
+    "@hono/zod-openapi": "^0.18.3",
+    "@hono/zod-validator": "^0.4.2",
+    "@lib/db": "workspace:^",
+    "@lib/errors": "workspace:^",
+    "@lib/models": "workspace:^",
+    "@lib/repositories": "workspace:^",
+    "@lib/services": "workspace:^",
+    "@lib/utils": "workspace:^",
+    "hono": "^4.6.19",
+    "jsonwebtoken": "^9.0.2",
+    "otplib": "^12.0.1",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@types/jsonwebtoken": "^9",
+    "@types/node": "^22.12.0",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.3"
+  },
+  "packageManager": "yarn@4.6.0"
+}

@@ -1,25 +1,41 @@
-import {OpenAPIHono} from '@hono/zod-openapi';
+import {OpenAPIHono, z} from '@hono/zod-openapi';
 import {cors} from 'hono/cors';
 import {csrf} from 'hono/csrf';
 import {requestId} from 'hono/request-id';
 
-import {db} from '@lib/db';
-import {MachineRepository} from '@lib/repositories/machine';
-import {MachineService} from '@lib/services/machine';
+// import {getKnexInstance} from '@lib/db';
+// import {MachineRepository} from '@lib/repositories/machine';
+// import {MachineService} from '@lib/services/machine';
 import {defaultValidationHook} from '@lib/utils';
 
 import {apiErrorHandler} from './api-error-handler';
 import {httpLogger} from './middlewares/http-logger';
-import {createMachineApi} from './routes/machine.routes';
-import {addOpenAPI} from './routes/openapi.routes';
-import {Environment} from './types';
+// import {createMachineApi} from './routes/machine.routes';
+import type {Environment} from './types';
 
 const app = new OpenAPIHono<Environment>({
 	strict: true,
 	defaultHook: defaultValidationHook,
 });
 
-app.use(cors());
+const cookieAuthRegistry = app.openAPIRegistry.registerComponent(
+	'securitySchemes',
+	'cookieAuth',
+	{
+		type: 'apiKey',
+		in: 'cookie',
+		name: 'eclaut-access-token',
+		description: 'Cookie-based authentication',
+	}
+);
+
+app.use(
+	cors({
+		origin: ['http://localhost:3000', 'http://localhost:3001'],
+		credentials: true,
+		// maxAge: 600,
+	})
+);
 app.use(csrf());
 app.onError(apiErrorHandler);
 app.use(requestId());
@@ -29,21 +45,7 @@ app.use(httpLogger);
  * Services
  */
 
-const machineRepository = new MachineRepository(db);
-const machineService = new MachineService(machineRepository);
+// const machineRepository = new MachineRepository(db);
+// const machineService = new MachineService(machineRepository);
 
-/**
- * Routes
- */
-
-app.route('/machines', createMachineApi(machineService));
-app.get('/health', (c) => {
-	return c.json({status: 'ok'});
-});
-
-/**
- * OpenAPI  swagger routes (needs to be last)
- */
-addOpenAPI(app);
-
-export default app;
+export {app, cookieAuthRegistry};

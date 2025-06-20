@@ -1,14 +1,26 @@
-import {Machine, MachineUpdateDTOType} from '@lib/models/machine';
+import type {Machine, MachineCreateDTOType} from '@lib/models/machine';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 interface IMachineService {
-	getAllMachines(): Promise<Machine[]>;
+	findMachines(
+		filters?: DatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<Machine[]>;
 
-	getMachineById(id: string): Promise<Machine>;
+	findPaginatedMachines(
+		filters: PaginatedDatabaseQueryFilters,
+		tenantId?: string,
+		locationIds?: string[]
+	): Promise<{
+		entries: Machine[];
+		totalEntries: number;
+	}>;
 
-	updateMachine(
-		machineId: string,
-		machine: MachineUpdateDTOType
-	): Promise<Machine>;
+	createMachine(machine: MachineCreateDTOType): Promise<Machine>;
 }
 
-export {IMachineService};
+export type {IMachineService};

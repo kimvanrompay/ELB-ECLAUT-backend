@@ -1,11 +1,16 @@
 import {
 	GametypeCreateDTOSchema,
+	type GametypeCreateDTOType,
 	GametypeDBSchema,
-	GametypeDBType,
+	type GametypeDBType,
 	GametypeDTOSchema,
-	GametypeDTOType,
+	type GametypeDTOType,
 	GametypeInsertDBSchema,
+	type GametypeInsertDBType,
+	GametypeUpdateDBSchema,
+	type GametypeUpdateDBType,
 	GametypeUpdateDTOSchema,
+	type GametypeUpdateDTOType,
 } from './gametype.schema';
 
 class Gametype {
@@ -19,6 +24,7 @@ class Gametype {
 		GametypeCreateDTOSchema,
 		GametypeInsertDBSchema,
 		GametypeUpdateDTOSchema,
+		GametypeUpdateDBSchema,
 	};
 
 	public constructor(
@@ -77,3 +83,12 @@ class Gametype {
 }
 
 export {Gametype};
+
+export type {
+	GametypeDTOType,
+	GametypeDBType,
+	GametypeCreateDTOType,
+	GametypeInsertDBType,
+	GametypeUpdateDBType,
+	GametypeUpdateDTOType,
+};

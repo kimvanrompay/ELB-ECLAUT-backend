@@ -1,0 +1,8 @@
+services:
+  elastimq:
+    image: softwaremill/elasticmq-native:latest
+    ports:
+      - '9324:9324'
+      - '9325:9325'
+    volumes:
+      - ./elasticmq.conf:/opt/elasticmq.conf

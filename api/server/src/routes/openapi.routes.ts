@@ -1,8 +1,7 @@
 import {swaggerUI} from '@hono/swagger-ui';
 import {OpenAPIHono} from '@hono/zod-openapi';
-import {basicAuth} from 'hono/basic-auth';
 
-import {Environment} from '../types';
+import {type Environment} from '../types';
 
 const addOpenAPI = (app: OpenAPIHono<Environment>) => {
 	app.doc('/openapi', {
@@ -13,12 +12,40 @@ const addOpenAPI = (app: OpenAPIHono<Environment>) => {
 		},
 	});
 
-	app.use('/swagger', basicAuth({username: 'lica', password: 'hellothere'}));
+	// app.use('/swagger', basicAuth({username: 'lica', password: 'hellothere'}));
 	app.get(
 		'/swagger',
 		swaggerUI({
 			url: '/openapi',
 			withCredentials: true,
+			syntaxHighlight: true,
+			tagsSorter: `(a, b) => {
+
+					// const order = ['General', 'Authentication', 'Users'];
+
+					// const aIndex = order.indexOf(a);
+					// const bIndex = order.indexOf(b);
+					//
+					// console.log(aIndex, a, bIndex, b);
+					//
+					// if (aIndex > -1 && bIndex === -1) {
+					// 	return -1;
+					// }
+					//
+					// if (aIndex === -1 && bIndex > -1) {
+					// 	return 1;
+					// }
+					//
+					// if (aIndex > bIndex) {
+					// 	return 1;
+					// }
+					//
+					// if (aIndex < bIndex) {
+					// 	return -1;
+					// }
+
+					return a.localeCompare(b);
+			}`,
 		})
 	);
 };
