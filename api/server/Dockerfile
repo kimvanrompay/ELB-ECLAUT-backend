@@ -6,6 +6,7 @@ ARG YARN_VERSION=4.6.0
 FROM public.ecr.aws/bitnami/node:22 AS base
 
 FROM base AS prebuilder
+ARG YARN_VERSION
 ENV NODE_ENV=production
 
 WORKDIR /app
@@ -18,6 +19,7 @@ RUN turbo prune api-server --docker
 
 # Install the dependencies and build the application
 FROM base AS installer
+ARG YARN_VERSION
 ENV NODE_ENV=production
 
 WORKDIR /app
@@ -27,6 +29,7 @@ COPY --from=prebuilder /app/out/json/ .
 RUN yarn install --immutable
 
 FROM installer AS builder
+ARG YARN_VERSION
 
 WORKDIR /app
 RUN corepack enable && corepack prepare yarn@${YARN_VERSION}
