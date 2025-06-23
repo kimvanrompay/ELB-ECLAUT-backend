@@ -1,5 +1,6 @@
 import {swaggerUI} from '@hono/swagger-ui';
 import {OpenAPIHono} from '@hono/zod-openapi';
+import {basicAuth} from 'hono/dist/types/middleware/basic-auth';
 
 import {type Environment} from '../types';
 
@@ -12,7 +13,7 @@ const addOpenAPI = (app: OpenAPIHono<Environment>) => {
 		},
 	});
 
-	// app.use('/swagger', basicAuth({username: 'lica', password: 'hellothere'}));
+	app.use('/swagger', basicAuth({username: 'eclaut', password: 'Monsterdrop'}));
 	app.get(
 		'/swagger',
 		swaggerUI({
