@@ -37,7 +37,7 @@ COPY --from=installer /app/node_modules ./node_modules
 RUN yarn workspace api-server build
 
 # Copy the application and run it on a DIFFERENT image!
-FROM node:${NODE_VERSION}-alpine AS runner
+FROM public.ecr.aws/bitnami/node:22 AS runner
 ENV NODE_ENV=production
 
 WORKDIR /app
