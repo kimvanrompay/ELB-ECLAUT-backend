@@ -1,6 +1,6 @@
 import {swaggerUI} from '@hono/swagger-ui';
 import {OpenAPIHono} from '@hono/zod-openapi';
-import {basicAuth} from 'hono/dist/types/middleware/basic-auth';
+import {basicAuth} from 'hono/basic-auth';
 
 import {type Environment} from '../types';
 
