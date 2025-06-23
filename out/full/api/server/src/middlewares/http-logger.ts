@@ -16,6 +16,11 @@ const httpLogger = createMiddleware(async (ctx, next) => {
 
 	ctx.set('logger', requestLogger);
 
+	ctx.set('appContext', {
+		logger: requestLogger,
+		requestId: ctx.var.requestId,
+	});
+
 	const start = performance.now();
 
 	await next();

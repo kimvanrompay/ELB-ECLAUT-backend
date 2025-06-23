@@ -4,13 +4,33 @@
   "private": true,
   "type": "module",
   "exports": {
+    "./app-user": "./src/app-user/app-user.repository.ts",
+    "./cabinet": "./src/cabinet/cabinet.repository.ts",
+    "./game-session": "./src/game-session/game-session.repository.ts",
+    "./gametype": "./src/gametype/gametype.repository.ts",
+    "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
+    "./machine": "./src/machine/machine.repository.ts",
+    "./machine-log": "./src/machine-log/machine-log.repository.ts",
+    "./machine-message": "./src/machine-message/machine-message.repository.ts",
+    "./playfield": "./src/playfield/playfield.repository.ts",
+    "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
+    "./tenant-location": "./src/tenant-location/tenant-location.repository.ts",
+    "./tenant": "./src/tenant/tenant.repository.ts",
     "./types": "./src/types.ts",
-    "./machine": "./src/machine/machine.repository.ts"
+    "./playfield-stats": "./src/playfield-stats/playfield-stats.repository.ts"
+  },
+  "scripts": {
+    "test": "yarn test:integration",
+    "pretest:integration": "yarn workspace @lib/db run db:test:down && yarn workspace @lib/db run db:test:up && yarn workspace @lib/db run db:test:migrate",
+    "test:integration": "yarn pretest:integration && vitest run && yarn posttest:integration",
+    "posttest:integration": "yarn workspace @lib/db run db:test:down"
   },
   "dependencies": {
     "@lib/errors": "workspace:^",
     "@lib/models": "workspace:^",
-    "@lib/utils": "workspace:^",
+    "@lib/utils": "workspace:^"
+  },
+  "devDependencies": {
     "knex": "^3.1.0",
     "uuid": "^11.0.3",
     "zod": "^3.24.1"

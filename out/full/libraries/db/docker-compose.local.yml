@@ -1,5 +1,5 @@
 services:
-  db:
+  db-local:
     image: postgres:17.2-alpine
     restart: always
     environment:
@@ -18,8 +18,6 @@ services:
       start_period: 60s
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-      - ./scripts/seed.sql:/docker-entrypoint-initdb.d/seed.sql
 
 volumes:
   pgdata:

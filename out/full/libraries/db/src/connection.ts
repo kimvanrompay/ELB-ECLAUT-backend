@@ -1,21 +1,75 @@
-import knex, {Knex} from 'knex';
-import PGClient from 'knex/lib/dialects/postgres';
+import knex, {type Knex} from 'knex';
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+//@ts-ignore
+import PGClient from 'knex/lib/dialects/postgres/index.js';
+
+import {getAwsSecret} from '@lib/utils/aws-secret-manager';
 
 // eslint-disable-next-line @typescript-eslint/no-namespace
 declare namespace global {
 	let postgresDatabase: Knex | undefined;
 }
 
-const connectionConfig = {
-	host: process.env.POSTGRES_HOST ?? 'host.docker.internal',
-	port: parseInt(process.env.POSTGRES_PORT ?? '5432') ?? 5432,
-	user: process.env.POSTGRES_USER ?? 'app',
-	password: process.env.POSTGRES_PASSWORD ?? 'example',
-	database: process.env.POSTGRES_DB ?? 'elaut',
+type DatabaseConfig = {
+	host: string;
+	port: number;
+	user: string;
+	password: string;
+	database: string;
 };
 
-let postgresDatabase: Knex | undefined;
-const getNewKnexInstance = () => {
+const getAwsDatabaseCredentials = async () => {
+	const secretName = process.env.AWS_DB_SECRET;
+
+	if (!secretName) {
+		throw new Error('No AWS_DB_SECRET environment variable set');
+	}
+
+	const creds = await getAwsSecret<{
+		host: string;
+		port: number;
+		username: string;
+		password: string;
+		dbname: string;
+	}>(secretName);
+
+	return {
+		host: creds.host,
+		port: creds.port,
+		user: creds.username,
+		password: creds.password,
+		database: creds.dbname,
+	};
+};
+
+const getPossiblyLocalDatabaseConfig = async (): Promise<DatabaseConfig> => {
+	const POSTGRES_HOST = process.env.POSTGRES_HOST;
+	const POSTGRES_PORT = process.env.POSTGRES_PORT;
+	const POSTGRES_USER = process.env.POSTGRES_USER;
+	const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD;
+	const POSTGRES_DB = process.env.POSTGRES_DB;
+
+	const areAllEnvVarsSet =
+		!!POSTGRES_HOST &&
+		!!POSTGRES_PORT &&
+		!!POSTGRES_USER &&
+		!!POSTGRES_PASSWORD &&
+		!!POSTGRES_DB;
+
+	if (areAllEnvVarsSet) {
+		return {
+			host: POSTGRES_HOST!,
+			port: parseInt(POSTGRES_PORT!),
+			user: POSTGRES_USER!,
+			password: POSTGRES_PASSWORD!,
+			database: POSTGRES_DB!,
+		};
+	}
+
+	return getAwsDatabaseCredentials();
+};
+
+const getNewKnexInstance = (config: DatabaseConfig) => {
 	return knex({
 		dialect: 'postgres',
 		client: PGClient,
@@ -23,19 +77,25 @@ const getNewKnexInstance = () => {
 			min: 5,
 			max: 50,
 		},
-		// TODO: env variables or secrets manager
-		connection: connectionConfig,
+		connection: config,
 	});
 };
 
-// Prevent Hot Module Replacement from creating new connections
-if (process.env.NODE_ENV !== 'production') {
-	if (!global.postgresDatabase) {
-		global.postgresDatabase = getNewKnexInstance();
-	}
-	postgresDatabase = global.postgresDatabase;
-} else {
-	postgresDatabase = getNewKnexInstance();
-}
+export const getKnexInstance = async () => {
+	// Prevent Hot Module Replacement from creating new connections
 
-export const db = postgresDatabase;
+	if (global.postgresDatabase) {
+		return global.postgresDatabase;
+	}
+
+	if (process.env.NODE_ENV !== 'production') {
+		global.postgresDatabase = getNewKnexInstance(
+			await getPossiblyLocalDatabaseConfig()
+		);
+	} else {
+		global.postgresDatabase = getNewKnexInstance(
+			await getAwsDatabaseCredentials()
+		);
+	}
+	return global.postgresDatabase;
+};

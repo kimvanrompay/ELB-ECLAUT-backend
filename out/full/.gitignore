@@ -41,3 +41,5 @@ build
 .turbo
 *.tsbuildinfo
 *.DS_Store
+
+cdk.out
