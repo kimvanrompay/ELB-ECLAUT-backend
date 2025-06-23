@@ -3,7 +3,7 @@ ARG NODE_VERSION=22
 ARG YARN_VERSION=4.6.0
 
 # Prune the dependencies and build the application
-FROM public.ecr.aws/bitnami/node:22.2.0-debian-11-r0 AS base
+FROM public.ecr.aws/bitnami/node:22 AS base
 
 FROM base AS prebuilder
 ENV NODE_ENV=production
