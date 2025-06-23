@@ -3,7 +3,7 @@ ARG NODE_VERSION=22
 ARG YARN_VERSION=4.6.0
 
 # Prune the dependencies and build the application
-FROM node:${NODE_VERSION}-alpine AS base
+FROM public.ecr.aws/bitnami/node:22.2.0-debian-11-r0 AS base
 
 FROM base AS prebuilder
 ENV NODE_ENV=production
@@ -72,5 +72,6 @@ USER nodejs
 
 #RUN --mount=type=secret,id=postgres_password export POSTGRES_PASSWORD=$(cat /run/secrets/postgres_password) && echo $POSTGRES_PASSWORD
 
-# Run the application.
-CMD node ./api/server/build/server.js
+CMD echo "AWS_PROFILE=$AWS_PROFILE" \
+  && printenv | grep AWS \
+  && node ./api/server/build/server.js
