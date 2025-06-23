@@ -4,6 +4,7 @@ ARG YARN_VERSION=4.6.0
 
 # Prune the dependencies and build the application
 FROM public.ecr.aws/bitnami/node:22 AS base
+ARG YARN_VERSION
 
 FROM base AS prebuilder
 ARG YARN_VERSION
