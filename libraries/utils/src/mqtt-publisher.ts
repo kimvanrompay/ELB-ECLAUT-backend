@@ -8,7 +8,6 @@ class MqttPublisher {
 
 	constructor(endpoint: string) {
 		this.client = new IoTDataPlaneClient({
-			profile: process.env.AWS_PROFILE,
 			region: process.env.AWS_REGION,
 			endpoint,
 		});

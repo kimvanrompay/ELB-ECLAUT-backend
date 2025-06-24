@@ -1,13 +1,13 @@
 import {createRoute, z} from '@hono/zod-openapi';
 
-const healthCheckRoute = createRoute({
-	summary: 'Health check',
+const pingCheckRoute = createRoute({
+	summary: 'Ping Check',
 	method: 'get',
 	path: '/ping',
 	tags: ['General'],
 	responses: {
 		200: {
-			description: 'Successful response',
+			description: 'Successful Ping Response',
 			content: {
 				'text/plain': {
 					schema: z.string(),
@@ -17,4 +17,21 @@ const healthCheckRoute = createRoute({
 	},
 });
 
-export {healthCheckRoute};
+const healthCheckRoute = createRoute({
+	summary: 'Health check',
+	method: 'get',
+	path: '/health',
+	tags: ['General'],
+	responses: {
+		200: {
+			description: 'Successful Health Response',
+			content: {
+				'text/plain': {
+					schema: z.string(),
+				},
+			},
+		},
+	},
+});
+
+export {pingCheckRoute, healthCheckRoute};

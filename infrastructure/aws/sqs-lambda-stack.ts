@@ -64,7 +64,7 @@ export class SqsLambdaStack extends cdk.Stack {
 			iotTopicRuleProps: {
 				topicRulePayload: {
 					ruleDisabled: false,
-					description: 'Testing the IotToSqs Pattern',
+					description: 'direct messages from iot to sqs',
 					sql: "SELECT * as message, topic() from '+/+/data'",
 					actions: [],
 				},
