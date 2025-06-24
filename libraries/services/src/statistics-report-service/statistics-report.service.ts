@@ -6,6 +6,7 @@ import {
 	StatsUnitUnsupportedError,
 } from '@lib/errors';
 import {GameTypeStatsReport} from '@lib/models/gametype-stats-report';
+import {PlayfieldCategoryStatsReport} from '@lib/models/playfield-category-stats-report';
 import {PlayfieldStatsReportModel} from '@lib/models/playfield-stats-report';
 import {PrizeStatsReport} from '@lib/models/prize-stats-report';
 import {TenantLocationStatsReport} from '@lib/models/tenant-location-stats-report';
@@ -107,7 +108,8 @@ class StatisticsReportService {
 			| 'tenant'
 			| 'tenant_location'
 			| 'gametype'
-			| 'prize',
+			| 'prize'
+			| 'playfield_category',
 		startDate: Date,
 		endDate: Date | undefined,
 		range: 'WEEK' | 'MONTH' | 'YEAR' | 'DAY' | undefined,
@@ -163,6 +165,15 @@ class StatisticsReportService {
 
 		if (entityType === 'prize') {
 			return this.getStatisticsReportByPrize(
+				entityId,
+				unit,
+				beginOfStartDate,
+				endOfEndDate
+			);
+		}
+
+		if (entityType === 'playfield_category') {
+			return this.getStatisticsReportByPlayfieldCategory(
 				entityId,
 				unit,
 				beginOfStartDate,
@@ -323,6 +334,17 @@ class StatisticsReportService {
 				'count_game_sessions desc'
 			);
 
+		const popularPlayfieldCategories =
+			await this.statisticsReportRepository.getPopularPlayfieldCategoryStatsForRange(
+				where,
+				startDate,
+				endDate,
+				loggedInTenantId,
+				loggedInLocationIds,
+				20,
+				'count_game_sessions desc'
+			);
+
 		const report = TenantLocationStatsReport.fromPlayfieldStats(
 			'',
 			tenantLocationId,
@@ -335,6 +357,7 @@ class StatisticsReportService {
 		report.popularPlayfields = popularPlayfieldStats;
 		report.popularPrizes = popularPrizeStats;
 		report.popularGametypes = popularGametypeStats;
+		report.popularPlayfieldCategories = popularPlayfieldCategories;
 
 		return report;
 	}
@@ -619,6 +642,109 @@ class StatisticsReportService {
 		report.popularPlayfields = popularPlayfieldStats;
 		report.popularLocations = popularLocationStats;
 
+		return report;
+	}
+
+	async getStatisticsReportByPlayfieldCategory(
+		playfieldCategoryId: string,
+		unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH',
+		startDate: Date,
+		endDate: Date
+	) {
+		const hasAccess = AuthorizationService.hasAccessToScope(
+			this.context.auth.securityGroup,
+			AppSecurityScopes.READ_MACHINES
+		);
+
+		if (!hasAccess) {
+			this.logger.error(
+				`User (${this.context.auth.userId}) does not have access to playfield category statistics`
+			);
+			throw new ForbiddenError(
+				'User does not have access to playfield category statistics'
+			);
+		}
+
+		const [loggedInTenantId, loggedInLocationIds] =
+			AuthorizationService.getTenantAndLocationFromContext(this.context);
+
+		const where = {
+			playfieldCategoryId,
+		} as {
+			playfieldCategoryId?: string;
+			playfieldId?: string;
+			tenantLocationId?: string;
+			tenantId?: string;
+			gametypeId?: string;
+			prizeId?: string;
+			serialNumber?: string;
+		};
+
+		const playfieldStats =
+			await this.statisticsReportRepository.findPlayfieldStatsByRange(
+				unit,
+				where,
+				['playfield_category_id'],
+				startDate,
+				endDate,
+				loggedInTenantId,
+				loggedInLocationIds
+			);
+
+		if (!playfieldStats || playfieldStats.length === 0) {
+			return new PlayfieldCategoryStatsReport(
+				playfieldCategoryId,
+				unit,
+				startDate,
+				endDate,
+				[]
+			);
+		}
+
+		const popularPrizeStats =
+			await this.statisticsReportRepository.getPopularPrizeStatsForRange(
+				where,
+				startDate,
+				endDate,
+				loggedInTenantId,
+				loggedInLocationIds,
+				10,
+				'count_game_sessions desc'
+			);
+
+		const popularLocationStats =
+			await this.statisticsReportRepository.getPopularLocationStatsForRange(
+				where,
+				startDate,
+				endDate,
+				loggedInTenantId,
+				loggedInLocationIds,
+				10,
+				'count_game_sessions desc'
+			);
+
+		const popularPlayfieldStats =
+			await this.statisticsReportRepository.getPopularPlayfieldStatsForRange(
+				where,
+				startDate,
+				endDate,
+				loggedInTenantId,
+				loggedInLocationIds,
+				10,
+				'count_game_sessions desc'
+			);
+
+		const report = PlayfieldCategoryStatsReport.fromPlayfieldStats(
+			playfieldCategoryId,
+			playfieldStats,
+			unit,
+			startDate,
+			endDate
+		);
+
+		report.popularPrizes = popularPrizeStats;
+		report.popularPlayfields = popularPlayfieldStats;
+		report.popularLocations = popularLocationStats;
 		return report;
 	}
 }
