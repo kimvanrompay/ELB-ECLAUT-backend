@@ -7,6 +7,7 @@ import {
 	type PlayfieldStatsDBType,
 	type PopularGametypeStats,
 	type PopularLocationStats,
+	type PopularPlayfieldCategoryStats,
 	type PopularPlayfieldStats,
 	type PopularPrizeStats,
 } from '@lib/models/playfield-stats';
@@ -71,6 +72,7 @@ class PlayfieldStatsRepository
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		groupBy: (
 			| 'playfield_id'
@@ -79,6 +81,7 @@ class PlayfieldStatsRepository
 			| 'gametype_id'
 			| 'serial_number'
 			| 'prize_id'
+			| 'playfield_category_id'
 		)[],
 		startDate: Date,
 		endDate: Date,
@@ -92,6 +95,7 @@ class PlayfieldStatsRepository
 			gametypeId,
 			prizeId,
 			serialNumber,
+			playfieldCategoryId,
 		} = where;
 
 		if (
@@ -100,7 +104,8 @@ class PlayfieldStatsRepository
 			!tenantId &&
 			!gametypeId &&
 			!serialNumber &&
-			!prizeId
+			!prizeId &&
+			!playfieldCategoryId
 		) {
 			throw new Error('At least one filter must be provided');
 		}
@@ -128,6 +133,9 @@ class PlayfieldStatsRepository
 		if (groupBy.includes('prize_id')) {
 			_groupBy.push(`game_session.prize_id`);
 		}
+		if (groupBy.includes('playfield_category_id')) {
+			_groupBy.push(`playfield.category_id`);
+		}
 
 		let _where = ``;
 		if (playfieldId) {
@@ -147,6 +155,9 @@ class PlayfieldStatsRepository
 		}
 		if (prizeId) {
 			_where += `game_session.prize_id = '${prizeId}'`;
+		}
+		if (playfieldCategoryId) {
+			_where += `playfield.category_id = '${playfieldCategoryId}'`;
 		}
 		if (loggedInTenantId) {
 			_where += `cabinet.tenant_id = '${loggedInTenantId}'`;
@@ -244,7 +255,8 @@ class PlayfieldStatsRepository
 			| 'tenant_id'
 			| 'gametype_id'
 			| 'serial_number'
-			| 'prize_id',
+			| 'prize_id'
+			| 'playfield_category_id',
 		where: {
 			playfieldId?: string;
 			tenantLocationId?: string;
@@ -252,6 +264,7 @@ class PlayfieldStatsRepository
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -281,6 +294,9 @@ class PlayfieldStatsRepository
 			}
 			if (where.prizeId) {
 				_andWhere += `and playfield_stats.prize_id = '${where.prizeId}'`;
+			}
+			if (where.playfieldCategoryId) {
+				_andWhere += `and playfield_stats.playfield_category_id = '${where.playfieldCategoryId}'`;
 			}
 			if (loggedInTenantId) {
 				_andWhere += `and playfield_stats.tenant_id = '${loggedInTenantId}'`;
@@ -474,7 +490,8 @@ class PlayfieldStatsRepository
 									payment_methods_data.payment_methods,
 									current_timestamp                                                 as created_at,
 									current_timestamp                                                 as updated_at,
-									game_session.prize_id
+									game_session.prize_id,
+									playfield.category_id                                             as playfield_category_id
 
 					 from game_session
 									inner join playfield on game_session.playfield_id = playfield.id
@@ -490,6 +507,7 @@ class PlayfieldStatsRepository
 					 group by game_session.playfield_id,
 										game_session.prize_id,
 										playfield.gametype_id,
+										playfield.category_id,
 										cabinet.serial_number,
 										cabinet.tenant_id,
 										cabinet.tenant_location_id,
@@ -505,6 +523,7 @@ class PlayfieldStatsRepository
 												playfield_id           = EXCLUDED.playfield_id,
 												gametype_id            = EXCLUDED.gametype_id,
 												prize_id               = EXCLUDED.prize_id,
+												playfield_category_id  = EXCLUDED.playfield_category_id,
 												serial_number          = EXCLUDED.serial_number,
 												tenant_id              = EXCLUDED.tenant_id,
 												tenant_location_id     = EXCLUDED.tenant_location_id,
@@ -548,6 +567,7 @@ class PlayfieldStatsRepository
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		groupBy: (
 			| 'playfield_id'
@@ -556,6 +576,7 @@ class PlayfieldStatsRepository
 			| 'gametype_id'
 			| 'serial_number'
 			| 'prize_id'
+			| 'playfield_category_id'
 		)[],
 		startDate: Date,
 		endDate: Date,
@@ -600,6 +621,7 @@ class PlayfieldStatsRepository
 			tenantId?: string;
 			gametypeId?: string;
 			serialNumber?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -667,6 +689,7 @@ class PlayfieldStatsRepository
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -686,10 +709,13 @@ class PlayfieldStatsRepository
 			const query = this.db.raw(`
 				select playfield_stats.playfield_id,
 							 playfield.name           as playfield_name,
+							 playfield.external_id,
 							 cabinet.serial_number,
 							 cabinet.name             as cabinet_name,
 							 playfield_stats.gametype_id,
 							 gametype.name            as gametype_name,
+							 playfield_stats.playfield_category_id,
+							 playfield_category.name  as playfield_category_name,
 							 sum(count_game_sessions) as count_game_sessions,
 							 sum(sum_money_in)        as sum_money_in,
 							 sum(sum_money_out)       as sum_money_out,
@@ -701,11 +727,12 @@ class PlayfieldStatsRepository
 							 inner join cabinet on playfield_stats.serial_number = cabinet.serial_number
 							 inner join playfield on playfield_stats.playfield_id = playfield.id
 							 inner join gametype on playfield_stats.gametype_id = gametype.id
+							 left join playfield_category on playfield.category_id = playfield_category.id
 				where playfield_stats.start_date between '${startDate.toISOString()}'::timestamp
 					and '${endDate.toISOString()}'::timestamp
 					and ${_andWhere}
 				group by playfield_stats.playfield_id, cabinet.serial_number, playfield_stats.gametype_id, playfield.name,
-								 cabinet.name,
+								 cabinet.name, playfield_category.name, playfield_stats.playfield_category_id, playfield.external_id,
 								 gametype.name ${orderBy ? `order by ${orderBy}` : ''}
 									 ${limit ? `limit ${limit}` : ''};
 			`);
@@ -810,6 +837,7 @@ class PlayfieldStatsRepository
 			tenantId?: string;
 			gametypeId?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -873,6 +901,73 @@ class PlayfieldStatsRepository
 			this.logger.error(error);
 			throw new DatabaseRetrieveError(
 				'Could not retrieve location statistics for range'
+			);
+		}
+	}
+
+	async getPopularPlayfieldCategoryStatsForRange(
+		where: {
+			tenantLocationId?: string;
+			tenantId?: string;
+			serialNumber?: string;
+			prizeId?: string;
+		},
+		startDate: Date,
+		endDate: Date,
+		loggedInTenantId?: string,
+		loggedInLocationIds?: string[],
+		limit?: number,
+		orderBy?: `${string} ${'asc' | 'desc'}`
+	): Promise<PopularPlayfieldCategoryStats[]> {
+		try {
+			let _andWhere = this.convertAndWhereObjectToString(where);
+
+			_andWhere += this.getTenantAndLocationWhereString(
+				loggedInTenantId,
+				loggedInLocationIds
+			);
+
+			const query = this.db.raw(`
+				select playfield_stats.playfield_category_id as playfield_category_id,
+							 playfield_category.name               as playfield_category_name,
+							 sum(count_game_sessions)              as count_game_sessions,
+							 sum(sum_money_in)                     as sum_money_in,
+							 sum(sum_money_out)                    as sum_money_out,
+							 sum(sum_profit)                       as sum_profit,
+							 sum(sum_play_time)                    as sum_play_time,
+							 cast(sum(avg_play_time * count_game_sessions) as decimal) /
+							 sum(count_game_sessions)              as avg_play_time
+				from playfield_stats
+							 inner join playfield on playfield_stats.playfield_id = playfield.id
+							 inner join playfield_category on playfield.category_id = playfield_category.id
+				where playfield_stats.start_date between '${startDate.toISOString()}'::timestamp
+					and '${endDate.toISOString()}'::timestamp
+					and ${_andWhere}
+				group by playfield_stats.playfield_category_id,
+								 playfield_category.name ${orderBy ? `order by ${orderBy}` : ''}
+									 ${limit ? `limit ${limit}` : ''};
+			`);
+
+			const result: {rows: any[]} = await query;
+
+			if (!result || result?.rows?.length <= 0) {
+				return [];
+			}
+
+			return result.rows?.map((playfieldCategoryStat) => ({
+				playfieldCategoryId: playfieldCategoryStat.playfield_category_id,
+				playfieldCategoryName: playfieldCategoryStat.playfield_category_name,
+				countGameSessions: Number(playfieldCategoryStat.count_game_sessions),
+				sumMoneyIn: Number(playfieldCategoryStat.sum_money_in),
+				sumMoneyOut: Number(playfieldCategoryStat.sum_money_out),
+				sumProfit: Number(playfieldCategoryStat.sum_profit),
+				sumPlayTime: Number(playfieldCategoryStat.sum_play_time),
+				avgPlayTime: Number(playfieldCategoryStat.avg_play_time),
+			}));
+		} catch (error) {
+			this.logger.error(error);
+			throw new DatabaseRetrieveError(
+				'Could not retrieve playfield category statistics for range'
 			);
 		}
 	}
