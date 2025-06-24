@@ -1,6 +1,8 @@
 import {z} from '@hono/zod-openapi';
 
 import {GameTypeStatsReport} from '@lib/models/gametype-stats-report';
+import {PlayfieldCategory} from '@lib/models/playfield-category';
+import {PlayfieldCategoryStatsReport} from '@lib/models/playfield-category-stats-report';
 import {PlayfieldStatsReportModel} from '@lib/models/playfield-stats-report';
 import {PrizeStatsReport} from '@lib/models/prize-stats-report';
 import {TenantLocationStatsReport} from '@lib/models/tenant-location-stats-report';
@@ -190,6 +192,36 @@ const getPrizeStatisticsRoute = createPrivateAppRoute([], {
 	},
 });
 
+const getPlayfieldCategoryStatisticsRoute = createPrivateAppRoute([], {
+	canThrowBadRequest: true,
+})({
+	summary: 'Get statistics for a specific playfield category',
+	tags: ['Statistics'],
+	method: 'get',
+	path: '/playfield_category/{id}',
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		query: z.object({
+			start_date: z.coerce.date(),
+			end_date: z.coerce.date().optional(),
+			range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']).optional(),
+			unit: z.enum(['HOUR', 'DAY', 'WEEK', 'MONTH']),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: PlayfieldCategoryStatsReport.schemas.DTOSchema,
+				},
+			},
+		},
+	},
+});
+
 export {
 	getGlobalStatisticsRoute,
 	getPlayfieldStatisticsRoute,
@@ -197,4 +229,5 @@ export {
 	getTenantLocationStatisticsRoute,
 	getGameTypeStatisticsRoute,
 	getPrizeStatisticsRoute,
+	getPlayfieldCategoryStatisticsRoute,
 };
