@@ -4,6 +4,7 @@ import {NotFoundError} from '@lib/errors';
 import {GameSessionRepository} from '@lib/repositories/game-session';
 import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {PlayfieldCategoryRepository} from '@lib/repositories/playfield-category';
 import {PrizeRepository} from '@lib/repositories/prize';
 import {GameSessionService} from '@lib/services/game-session';
 import {MachineLogService} from '@lib/services/machine-log';
@@ -21,6 +22,7 @@ import {
 	findPlayfieldLogsRoute,
 	findPlayfieldsRoute,
 	getPlayfieldRoute,
+	updatePlayfieldCategoryRoute,
 	updatePlayfieldPrizeRoute,
 	updatePlayfieldRoute,
 } from './playfield.openapi';
@@ -35,9 +37,14 @@ const createPlayfieldApi = () => {
 		const playfieldRepository = new PlayfieldRepository(db, context);
 		const prizeRepository = new PrizeRepository(db, context);
 		const machineLogRepository = new MachineLogRepository(db, context);
+		const playfieldCategoryRepository = new PlayfieldCategoryRepository(
+			db,
+			context
+		);
 		const playfieldService = new PlayfieldService(
 			playfieldRepository,
 			prizeRepository,
+			playfieldCategoryRepository,
 			machineLogRepository,
 			context
 		);
@@ -69,6 +76,8 @@ const createPlayfieldApi = () => {
 			'serial_number[like]': 'playfield.serial_number[like]',
 			'serial_number[eq]': 'playfield.serial_number[eq]',
 			'name[like]': 'playfield.name[like]',
+			'external_id[like]': 'playfield.external_id[like]',
+			'category_id[eq]': 'playfield.category_id[eq]',
 		}) as typeof queryParams;
 
 		const filters = parseQueryParamsToDatabaseFilters(renamedQueryParams);
@@ -189,6 +198,26 @@ const createPlayfieldApi = () => {
 		const playfield = await playfieldService.updatePlayfieldPrize(
 			id,
 			body.prizeId
+		);
+
+		if (!playfield) {
+			throw new NotFoundError('Cannot find playfield');
+		}
+
+		return ctx.json(playfield.toJSON(), 200);
+	});
+
+	app.openapi(updatePlayfieldCategoryRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const {id} = ctx.req.valid('param');
+
+		const body = ctx.req.valid('json');
+
+		const {playfieldService} = createServices(appContext);
+
+		const playfield = await playfieldService.updatePlayfieldCategory(
+			id,
+			body.categoryId ?? null
 		);
 
 		if (!playfield) {
