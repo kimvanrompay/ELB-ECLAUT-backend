@@ -62,9 +62,15 @@ class PlayfieldRepository
 			.select(
 				'playfield.*',
 				'gametype.name as gametype_name',
+				'playfield_category.name as category_name',
 				this.db.raw(`coalesce(row_to_json(cabinet),'{}') as cabinet`)
 			)
-			.join('gametype', 'playfield.gametype_id', 'gametype.id');
+			.join('gametype', 'playfield.gametype_id', 'gametype.id')
+			.leftJoin(
+				'playfield_category',
+				'playfield.category_id',
+				'playfield_category.id'
+			);
 	}
 
 	private applyTenantAndLocationFilters<Query extends Knex.QueryBuilder>(
@@ -99,12 +105,20 @@ class PlayfieldRepository
 					? filters.orderBy?.splice(orderByStatusIndex, 1)?.[0]
 					: undefined;
 
+			const searchOnNameFilterIndex =
+				filters.where?.findIndex(
+					(s) => s.columnName === 'name' || s.columnName === 'playfield.name'
+				) ?? -1;
+
+			const searchOnNameFilter =
+				searchOnNameFilterIndex > -1
+					? filters.where?.splice(searchOnNameFilterIndex, 1)?.[0]
+					: undefined;
+
 			const query = KnexFilterAdapter.applyFilters(
 				this.selectPlayfieldWithCabinet<PlayfieldWithCabinetDBType[]>(),
 				filters
 			);
-
-			console.log(orderByStatus, filters.orderBy);
 
 			if (orderByStatus) {
 				query.orderByRaw(
@@ -112,13 +126,25 @@ class PlayfieldRepository
 				);
 			}
 
+			if (searchOnNameFilter) {
+				query.where((qb) => {
+					qb.where(
+						'playfield.name',
+						'ilike',
+						`%${searchOnNameFilter.value}%`
+					).orWhere(
+						'playfield.external_id',
+						'ilike',
+						`%${searchOnNameFilter.value}%`
+					);
+				});
+			}
+
 			const result = await this.applyTenantAndLocationFilters(
 				query,
 				tenantId,
 				locationIds
 			);
-
-			console.log('result', result);
 
 			return Playfield.fromDBTypeWithCabinet(result);
 		} catch (error) {

@@ -15,6 +15,7 @@
     "./machine-log": "./src/machine-log/machine-log.repository.ts",
     "./machine-message": "./src/machine-message/machine-message.repository.ts",
     "./playfield": "./src/playfield/playfield.repository.ts",
+    "./playfield-category": "./src/playfield-category/playfield-category.repository.ts",
     "./refresh-token": "./src/refresh-token/refresh-token.repository.ts",
     "./tenant-location": "./src/tenant-location/tenant-location.repository.ts",
     "./tenant": "./src/tenant/tenant.repository.ts",

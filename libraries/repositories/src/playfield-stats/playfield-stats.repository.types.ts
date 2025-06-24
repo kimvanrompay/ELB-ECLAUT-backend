@@ -4,6 +4,7 @@ import {
 	PlayfieldStats,
 	type PopularGametypeStats,
 	type PopularLocationStats,
+	type PopularPlayfieldCategoryStats,
 	type PopularPlayfieldStats,
 	type PopularPrizeStats,
 } from '@lib/models/playfield-stats';
@@ -22,6 +23,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		groupBy: (
 			| 'playfield_id'
@@ -30,6 +32,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			| 'gametype_id'
 			| 'serial_number'
 			| 'prize_id'
+			| 'playfield_category_id'
 		)[],
 		startDate: Date,
 		endDate: Date,
@@ -47,6 +50,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		groupBy: (
 			| 'playfield_id'
@@ -55,6 +59,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			| 'gametype_id'
 			| 'serial_number'
 			| 'prize_id'
+			| 'playfield_category_id'
 		)[],
 		startDate: Date,
 		endDate: Date
@@ -68,7 +73,8 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			| 'tenant_id'
 			| 'gametype_id'
 			| 'serial_number'
-			| 'prize_id',
+			| 'prize_id'
+			| 'playfield_category_id',
 		where: {
 			playfieldId?: string;
 			tenantLocationId?: string;
@@ -76,6 +82,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date
@@ -93,6 +100,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			tenantId?: string;
 			gametypeId?: string;
 			serialNumber?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -109,6 +117,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			gametypeId?: string;
 			serialNumber?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -138,6 +147,7 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 			tenantId?: string;
 			gametypeId?: string;
 			prizeId?: string;
+			playfieldCategoryId?: string;
 		},
 		startDate: Date,
 		endDate: Date,
@@ -146,6 +156,21 @@ interface IPlayfieldStatsRepository extends IKnexRepository {
 		limit?: number,
 		orderBy?: `${string} ${'asc' | 'desc'}`
 	): Promise<PopularLocationStats[]>;
+
+	getPopularPlayfieldCategoryStatsForRange(
+		where: {
+			tenantLocationId?: string;
+			tenantId?: string;
+			serialNumber?: string;
+			prizeId?: string;
+		},
+		startDate: Date,
+		endDate: Date,
+		loggedInTenantId?: string,
+		loggedInLocationIds?: string[],
+		limit?: number,
+		orderBy?: `${string} ${'asc' | 'desc'}`
+	): Promise<PopularPlayfieldCategoryStats[]>;
 }
 
 export type {IPlayfieldStatsRepository};

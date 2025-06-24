@@ -13,3 +13,4 @@ export type {IPlayfieldStatsRepository} from './playfield-stats/playfield-stats.
 export type {IPrizeRepository} from './prize/prize.repository.types';
 export type {IClientRepository} from './client/client.repository.types';
 export type {IPasswordResetTokenRepository} from './password-reset-token/password-reset-token.repository.types';
+export type {IPlayfieldCategoryRepository} from './playfield-category/playfield-category.repository.types';
