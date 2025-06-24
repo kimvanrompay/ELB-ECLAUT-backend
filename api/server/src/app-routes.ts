@@ -9,6 +9,7 @@ import {createMachineApi} from './routes/machine.routes';
 import {createMqttApi} from './routes/mqtt.routes';
 import {addOpenAPI} from './routes/openapi.routes';
 import {createPlayerZoneApi} from './routes/playerzone.routes';
+import {createPlayfieldCategoriesApi} from './routes/playfield-category.routes';
 import {createPlayfieldApi} from './routes/playfield.routes';
 import {createPrizeApi} from './routes/prize.routes';
 import {createStatisticsApi} from './routes/statistics.routes';
@@ -34,6 +35,8 @@ app.route('/gametype', createGametypeApi());
 app.route('/location', createTenantLocationApi());
 
 app.route('/machine', createMachineApi());
+
+app.route('/machine/playfield/category', createPlayfieldCategoriesApi());
 
 app.route('/machine/playfield', createPlayfieldApi());
 
