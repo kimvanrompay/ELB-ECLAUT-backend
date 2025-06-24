@@ -31,25 +31,25 @@ type NotEqualsFilter = {
 type GreaterThanWhereFilter = {
 	type: 'gt';
 	columnName: string;
-	value: number;
+	value: number | string | Date;
 };
 
 type GreaterThanOrEqualWhereFilter = {
 	type: 'gte';
 	columnName: string;
-	value: number;
+	value: number | string | Date;
 };
 
 type LessThanWhereFilter = {
 	type: 'lt';
 	columnName: string;
-	value: number;
+	value: number | string | Date;
 };
 
 type LessThanOrEqualWhereFilter = {
 	type: 'lte';
 	columnName: string;
-	value: number;
+	value: number | string | Date;
 };
 
 type InWhereFilter = {
