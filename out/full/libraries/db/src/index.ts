@@ -1,1 +1,0 @@
-export {getKnexInstance} from './connection';
