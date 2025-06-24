@@ -12,6 +12,8 @@ import type {
 import {PinoLogger} from '@lib/utils';
 import type {WithRequired} from '@lib/utils/types';
 
+import type {IPlayerZoneService} from '../player-zone-service/player-zone.service.types';
+
 class GameMessagesService {
 	private logger: PinoLogger;
 
@@ -20,6 +22,7 @@ class GameMessagesService {
 		private playfieldRepository: IPlayfieldRepository,
 		private machineLogRepository: IMachineLogRepository,
 		private playfieldStatsRepository: IPlayfieldStatsRepository,
+		// private playerZoneService: IPlayerZoneService,
 		context: {logger: PinoLogger}
 	) {
 		this.logger = context.logger.getChildLogger(
@@ -217,6 +220,26 @@ class GameMessagesService {
 						...result,
 					},
 				});
+
+				const gameSession =
+					await scopedGameSessionRepository.getGameSessionById(gameSessionId);
+
+				if (!gameSession) {
+					this.logger.error(
+						`Game session not found for session end event: ${gameSessionId}`
+					);
+					return false;
+				}
+
+				// if (gameSession.playerId) {
+				// 	this.playerZoneService.updatePlayerProgression(gameSession.playerId, {
+				// 		gameSessionId: gameSession.id,
+				// 		playfieldId: playfieldId!,
+				// 		ticketsCollected: validatedData.t || 0, // Default to 0 if not provided
+				// 		seasonIndex: validatedData.s,
+				// 		charsCollected: validatedData.c,
+				// 	});
+				// }
 			});
 		} catch (error) {
 			this.logger.error('Error handling session end event', error);
