@@ -3764,6 +3764,29 @@ __metadata:
   languageName: node
   linkType: hard
 
+"eclaut@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "eclaut@workspace:."
+  dependencies:
+    "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
+    "@types/node": "npm:^22.12.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.22.0"
+    "@typescript-eslint/parser": "npm:^8.22.0"
+    "@vitest/coverage-v8": "npm:^3.0.8"
+    eslint: "npm:^9.19.0"
+    eslint-config-prettier: "npm:^10.0.1"
+    eslint-plugin-import: "npm:^2.31.0"
+    eslint-plugin-prettier: "npm:^5.2.3"
+    husky: "npm:^9.1.7"
+    prettier: "npm:^3.4.2"
+    ts-node: "npm:^10.9.2"
+    turbo: "npm:^2.4.1"
+    typescript: "npm:^5.7.3"
+    vite: "npm:^6.1.0"
+    vitest: "npm:^3.0.5"
+  languageName: unknown
+  linkType: soft
+
 "emoji-regex@npm:^8.0.0":
   version: 8.0.0
   resolution: "emoji-regex@npm:8.0.0"
@@ -7708,29 +7731,6 @@ __metadata:
   checksum: 10c0/73e8ee3809041ca8b818efb141801a1004e3fc0002727f1531f4de613ea281b494a40909596dae4a042a4fb6cd385af5d4db2e137b1362e0e91384b828effd3a
   languageName: node
   linkType: hard
-
-"untitled5@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "untitled5@workspace:."
-  dependencies:
-    "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
-    "@types/node": "npm:^22.12.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.22.0"
-    "@typescript-eslint/parser": "npm:^8.22.0"
-    "@vitest/coverage-v8": "npm:^3.0.8"
-    eslint: "npm:^9.19.0"
-    eslint-config-prettier: "npm:^10.0.1"
-    eslint-plugin-import: "npm:^2.31.0"
-    eslint-plugin-prettier: "npm:^5.2.3"
-    husky: "npm:^9.1.7"
-    prettier: "npm:^3.4.2"
-    ts-node: "npm:^10.9.2"
-    turbo: "npm:^2.4.1"
-    typescript: "npm:^5.7.3"
-    vite: "npm:^6.1.0"
-    vitest: "npm:^3.0.5"
-  languageName: unknown
-  linkType: soft
 
 "uri-js@npm:^4.2.2":
   version: 4.4.1

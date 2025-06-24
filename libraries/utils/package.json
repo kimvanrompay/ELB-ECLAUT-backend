@@ -19,8 +19,6 @@
     "./string": "./src/string.utils.ts",
     "./types": "./src/types.utils.ts",
     "./mqtt-publisher": "./src/mqtt-publisher.ts"
-    "./mqtt-publisher": "./src/mqtt-publisher.ts",
-    "./language": "./src/language.utils.ts"
   },
   "scripts": {
     "test": "yarn test:unit",
@@ -30,18 +28,19 @@
     "mock-sqs-messages": "npx tsx scripts/generate-mock-messages.ts"
   },
   "dependencies": {
-    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@lib/errors": "workspace:^",
+    "knex": "^3.1.0",
     "@aws-sdk/client-iot": "3.744.0",
     "@aws-sdk/client-iot-data-plane": "3.744.0",
     "@aws-sdk/client-secrets-manager": "3.744.0",
     "@aws-sdk/client-sqs": "3.744.0",
     "@aws-sdk/client-ssm": "3.744.0",
-    "@aws-sdk/client-sts": "3.744.0",
+    "@aws-sdk/client-sts": "3.744.0"
+  },
+  "devDependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
     "@hono/zod-openapi": "^0.18.3",
-    "@lib/errors": "workspace:^",
-    "async-mutex": "^0.5.0",
     "hono": "^4.6.19",
-    "knex": "^3.1.0",
     "uuid": "^11.0.5",
     "zod": "^3.24.1"
   },
