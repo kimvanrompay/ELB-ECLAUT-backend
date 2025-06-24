@@ -31,6 +31,12 @@ const MachineDTOSchema = z
 			name: z.string(),
 		}),
 		status: z.string(),
+		category: z
+			.object({
+				id: z.string(),
+				name: z.string(),
+			})
+			.optional(),
 	})
 	.openapi('Machine', {
 		description:

@@ -13,12 +13,6 @@ import {
  * This model is an abstraction of a cabint or playfield in the system.
  */
 class Machine {
-	id: string;
-	type: 'CABINET' | 'PLAYFIELD';
-	gametype: {
-		id: string;
-		name: string;
-	};
 	cabinet: {
 		serialNumber: string;
 		name: string;
@@ -36,8 +30,6 @@ class Machine {
 			status: string;
 		}[];
 	};
-	name: string;
-	status: string;
 
 	static schemas = {
 		DTOSchema: MachineDTOSchema,
@@ -45,10 +37,10 @@ class Machine {
 	};
 
 	public constructor(
-		id: string,
-		serialNumber: string,
-		name: string,
-		gametype: {
+		public id: string,
+		public serialNumber: string,
+		public name: string,
+		public gametype: {
 			id: string;
 			name: string;
 		},
@@ -56,17 +48,22 @@ class Machine {
 			id: string;
 			name: string;
 		},
-		type: 'CABINET' | 'PLAYFIELD',
+		public type: 'CABINET' | 'PLAYFIELD',
 		location: {
 			id: string;
 			name: string;
 		},
-		status: string,
+		public status: string,
 		playfields: {
 			id: string;
 			name: string;
 			status: string;
 		}[]
+		}[],
+		public category?: {
+			id: string;
+			name: string;
+		},
 	) {
 		this.id = id;
 		this.type = type;
@@ -99,6 +96,7 @@ class Machine {
 			},
 			status: this.status,
 			name: this.name,
+			category: this.category,
 		};
 	}
 
@@ -118,6 +116,13 @@ class Machine {
 				item.cabinet.location,
 				item.status,
 				item.cabinet.playfields
+				item.cabinet.playfields,
+				item.category
+					? {
+							id: item.category.id,
+							name: item.category.name,
+						}
+					: undefined,
 			);
 		});
 	}
@@ -139,6 +144,8 @@ class Machine {
 				item.location,
 				'UNKNOWN', // TODO: Get aggregated status from playfields
 				item.playfields
+				item.playfields, // tODO add category to playfields
+				undefined, // todo: Add category if all playfields have the same category,
 			);
 		});
 	}
