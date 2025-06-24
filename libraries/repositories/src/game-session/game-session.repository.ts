@@ -57,7 +57,9 @@ class GameSessionRepository
 	): Promise<GameSession[]> {
 		try {
 			const query = KnexFilterAdapter.applyFilters(
-				this.db<GameSessionDBType>('game_session'),
+				this.db<GameSessionDBType>('game_session')
+					.select('game_session.*', 'playfield.serial_number')
+					.join('playfield', 'game_session.playfield_id', 'playfield.id'),
 				filters
 			);
 
@@ -109,14 +111,13 @@ class GameSessionRepository
 	): Promise<GameSession | undefined> {
 		try {
 			const query = this.db<GameSessionDBType>('game_session')
+				.select('game_session.*', 'playfield.serial_number')
+				.join('playfield', 'game_session.playfield_id', 'playfield.id')
 				.where('game_session.id', id)
 				.first();
 
-			const result = await this.applyTenantAndLocationFilters(
-				query,
-				tenantId,
-				locationIds
-			);
+			const result: GameSessionDBType =
+				await this.applyTenantAndLocationFilters(query, tenantId, locationIds);
 
 			if (!result) {
 				return undefined;

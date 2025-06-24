@@ -11,23 +11,6 @@ import {
 } from './game-session.schema';
 
 class GameSession {
-	id: string;
-	playfieldId: string;
-	tenantId: string;
-	tenantLocationId: string;
-	prizeId: string | undefined;
-	startedAt: Date | undefined;
-	endedAt: Date | undefined;
-
-	result: Record<string, unknown> | undefined;
-	amountMoneyIn: number | undefined;
-	amountCredits: number | undefined;
-	amountMoneyOut: number | undefined;
-	paymentMethod: string | undefined;
-
-	createdAt: Date;
-	updatedAt: Date;
-
 	static schemas = {
 		DTOSchema: GameSessionDTOSchema,
 		CreateDTOSchema: GameSessionInsertDBSchema,
@@ -35,36 +18,23 @@ class GameSession {
 	};
 
 	constructor(
-		id: string,
-		playfieldId: string,
-		tenantId: string,
-		tenantLocationId: string,
-		prizeId: string | undefined,
-		startedAt: Date | undefined,
-		endedAt: Date | undefined,
-		result: Record<string, unknown> | undefined,
-		amountMoneyIn: number | undefined,
-		amountCredits: number | undefined,
-		amountMoneyOut: number | undefined,
-		paymentMethod: string | undefined,
-		createdAt: Date,
-		updatedAt: Date
-	) {
-		this.id = id;
-		this.playfieldId = playfieldId;
-		this.tenantId = tenantId;
-		this.tenantLocationId = tenantLocationId;
-		this.startedAt = startedAt;
-		this.endedAt = endedAt;
-		this.result = result;
-		this.createdAt = createdAt;
-		this.updatedAt = updatedAt;
-		this.amountMoneyIn = amountMoneyIn;
-		this.amountCredits = amountCredits;
-		this.amountMoneyOut = amountMoneyOut;
-		this.paymentMethod = paymentMethod;
-		this.prizeId = prizeId;
-	}
+		public id: string,
+		public playfieldId: string,
+		public tenantId: string,
+		public tenantLocationId: string,
+		public prizeId: string | undefined,
+		public startedAt: Date | undefined,
+		public endedAt: Date | undefined,
+		public result: Record<string, unknown> | undefined,
+		public amountMoneyIn: number | undefined,
+		public amountCredits: number | undefined,
+		public amountMoneyOut: number | undefined,
+		public paymentMethod: string | undefined,
+		public createdAt: Date,
+		public updatedAt: Date,
+		public serialNumber: string,
+		public playerId?: string
+	) {}
 
 	static fromDBType(data: GameSessionDBType[]): GameSession[];
 	static fromDBType(data: GameSessionDBType): GameSession;
@@ -93,7 +63,9 @@ class GameSession {
 					item.amount_money_out,
 					item.payment_method,
 					item.created_at,
-					item.updated_at
+					item.updated_at,
+					item.serial_number,
+					item.player_id
 				);
 			} catch (e) {
 				console.error(e);
@@ -124,7 +96,9 @@ class GameSession {
 				item.amountMoneyOut,
 				item.paymentMethod,
 				item.createdAt,
-				item.updatedAt
+				item.updatedAt,
+				item.serialNumber,
+				undefined
 			);
 		});
 	}
@@ -146,6 +120,7 @@ class GameSession {
 				GamePaymentMethod.OTHER) as GamePaymentMethod,
 			createdAt: this.createdAt,
 			updatedAt: this.updatedAt,
+			serialNumber: this.serialNumber,
 		};
 	}
 }

@@ -12,7 +12,7 @@ const initializeGameOnPlayfieldRoute = createPrivateAppRoute(
 )({
 	method: 'post',
 	summary: 'Initialize game on playfield',
-	path: '/sessions/init',
+	path: '/game-session/init',
 	tags: ['Player Zone'],
 	request: {
 		body: {
@@ -36,4 +36,81 @@ const initializeGameOnPlayfieldRoute = createPrivateAppRoute(
 	},
 });
 
-export {initializeGameOnPlayfieldRoute};
+const getPlayerProfileRoute = createPrivateAppRoute(
+	[AppSecurityScopes.READ_PLAYERZONE_PROFILES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'get',
+	summary: 'Get player profile',
+	path: '/player/profile/{playerId}',
+	tags: ['Player Zone'],
+	request: {
+		params: z.object({
+			playerId: z.string(),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: z.object({
+						id: z.string(),
+						username: z.string(),
+						avatar: z.string().optional(),
+						birthDate: z.string().optional(),
+					}),
+				},
+			},
+		},
+		404: {
+			description: 'Player not found',
+		},
+	},
+});
+
+const getMachineLeaderboardRoute = createPrivateAppRoute(
+	[AppSecurityScopes.READ_PLAYERZONE_LEADERBOARDS],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'get',
+	summary: 'Get machine leaderboard',
+	path: '/machine/leaderboard/{serialNumber}',
+	tags: ['Player Zone'],
+	request: {
+		params: z.object({
+			serialNumber: z.string(),
+		}),
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: z.object({
+						leaderboard: z.array(
+							z.object({
+								playerId: z.string(),
+								username: z.string(),
+								score: z.number(),
+							})
+						),
+					}),
+				},
+			},
+		},
+		404: {
+			description: 'Machine not found',
+		},
+	},
+});
+
+export {
+	initializeGameOnPlayfieldRoute,
+	getPlayerProfileRoute,
+	getMachineLeaderboardRoute,
+};

@@ -83,7 +83,9 @@ class LoginVerificationCodeService implements ILoginVerificationCodeService {
 				`Sending login verification code (${code.code}) to ${_user.email}`
 			);
 
-			const loginUrl = new URL(`${process.env.APP_URL}`);
+			const loginUrl = new URL(
+				`${process.env.APP_URL}/${user?.settings.language ?? 'en'}`
+			);
 			loginUrl.searchParams.set('code', code.code);
 			loginUrl.searchParams.set('email', email);
 
