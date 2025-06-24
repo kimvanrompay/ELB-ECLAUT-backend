@@ -20,8 +20,11 @@ const findMachinesRoute = createPrivateAppRoute(
 	request: {
 		query: z.object({
 			'location_id[eq]': z.string().optional(),
+			'location_id[in]': z.string().optional(),
 			'tenant_id[eq]': z.string().optional(),
 			'machine_name[like]': z.string().optional(),
+			'external_id[like]': z.string().optional(),
+			'category_id[eq]': z.string().optional(),
 			'status[eq]': z.string().optional(),
 			'gametype_id[eq]': z.string().optional(),
 			limit: z.string(),

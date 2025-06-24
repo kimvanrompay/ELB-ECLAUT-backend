@@ -49,7 +49,10 @@ const createMachineApi = () => {
 
 		const renamedQueryParams = renameProperties(queryParams, {
 			'location_id[eq]': 'cabinet.tenant_location_id[eq]',
+			'location_id[in]': 'cabinet.tenant_location_id[in]',
 			'tenant_id[eq]': 'cabinet.tenant_id[eq]',
+			'external_id[like]': 'playfield.external_id[like]',
+			'category_id[eq]': 'playfield.category_id[eq]',
 			'gametype_id[eq]': 'playfield.gametype_id[eq]',
 			'machine_name[like]': 'playfield.name[like]', // TODO: this should also work for cabinets in the future
 			'status[eq]': 'playfield.status[eq]', // TODO: this should also work for cabinets in the future
