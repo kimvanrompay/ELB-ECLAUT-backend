@@ -58,7 +58,6 @@ class Playfield {
 			code: string;
 			eventData?: string;
 		},
-		prize?: {
 		public prize?: {
 			id: string;
 			name: string;
@@ -66,18 +65,8 @@ class Playfield {
 		public category?: {
 			id: string;
 			name: string;
-		}
-	) {
-		this.id = id;
-		this.cabinet = cabinet;
-		this.name = name;
-		this.gametype = gametype;
-		this.status = status;
-		this.lastMessageAt = lastMessageAt;
-		this.error = error;
-		this.prize = prize;
-	}
 		},
+		public externalId?: string
 	) {}
 
 	static fromJSON(data: PlayfieldDTOType[]): Playfield[];
@@ -108,7 +97,6 @@ class Playfield {
 							id: item.prize.id,
 							name: item.prize.name,
 						}
-					: undefined
 					: undefined,
 				item.category
 					? {
@@ -116,6 +104,7 @@ class Playfield {
 							name: item.category.name,
 						}
 					: undefined,
+				item.externalId
 			);
 		});
 	}
@@ -168,7 +157,6 @@ class Playfield {
 							id: item.prize_id,
 							name: item.prize_name,
 						}
-					: undefined
 					: undefined,
 				item.category_id && item.category_name
 					? {
@@ -176,6 +164,7 @@ class Playfield {
 							name: item.category_name,
 						}
 					: undefined,
+				item.external_id
 			);
 		});
 	}
@@ -206,6 +195,7 @@ class Playfield {
 								name: z.string(),
 								status: z.string(),
 								gametype_id: z.string(),
+								external_id: z.string().optional().nullable(),
 							})
 						)
 						.min(1),
@@ -230,6 +220,7 @@ class Playfield {
 						name: playfield.name,
 						status: playfield.status,
 						gametypeId: playfield.gametype_id,
+						externalId: playfield.external_id ?? undefined,
 					})),
 				},
 				item.name,
@@ -253,7 +244,6 @@ class Playfield {
 							id: item.prize_id,
 							name: item.prize_name,
 						}
-					: undefined
 					: undefined,
 				item.category_id && item.category_name
 					? {
@@ -261,6 +251,7 @@ class Playfield {
 							name: item.category_name,
 						}
 					: undefined,
+				item.external_id ?? undefined
 			);
 		});
 	}
@@ -301,6 +292,7 @@ class Playfield {
 						name: this.category.name,
 					}
 				: undefined,
+			externalId: this.externalId,
 		};
 	}
 
@@ -310,6 +302,7 @@ class Playfield {
 		return {
 			name: data.name,
 			tenant_location_id: data.tenantLocationId,
+			external_id: data.externalId,
 		};
 	}
 }
