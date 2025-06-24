@@ -116,11 +116,8 @@ class GameSessionRepository
 				.where('game_session.id', id)
 				.first();
 
-			const result = await this.applyTenantAndLocationFilters(
-				query,
-				tenantId,
-				locationIds
-			);
+			const result: GameSessionDBType =
+				await this.applyTenantAndLocationFilters(query, tenantId, locationIds);
 
 			if (!result) {
 				return undefined;
