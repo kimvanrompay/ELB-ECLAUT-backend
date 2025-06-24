@@ -44,6 +44,12 @@ const PlayfieldDTOSchema = z
 				name: z.string(),
 			})
 			.optional(),
+		category: z
+			.object({
+				id: z.string(),
+				name: z.string(),
+			})
+			.optional(),
 	})
 	.openapi('Playfield');
 

@@ -1,7 +1,6 @@
 import {z} from '@hono/zod-openapi';
 
 import {mapArrayOrSingleItem} from '@lib/utils';
-import {renameSnakeCasePropertiesToCamelCase} from '@lib/utils/object';
 
 import {
 	PlayfieldDBSchema,
@@ -19,41 +18,6 @@ import {
 } from './playfield.schema';
 
 class Playfield {
-	id: string;
-	cabinet: {
-		serialNumber: string;
-		name: string;
-		tenant: {
-			id: string;
-			name: string;
-		};
-		location: {
-			id: string;
-			name: string;
-		};
-		playfields: {
-			id: string;
-			name: string;
-			status: string;
-		}[];
-	};
-	name: string;
-	gametype: {
-		id: string;
-		name: string;
-	};
-	status: string;
-	lastMessageAt?: Date;
-	error?: {
-		isActive: boolean;
-		code: string;
-		eventData?: string;
-	};
-	prize?: {
-		id: string;
-		name: string;
-	};
-
 	static schemas = {
 		DTOSchema: PlayfieldDTOSchema,
 		DBSchema: PlayfieldDBSchema,
@@ -64,8 +28,8 @@ class Playfield {
 	};
 
 	public constructor(
-		id: string,
-		cabinet: {
+		public id: string,
+		public cabinet: {
 			serialNumber: string;
 			name: string;
 			tenant: {
@@ -82,19 +46,24 @@ class Playfield {
 				status: string;
 			}[];
 		},
-		name: string,
-		gametype: {
+		public name: string,
+		public gametype: {
 			id: string;
 			name: string;
 		},
-		status: string,
-		lastMessageAt?: Date,
-		error?: {
+		public status: string,
+		public lastMessageAt?: Date,
+		public error?: {
 			isActive: boolean;
 			code: string;
 			eventData?: string;
 		},
 		prize?: {
+		public prize?: {
+			id: string;
+			name: string;
+		},
+		public category?: {
 			id: string;
 			name: string;
 		}
@@ -108,6 +77,8 @@ class Playfield {
 		this.error = error;
 		this.prize = prize;
 	}
+		},
+	) {}
 
 	static fromJSON(data: PlayfieldDTOType[]): Playfield[];
 	static fromJSON(data: PlayfieldDTOType): Playfield;
@@ -138,6 +109,13 @@ class Playfield {
 							name: item.prize.name,
 						}
 					: undefined
+					: undefined,
+				item.category
+					? {
+							id: item.category.id,
+							name: item.category.name,
+						}
+					: undefined,
 			);
 		});
 	}
@@ -191,6 +169,13 @@ class Playfield {
 							name: item.prize_name,
 						}
 					: undefined
+					: undefined,
+				item.category_id && item.category_name
+					? {
+							id: item.category_id,
+							name: item.category_name,
+						}
+					: undefined,
 			);
 		});
 	}
@@ -269,6 +254,13 @@ class Playfield {
 							name: item.prize_name,
 						}
 					: undefined
+					: undefined,
+				item.category_id && item.category_name
+					? {
+							id: item.category_id,
+							name: item.category_name,
+						}
+					: undefined,
 			);
 		});
 	}
@@ -301,6 +293,12 @@ class Playfield {
 				? {
 						id: this.prize.id,
 						name: this.prize.name,
+					}
+				: undefined,
+			category: this.category
+				? {
+						id: this.category.id,
+						name: this.category.name,
 					}
 				: undefined,
 		};
