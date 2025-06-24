@@ -1,8 +1,6 @@
-import type {PlayfieldPrize} from '../playfield-prize/playfield-prize.model';
-import {
-	PlayfieldStats,
-	type PopularPrizeStats,
-} from '../playfield-stats/playfield-stats.model';
+import type {PlayfieldPrize} from '../../playfield-prize/playfield-prize.model';
+import type {PopularPrizeStats} from '../helpers';
+import {PlayfieldStats} from '../playfield-stats/playfield-stats.model';
 import {StatisticsData} from '../playfield-stats/statistics-data';
 import {
 	PlayfieldStatsReportDBSchema,

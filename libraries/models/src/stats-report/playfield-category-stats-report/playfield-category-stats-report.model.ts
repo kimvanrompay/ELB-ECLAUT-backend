@@ -1,42 +1,41 @@
 import type {
-	PlayfieldStats,
+	PopularLocationStats,
 	PopularPlayfieldStats,
 	PopularPrizeStats,
-} from '../playfield-stats/playfield-stats.model';
+} from '../helpers';
+import type {PlayfieldStats} from '../playfield-stats/playfield-stats.model';
 import {StatisticsData} from '../playfield-stats/statistics-data';
 import {
-	GameTypeStatsReportDTOSchema,
-	type GameTypeStatsReportDTOType,
-} from './gametype-stats-report.schema';
+	PlayfieldCategoryStatsReportDTOSchema,
+	type PlayfieldCategoryStatsReportDTOType,
+} from './playfield-category-stats-report.schema';
 
-class GameTypeStats {
+class PlayfieldCategoryStats {
 	constructor(
-		public gametypeId: string,
+		public playfieldCategoryId: string,
 		public startDate: Date,
 		public endDate: Date,
 		public range: 'WEEK' | 'MONTH' | 'YEAR' | 'DAY',
 		public stats: StatisticsData
 	) {
+		this.playfieldCategoryId = playfieldCategoryId;
 		this.startDate = startDate;
 		this.endDate = endDate;
 		this.range = range;
-
-		this.gametypeId = gametypeId;
-
 		this.stats = stats;
 	}
 
 	static fromPlayfieldStats(
-		gametypeId: string,
+		playfieldCategoryId: string,
 		playfieldStats: PlayfieldStats[]
-	) {
+	): PlayfieldCategoryStats[] {
 		return playfieldStats.map((playfieldStat) => {
 			const startDate = playfieldStat.startDate;
 			const endDate = playfieldStat.endDate;
 			const range = playfieldStat.range;
 
-			return new GameTypeStats(
-				gametypeId,
+			return new PlayfieldCategoryStats(
+				playfieldCategoryId,
 				startDate,
 				endDate,
 				range,
@@ -46,86 +45,43 @@ class GameTypeStats {
 	}
 }
 
-class GameTypeStatsReport {
-	gametypeId: string;
-
-	startDate: Date;
-	endDate: Date;
-
-	unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
-
-	aggregatedData: StatisticsData;
-	data: GameTypeStats[];
-
-	popularPlayfields?: PopularPlayfieldStats[];
-	popularPrizes?: PopularPrizeStats[];
+class PlayfieldCategoryStatsReport {
+	public aggregatedData: StatisticsData;
 
 	static schemas = {
-		DTOSchema: GameTypeStatsReportDTOSchema,
+		DTOSchema: PlayfieldCategoryStatsReportDTOSchema,
 	};
 
 	constructor(
-		meta: {
-			gametypeId: string;
-			startDate: Date;
-			endDate: Date;
-			unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
-		},
-		data: GameTypeStats[]
+		public playfieldCategoryId: string,
+		public unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH',
+		public startDate: Date,
+		public endDate: Date,
+		public data: PlayfieldCategoryStats[],
+		public popularLocations?: PopularLocationStats[],
+		public popularPlayfields?: PopularPlayfieldStats[],
+		public popularPrizes?: PopularPrizeStats[]
 	) {
-		this.gametypeId = meta.gametypeId;
-		this.startDate = meta.startDate;
-		this.endDate = meta.endDate;
-		this.unit = meta.unit;
-
-		this.aggregatedData = StatisticsData.aggregate(data.map((d) => d.stats));
-		this.data = data;
-	}
-
-	static fromPlayfieldStats(
-		meta: {
-			gametypeId: string;
-			startDate: Date;
-			endDate: Date;
-			unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
-		},
-		playfieldStats: PlayfieldStats[]
-	) {
-		const gameTypeStats = GameTypeStats.fromPlayfieldStats(
-			meta.gametypeId,
-			playfieldStats
+		this.aggregatedData = StatisticsData.aggregate(
+			data.map((item) => item.stats)
 		);
-
-		return this.fromGameTypeStats(meta, gameTypeStats);
 	}
 
-	static fromGameTypeStats(
-		meta: {
-			gametypeId: string;
-			startDate: Date;
-			endDate: Date;
-			unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH';
-		},
-		stats: GameTypeStats[]
-	) {
-		return new GameTypeStatsReport(meta, stats);
-	}
-
-	toJSON(): GameTypeStatsReportDTOType {
+	toJSON(): PlayfieldCategoryStatsReportDTOType {
 		return {
-			gametypeId: this.gametypeId,
+			playfieldCategoryId: this.playfieldCategoryId,
+			unit: this.unit,
 			startDate: this.startDate,
 			endDate: this.endDate,
-			unit: this.unit,
 
+			countGameSessions: this.aggregatedData.countGameSessions,
 			sumMoneyIn: this.aggregatedData.sumMoneyIn,
 			sumMoneyOut: this.aggregatedData.sumMoneyOut,
 			sumProfit: this.aggregatedData.sumProfit,
 			sumCredits: this.aggregatedData.sumCredits,
-			sumPlayTime: this.aggregatedData.sumPlayTime,
-			countGameSessions: this.aggregatedData.countGameSessions,
 			returnToPlayer: this.aggregatedData.returnToPlayer,
 			avgPlayTime: this.aggregatedData.avgPlayTime,
+			sumPlayTime: this.aggregatedData.sumPlayTime,
 			avgMoneyIn: this.aggregatedData.avgMoneyIn,
 			avgMoneyOut: this.aggregatedData.avgMoneyOut,
 			avgCredits: this.aggregatedData.avgCredits,
@@ -138,6 +94,8 @@ class GameTypeStatsReport {
 			maxCredits: this.aggregatedData.maxCredits,
 			minCredits: this.aggregatedData.minCredits,
 
+			paymentMethods: this.aggregatedData.paymentMethods,
+
 			gameSessionsOverTime: this.data.map((item) => ({
 				date: item.startDate,
 				countGameSessions: item.stats.countGameSessions,
@@ -147,14 +105,35 @@ class GameTypeStatsReport {
 				sumCredits: item.stats.sumCredits,
 			})),
 
-			paymentMethods: this.aggregatedData.paymentMethods,
-
 			gameSessionsPerHourOfDay: this.aggregatedData.gameSessionsPerHour,
 
-			popularPrizes: this.popularPrizes ?? [],
-			popularPlayfields: this.popularPlayfields ?? [],
+			popularLocations: this.popularLocations,
+			popularPlayfields: this.popularPlayfields,
+			popularPrizes: this.popularPrizes,
 		};
+	}
+
+	static fromPlayfieldStats(
+		playfieldCategoryId: string,
+		playfieldStats: PlayfieldStats[],
+		unit: 'HOUR' | 'DAY' | 'WEEK' | 'MONTH',
+		startDate: Date,
+		endDate: Date
+	): PlayfieldCategoryStatsReport {
+		const data = PlayfieldCategoryStats.fromPlayfieldStats(
+			playfieldCategoryId,
+			playfieldStats
+		);
+		return new PlayfieldCategoryStatsReport(
+			playfieldCategoryId,
+			unit,
+			startDate,
+			endDate,
+			data
+		);
 	}
 }
 
-export {GameTypeStats, GameTypeStatsReport};
+export {PlayfieldCategoryStats, PlayfieldCategoryStatsReport};
+
+export type {PlayfieldCategoryStatsReportDTOType};

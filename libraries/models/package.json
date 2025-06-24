@@ -20,6 +20,7 @@
     "./machine-message": "./src/machine-message/machine-message.model.ts",
     "./password-reset-token": "./src/password-reset-token/password-reset-token.model.ts",
     "./playfield": "./src/playfield/playfield.model.ts",
+    "./playfield-category": "./src/playfield-category/playfield-category.model.ts",
     "./playfield-prize": "./src/playfield-prize/playfield-prize.model.ts",
     "./prize": "./src/prize/prize.model.ts",
     "./refresh-token": "./src/refresh-token/refresh-token.model.ts",
@@ -32,6 +33,13 @@
     "./tenant-location-stats-report": "./src/tenant-location-stats-report/tenant-location-stats-report.model.ts",
     "./tenant-stats-report": "./src/tenant-stats-report/tenant-stats-report.model.ts",
     "./prize-stats-report": "./src/prize-stats-report/prize-stats-report.model.ts"
+    "./playfield-stats-report": "./src/stats-report/playfield-stats-report/playfield-stats-report.model.ts",
+    "./playfield-stats": "./src/stats-report/playfield-stats/playfield-stats.model.ts",
+    "./gametype-stats-report": "./src/stats-report/gametype-stats-report/gametype-stats-report.model.ts",
+    "./tenant-location-stats-report": "./src/stats-report/tenant-location-stats-report/tenant-location-stats-report.model.ts",
+    "./tenant-stats-report": "./src/stats-report/tenant-stats-report/tenant-stats-report.model.ts",
+    "./prize-stats-report": "./src/stats-report/prize-stats-report/prize-stats-report.model.ts",
+    "./playfield-category-stats-report": "./src/stats-report/playfield-category-stats-report/playfield-category-stats-report.model.ts"
   },
   "dependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
