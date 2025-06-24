@@ -69,6 +69,31 @@ class LogMessagesService {
 
 		return true;
 	}
+
+	async handleGrabForceMessage(message: MachineMessage): Promise<boolean> {
+		if (message.eventType !== MachineMessageEventType.GRAB_FORCE) {
+			return false;
+		}
+
+		const {data, messageId, timestamp, serialNumber, playfieldId} = message;
+
+		try {
+			await this.machineLogRepository.createMachineLog({
+				id: messageId,
+				level: 'INFO',
+				type: 'GRAB_FORCE',
+				serial_number: serialNumber,
+				playfield_id: playfieldId,
+				timestamp: new Date(timestamp),
+				data,
+			});
+		} catch (error) {
+			this.logger.error('Error handling grab force event', error);
+			return false;
+		}
+
+		return true;
+	}
 }
 
 export {LogMessagesService};

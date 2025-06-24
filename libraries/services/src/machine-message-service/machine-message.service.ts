@@ -150,8 +150,11 @@ class MachineMessageService implements IMachineMessageService {
 			case MachineMessageEventType.STATUS:
 				result = await this.statusMessagesService.handleMessage(message);
 				break;
+			case MachineMessageEventType.GRAB_FORCE:
+				result = await this.logMessagesService.handleGrabForceMessage(message);
+				break;
 			default:
-				this.logger.warn('Unknown machine message type', message);
+				this.logger.warn(`Unknown machine message type: ${message.eventType}`);
 				break;
 		}
 
