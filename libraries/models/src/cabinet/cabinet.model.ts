@@ -31,6 +31,7 @@ class Cabinet {
 		name: string;
 		status: string;
 		gametypeId: string;
+		externalId?: string;
 	}[];
 	lastMessageAt?: Date;
 
@@ -102,6 +103,7 @@ class Cabinet {
 							name: z.string(),
 							status: z.string(),
 							gametype_id: z.string(),
+							external_id: z.string().optional().nullable(),
 						})
 					)
 					.min(1)
@@ -123,6 +125,7 @@ class Cabinet {
 						name: playfield.name,
 						status: playfield.status,
 						gametypeId: playfield.gametype_id,
+						externalId: playfield.external_id ?? undefined,
 					})),
 					item.last_machine_message
 				);
