@@ -29,6 +29,8 @@ interface IAppUserService {
 
 	updateUser(id: string, user: AppUserUpdateDTOType): Promise<AppUser>;
 
+	updateUserPassword(id: string, newPassword: string): Promise<AppUser>;
+
 	inactivateUser(id: string): Promise<void>;
 }
 

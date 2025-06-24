@@ -1,9 +1,11 @@
 import {compare, hash} from 'bcrypt';
+import {randomInt} from 'crypto';
 
-import {ForbiddenError} from '@lib/errors';
+import type {AppUser} from '@lib/models/app-user';
 import {LoginVerificationCode} from '@lib/models/login-verification-code';
 import type {ILoginVerificationCodeRepository} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
+import {getEnvVariable} from '@lib/utils/env';
 
 import type {IAppUserService} from '../app-user-service/app-user.service.types';
 import type {IEmailService} from '../email-service/email.service.types';
@@ -11,7 +13,7 @@ import type {AppContext} from '../types';
 import type {ILoginVerificationCodeService} from './login-verification-code.service.types';
 
 class LoginVerificationCodeService implements ILoginVerificationCodeService {
-	private loginVerificationCodeExpiration = 60 * 1000 * 5; // 5 minutes
+	private loginVerificationCodeExpiration = 60 * 1000 * 15; // 15 minutes
 	private loginVerificationCodeLength = 6;
 	private loginVerificationCodeCharset =
 		'0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
@@ -38,7 +40,7 @@ class LoginVerificationCodeService implements ILoginVerificationCodeService {
 	private generateLoginVerificationCode(): string {
 		return Array.from({length: this.loginVerificationCodeLength}, () => {
 			return this.loginVerificationCodeCharset.charAt(
-				Math.floor(Math.random() * this.loginVerificationCodeCharset.length)
+				randomInt(this.loginVerificationCodeCharset.length) // use crypto's randomInt for better randomness
 			);
 		}).join('');
 	}
@@ -52,15 +54,14 @@ class LoginVerificationCodeService implements ILoginVerificationCodeService {
 	}
 
 	async getNewLoginVerificationCode(
-		email: string
+		email: string,
+		user?: AppUser | null | undefined
 	): Promise<LoginVerificationCode> {
-		const user = await this.appUserService.getUserByEmail(email);
-		await this.deleteUserLoginVerificationCodes(email);
-
-		if (user?.isBlocked) {
-			throw new ForbiddenError('User is blocked');
+		let _user = user;
+		if (_user === undefined) {
+			_user = await this.appUserService.getUserByEmail(email);
 		}
-
+		await this.deleteUserLoginVerificationCodes(email);
 		// Return a code for security reasons. We don't want to expose whether an account exists.
 		// But don't save the code if the user doesn't exist.
 
@@ -74,20 +75,26 @@ class LoginVerificationCodeService implements ILoginVerificationCodeService {
 			new Date(Date.now() + this.loginVerificationCodeExpiration)
 		);
 
-		if (user) {
+		if (_user) {
 			await this.saveLoginVerificationCode(code);
 
 			// TODO: remove this log after email service is implemented for security reasons
 			this.logger.debug(
-				`Sending login verification code (${code.code}) to ${user.email}`
+				`Sending login verification code (${code.code}) to ${_user.email}`
 			);
 
+			const loginUrl = new URL(`${process.env.APP_URL}`);
+			loginUrl.searchParams.set('code', code.code);
+			loginUrl.searchParams.set('email', email);
+
 			await this.emailService.sendEmail({
-				to: [user.email],
-				subject: 'Login Verification Code', // TODO: Add translations?
-				template: 'login-verification-code',
+				to: [email],
+				template: 'login-code',
 				data: {
 					code: code.code,
+					username: _user.username,
+					language: _user.settings.language ?? 'en',
+					loginLink: loginUrl.toString(), // TODO: Get redirect after login query param from FE?
 				},
 			});
 		}
@@ -96,7 +103,7 @@ class LoginVerificationCodeService implements ILoginVerificationCodeService {
 	}
 
 	async encryptLoginVerificationCode(code: string): Promise<string> {
-		return await hash(code, 5);
+		return await hash(code, getEnvVariable('BCRYPT_SALT_ROUNDS', 5));
 	}
 
 	async verifyLoginVerificationCode(

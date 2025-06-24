@@ -10,6 +10,7 @@
     "./game-session": "./src/game-session/game-session.repository.ts",
     "./gametype": "./src/gametype/gametype.repository.ts",
     "./login-verification-code": "./src/login-verification-code/login-verification-code.repository.ts",
+    "./password-reset-token": "./src/password-reset-token/password-reset-token.repository.ts",
     "./machine": "./src/machine/machine.repository.ts",
     "./machine-log": "./src/machine-log/machine-log.repository.ts",
     "./machine-message": "./src/machine-message/machine-message.repository.ts",

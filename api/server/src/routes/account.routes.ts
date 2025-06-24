@@ -21,8 +21,6 @@ const createAccountApi = () => {
 		defaultHook: defaultValidationHook,
 	});
 
-	app.use(Authenticate());
-
 	app.openapi(loggedInUserRoute, async (ctx) => {
 		const appContext = ctx.get('appContext');
 		const appUserRepository = new AppUserRepository(db, {

@@ -1,6 +1,7 @@
 import {createRoute} from '@hono/zod-openapi';
 import {z} from '@hono/zod-openapi';
 
+import {ApiErrorSchema} from '@lib/errors';
 import {LoginVerificationCode} from '@lib/models/login-verification-code';
 
 import {cookieAuthRegistry} from '../app';
@@ -103,6 +104,133 @@ const startClientAuthenticationWithSecretRoute = createRoute({
 	},
 });
 
+const authenticateWithPasswordRoute = createRoute({
+	summary: 'Method to authenticate with username and password',
+	method: 'post',
+	path: '/credentials',
+	tags: ['Authentication'],
+	request: {
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						email: z.string().email(),
+						password: z.string(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: 'Successful login',
+			headers: {
+				'Set-Cookie': {
+					description: 'Set the cookie',
+					schema: {
+						type: 'string',
+					},
+				},
+			},
+		},
+	},
+});
+
+const requestResetPasswordRoute = createRoute({
+	summary: 'Method to request a password reset',
+	method: 'post',
+	path: '/credentials/reset-password',
+	tags: ['Authentication'],
+	request: {
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						email: z.string().email(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		204: {
+			description: 'Password reset request successful',
+		},
+	},
+});
+
+const validateResetPasswordTokenRoute = createRoute({
+	summary: 'Method to validate a password reset token',
+	method: 'post',
+	path: '/credentials/validate-reset-token',
+	tags: ['Authentication'],
+	request: {
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						email: z.string().email(),
+						token: z.string(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: 'Token is valid',
+			content: {
+				'application/json': {
+					schema: z.object({
+						username: z.string(),
+					}),
+				},
+			},
+		},
+		400: {
+			description: 'Token is invalid, expired, or does not exists',
+			content: {
+				'application/json': {
+					schema: ApiErrorSchema,
+				},
+			},
+		},
+	},
+});
+
+const updatePasswordRoute = createRoute({
+	summary: 'Method to update a password after a reset request',
+	method: 'put',
+	path: '/credentials/update-password',
+	tags: ['Authentication'],
+	request: {
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						email: z.string().email(),
+						token: z.string(),
+						newPassword: z.string(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		204: {
+			description: 'Password reset successful',
+		},
+		400: {
+			description: 'Token is invalid, expired, or does not exists',
+			content: {
+				'application/json': {
+					schema: ApiErrorSchema,
+				},
+			},
+		},
+	},
+});
+
 const refreshTokenRoute = createRoute({
 	summary: 'Method to refresh a token',
 	method: 'post',
@@ -175,4 +303,8 @@ export {
 	logoutRoute,
 	logoutAllDevicesRoute,
 	startClientAuthenticationWithSecretRoute,
+	authenticateWithPasswordRoute,
+	requestResetPasswordRoute,
+	validateResetPasswordTokenRoute,
+	updatePasswordRoute,
 };

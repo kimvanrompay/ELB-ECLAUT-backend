@@ -1,4 +1,4 @@
-import {AppSecurityGroup, type AppUser} from '@lib/models/app-user';
+import {AppSecurityGroup} from '@lib/models/app-user';
 
 type UserTokenPayload = {
 	userId: string;
@@ -23,17 +23,11 @@ interface IAuthService {
 	refreshJwtTokens(refreshToken: string): Promise<{
 		accessToken: string;
 		refreshToken: string;
-		accessTokenExpiration: Date;
-		refreshTokenExpiration: Date;
 	}>;
 
-	getJwtTokensByEmail(email: string): Promise<{
-		user: AppUser;
-		accessToken: string;
-		refreshToken: string;
-		accessTokenExpiration: Date;
-		refreshTokenExpiration: Date;
-	}>;
+	logoutOnAllDevices(userId: string): Promise<void>;
+
+	logoutOnDevice(refreshToken: string): Promise<void>;
 }
 
 export type {IAuthService, UserTokenPayload, ClientTokenPayload};

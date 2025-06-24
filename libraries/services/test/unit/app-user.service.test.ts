@@ -9,7 +9,6 @@ import {
 	UserAlreadyExistsError,
 } from '@lib/errors';
 import {AppSecurityGroup, AppUser} from '@lib/models/app-user';
-import type {TenantLocation} from '@lib/models/tenant-location';
 import type {
 	IAppUserRepository,
 	ITenantLocationRepository,
@@ -276,11 +275,17 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				['00000000-0000-0000-0000-000000000009'],
 				false,
 				true,
 				new Date('2021-01-01T00:00:00.000Z'),
-				new Date('2021-01-01T00:00:00.000Z')
+				new Date('2021-01-01T00:00:00.000Z'),
+				false,
+				''
 			);
 			mockAppUserRepository.updateUser.mockResolvedValue(user);
 
@@ -315,6 +320,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				['00000000-0000-0000-0000-000000000009'],
 				true,
 				true,
@@ -369,6 +378,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_MANAGER,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				['00000000-0000-0000-0000-000000000009'],
 				false,
 				true,
@@ -428,6 +441,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -466,6 +483,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -504,6 +525,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -546,6 +571,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -582,6 +611,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -618,6 +651,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -658,6 +695,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -699,6 +740,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -740,6 +785,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -785,6 +834,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -827,6 +880,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -869,6 +926,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -974,6 +1035,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1022,6 +1087,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1048,6 +1117,10 @@ describe('AppUserService', () => {
 				role: AppSecurityGroup.ELAUT_ADMIN,
 				username: 'admin',
 				tenant_id: '00000000-0000-0000-0000-000000000001',
+				allow_password_login: true,
+				has_temp_password: false,
+				hashed_password: '',
+				language: 'en',
 			});
 
 			// TODO: test for locations
@@ -1067,6 +1140,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1155,6 +1232,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1212,6 +1293,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1261,6 +1346,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant 2',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1296,6 +1385,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1331,6 +1424,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				['00000000-0000-0000-0000-000000000009'],
 				false,
 				true,
@@ -1347,6 +1444,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[
 					'00000000-0000-0000-0000-000000000009',
 					'00000000-0000-0000-0000-000000000010',
@@ -1455,6 +1556,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1505,6 +1610,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[],
 				false,
 				true,
@@ -1572,6 +1681,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.ELAUT_ADMIN,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				['00000000-0000-0000-0000-000000000001'],
 				false,
 				true,
@@ -1642,6 +1755,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				['00000000-0000-0000-0000-000000000012'],
 				false,
 				true,
@@ -1658,6 +1775,10 @@ describe('AppUserService', () => {
 					name: 'Test Tenant',
 				},
 				AppSecurityGroup.TENANT_ARCADE_EMPLOYEE,
+				{
+					allowPasswordLogin: true,
+					language: 'en',
+				},
 				[
 					'00000000-0000-0000-0000-000000000009',
 					'00000000-0000-0000-0000-000000000010',

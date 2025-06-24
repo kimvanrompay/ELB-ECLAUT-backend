@@ -18,7 +18,9 @@
     "./sqs": "./src/sqs/sqs.utils.ts",
     "./string": "./src/string.utils.ts",
     "./types": "./src/types.utils.ts",
-    "./mqtt-publisher": "./src/mqtt-publisher.ts"
+    "./mqtt-publisher": "./src/mqtt-publisher.ts",
+    "./strivecloud-adapter": "./src/strivecloud-adapter.ts",
+    "./language": "./src/language.utils.ts"
   },
   "scripts": {
     "test": "yarn test:unit",
