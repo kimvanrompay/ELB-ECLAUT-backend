@@ -1,7 +1,7 @@
 import knex, {type Knex} from 'knex';
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 //@ts-ignore
-import PGClient from 'knex/lib/dialects/postgres';
+import PGClient from 'knex/lib/dialects/postgres/index.js';
 
 import {getAwsSecret} from '@lib/utils/aws-secret-manager';
 
