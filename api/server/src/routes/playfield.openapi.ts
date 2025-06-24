@@ -47,6 +47,7 @@ const findPlayfieldsRoute = createPrivateAppRoute(
 	path: '/',
 	request: {
 		query: z.object({
+			'external_id[like]': z.string().optional(),
 			'name[like]': z.string().optional(),
 			'serial_number[like]': z.string().optional(),
 			limit: z.coerce.number().min(1).optional(),
@@ -145,7 +146,7 @@ const findPlayfieldLogsRoute = createPrivateAppRoute(
 });
 
 const updatePlayfieldPrizeRoute = createPrivateAppRoute(
-	[AppSecurityScopes.READ_MACHINES],
+	[AppSecurityScopes.UPDATE_MACHINES],
 	{
 		canThrowBadRequest: true,
 	}
@@ -163,6 +164,42 @@ const updatePlayfieldPrizeRoute = createPrivateAppRoute(
 				'application/json': {
 					schema: z.object({
 						prizeId: z.string().nullable(),
+					}),
+				},
+			},
+		},
+	},
+	responses: {
+		200: {
+			description: 'Successful response',
+			content: {
+				'application/json': {
+					schema: Playfield.schemas.DTOSchema,
+				},
+			},
+		},
+	},
+});
+
+const updatePlayfieldCategoryRoute = createPrivateAppRoute(
+	[AppSecurityScopes.UPDATE_MACHINES],
+	{
+		canThrowBadRequest: true,
+	}
+)({
+	method: 'put',
+	summary: 'Update playfield category',
+	tags: ['Machines', 'Playfield Categories'],
+	path: '/{id}/category',
+	request: {
+		params: z.object({
+			id: z.string(),
+		}),
+		body: {
+			content: {
+				'application/json': {
+					schema: z.object({
+						categoryId: z.string().optional().nullable(),
 					}),
 				},
 			},
@@ -221,4 +258,5 @@ export {
 	findPlayfieldLogsRoute,
 	updatePlayfieldPrizeRoute,
 	updatePlayfieldRoute,
+	updatePlayfieldCategoryRoute,
 };

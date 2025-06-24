@@ -15,6 +15,7 @@
     "./gametype": "./src/gametype-service/gametype.service.ts",
     "./machine": "./src/machine-service/machine.service.ts",
     "./playfield": "./src/playfield-service/playfield.service.ts",
+    "./playfield-category": "./src/playfield-category-service/playfield-category.service.ts",
     "./cabinet": "./src/cabinet-service/cabinet.service.ts",
     "./email": "./src/email-service/email.service.ts",
     "./machine-message": "./src/machine-message-service/machine-message.service.ts",

@@ -21,6 +21,7 @@ const MachineDTOSchema = z
 						id: z.string(),
 						name: z.string(),
 						status: z.string(),
+						externalId: z.string().optional(),
 					})
 				)
 				.min(1),
@@ -31,6 +32,13 @@ const MachineDTOSchema = z
 			name: z.string(),
 		}),
 		status: z.string(),
+		category: z
+			.object({
+				id: z.string(),
+				name: z.string(),
+			})
+			.optional(),
+		externalId: z.string().optional(),
 	})
 	.openapi('Machine', {
 		description:

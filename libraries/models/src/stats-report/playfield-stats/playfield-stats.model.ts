@@ -1,12 +1,15 @@
 import {mapArrayOrSingleItem} from '@lib/utils';
 
+import type {
+	PopularGametypeStats,
+	PopularLocationStats,
+	PopularPlayfieldCategoryStats,
+	PopularPlayfieldStats,
+	PopularPrizeStats,
+} from '../helpers';
 import {
 	PlayfieldStatsDBSchema,
 	type PlayfieldStatsDBType,
-	type PopularGametypeStats,
-	type PopularLocationStats,
-	type PopularPlayfieldStats,
-	type PopularPrizeStats,
 	type StatisticsDataDBType,
 	type StatisticsDataType,
 } from './playfield-stats.schema';
@@ -24,6 +27,7 @@ class PlayfieldStats {
 	tenantId?: string;
 	tenantLocationId?: string;
 	prizeId?: string;
+	playfieldCategoryId?: string;
 
 	stats: StatisticsData;
 
@@ -42,6 +46,7 @@ class PlayfieldStats {
 		tenantId?: string;
 		tenantLocationId?: string;
 		prizeId?: string;
+		playfieldCategoryId?: string;
 
 		stats: StatisticsData;
 	}) {
@@ -59,6 +64,7 @@ class PlayfieldStats {
 		this.tenantLocationId = args.tenantLocationId;
 
 		this.stats = args.stats;
+		this.playfieldCategoryId = args.playfieldCategoryId;
 	}
 
 	static fromDBType(data: PlayfieldStatsDBType[]): PlayfieldStats[];
@@ -80,6 +86,7 @@ class PlayfieldStats {
 				tenantId: item.tenant_id,
 				tenantLocationId: item.tenant_location_id,
 				prizeId: item.prize_id,
+				playfieldCategoryId: item.playfield_category_id,
 
 				stats: new StatisticsData({
 					countGameSessions: item.count_game_sessions,
@@ -117,4 +124,5 @@ export type {
 	PopularGametypeStats,
 	PopularPlayfieldStats,
 	PopularLocationStats,
+	PopularPlayfieldCategoryStats,
 };

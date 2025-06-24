@@ -39,6 +39,14 @@ enum AppSecurityScopes {
 	CREATE_PRIZES = 'create:prizes',
 	UPDATE_PRIZES = 'update:prizes',
 	DELETE_PRIZES = 'delete:prizes',
+
+	READ_PLAYFIELD_CATEGORIES = 'read:playfield-categories',
+	CREATE_PLAYFIELD_CATEGORIES = 'create:playfield-categories',
+	UPDATE_PLAYFIELD_CATEGORIES = 'update:playfield-categories',
+	DELETE_PLAYFIELD_CATEGORIES = 'delete:playfield-categories',
+
+	READ_PLAYERZONE_PROFILES = 'read:playerzone-profiles',
+	READ_PLAYERZONE_LEADERBOARDS = 'read:playerzone-leaderboards',
 }
 
 const AppSecurityGroupToSecurityClaims: Record<

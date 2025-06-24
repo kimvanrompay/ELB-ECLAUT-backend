@@ -4,6 +4,7 @@ import {OpenAPIHono} from '@hono/zod-openapi';
 import {ForbiddenError} from '@lib/errors';
 import {MachineLogRepository} from '@lib/repositories/machine-log';
 import {PlayfieldRepository} from '@lib/repositories/playfield';
+import {PlayfieldCategoryRepository} from '@lib/repositories/playfield-category';
 import {PrizeRepository} from '@lib/repositories/prize';
 import {MqttCredentialsService} from '@lib/services/mqtt-credentials';
 import {PlayfieldService} from '@lib/services/playfield';
@@ -52,10 +53,15 @@ const createMqttApi = () => {
 		const playfieldRepository = new PlayfieldRepository(db, appContext);
 		const prizeRepository = new PrizeRepository(db, appContext);
 		const machineLogRepository = new MachineLogRepository(db, appContext);
+		const playfieldCategoryRepository = new PlayfieldCategoryRepository(
+			db,
+			appContext
+		);
 
 		const playfieldService = new PlayfieldService(
 			playfieldRepository,
 			prizeRepository,
+			playfieldCategoryRepository,
 			machineLogRepository,
 			appContext
 		);

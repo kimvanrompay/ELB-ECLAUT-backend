@@ -1,9 +1,10 @@
 import type {
-	PlayfieldStats,
 	PopularGametypeStats,
+	PopularPlayfieldCategoryStats,
 	PopularPlayfieldStats,
 	PopularPrizeStats,
-} from '../playfield-stats/playfield-stats.model';
+} from '../helpers';
+import type {PlayfieldStats} from '../playfield-stats/playfield-stats.model';
 import {StatisticsData} from '../playfield-stats/statistics-data';
 import {
 	TenantLocationStatsReportDTOSchema,
@@ -76,6 +77,7 @@ class TenantLocationStatsReport {
 	popularPrizes?: PopularPrizeStats[];
 	popularPlayfields?: PopularPlayfieldStats[];
 	popularGametypes?: PopularGametypeStats[];
+	popularPlayfieldCategories?: PopularPlayfieldCategoryStats[];
 
 	// dataPerGameType: Record<string, StatisticsData>;
 	// dataPerPlayfield: Record<string, StatisticsData>;
@@ -93,7 +95,8 @@ class TenantLocationStatsReport {
 		data: TenantLocationStats[],
 		popularPrizes?: PopularPrizeStats[],
 		popularPlayfields?: PopularPlayfieldStats[],
-		popularGameTypes?: PopularGametypeStats[]
+		popularGameTypes?: PopularGametypeStats[],
+		popularPlayfieldCategories?: PopularPlayfieldCategoryStats[]
 	) {
 		this.tenantId = tenantId;
 		this.tenantLocationId = tenantLocationId;
@@ -106,6 +109,7 @@ class TenantLocationStatsReport {
 		this.popularPrizes = popularPrizes ?? [];
 		this.popularPlayfields = popularPlayfields ?? [];
 		this.popularGametypes = popularGameTypes ?? [];
+		this.popularPlayfieldCategories = popularPlayfieldCategories ?? [];
 	}
 
 	toJSON(): TenantLocationStatsReportDTOType {
@@ -152,6 +156,7 @@ class TenantLocationStatsReport {
 			popularGametypes: this.popularGametypes ?? [],
 			popularPrizes: this.popularPrizes ?? [],
 			popularPlayfields: this.popularPlayfields ?? [],
+			popularPlayfieldCategories: this.popularPlayfieldCategories ?? [],
 
 			// aggregatedData: this.aggregatedData.toJSON(),
 			// data: this.data.map((item) => ({
