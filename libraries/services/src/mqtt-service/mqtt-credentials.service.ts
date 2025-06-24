@@ -39,15 +39,15 @@ class MqttCredentialsService {
 	}): Promise<MqttCredentialsModel | undefined> {
 		const {playfieldId, serialNumber} = options;
 
-		const {userId, tenantId, locationIds, role} = this.context.auth;
+		const {userId, tenantId, locationIds, securityGroup} = this.context.auth;
 
-		const isTenantBound = AuthorizationService.isTenantBound(role);
-		const isLocationBound = AuthorizationService.isLocationBound(role);
+		const isTenantBound = AuthorizationService.isTenantBound(securityGroup);
+		const isLocationBound = AuthorizationService.isLocationBound(securityGroup);
 
 		const subscribeTopics = [`user/${userId}/*`];
 
 		this.logger.debug(
-			`getMqttCredentials: userId: ${userId}, tenantId: ${tenantId}, locationIds: ${locationIds}, role: ${role}`
+			`getMqttCredentials: userId: ${userId}, tenantId: ${tenantId}, locationIds: ${locationIds}, role: ${securityGroup}`
 		);
 
 		if (isTenantBound && isLocationBound) {

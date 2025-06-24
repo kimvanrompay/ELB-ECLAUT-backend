@@ -1,15 +1,19 @@
 import {OpenAPIHono} from '@hono/zod-openapi';
+import dayjs from 'dayjs';
 import {getCookie, setCookie} from 'hono/cookie';
 
 import {BadRequestError, UnauthorizedError} from '@lib/errors';
 import {AppUserRepository} from '@lib/repositories/app-user';
+import {ClientRepository} from '@lib/repositories/client';
 import {LoginVerificationCodeRepository} from '@lib/repositories/login-verification-code';
 import {RefreshTokenRepository} from '@lib/repositories/refresh-token';
 import {TenantLocationRepository} from '@lib/repositories/tenant-location';
 import {AppUserService} from '@lib/services/app-user';
 import {AuthService} from '@lib/services/auth';
+import {ClientService} from '@lib/services/client';
 import {EmailService} from '@lib/services/email';
 import {LoginVerificationCodeService} from '@lib/services/login-verification-code';
+import {TenantLocationService} from '@lib/services/tenant-location';
 import type {AppContext} from '@lib/services/types';
 import {defaultValidationHook} from '@lib/utils';
 import {isDevelopmentBuild} from '@lib/utils/env';
@@ -22,6 +26,7 @@ import {
 	logoutRoute,
 	refreshTokenRoute,
 	startAuthenticationWithCodeRoute,
+	startClientAuthenticationWithSecretRoute,
 } from './auth.openapi';
 
 const createServices = (appContext: AppContext) => {
@@ -54,10 +59,23 @@ const createServices = (appContext: AppContext) => {
 		logger: appContext.logger,
 	});
 
+	const tenantLocationService = new TenantLocationService(
+		tenantLocationRepository,
+		appContext
+	);
+
+	const clientRepository = new ClientRepository(db, {
+		logger: appContext.logger,
+	});
+
+	const clientService = new ClientService(clientRepository, appContext);
+
 	const authService = new AuthService(
-		'SOME_SUPER_DUPER_UNIQUE_SECRET',
+		'SOME_SUPER_DUPER_UNIQUE_SECRET', // TODO: replace with a real secret from AWS Secrets Manager
 		refreshTokenRepository,
 		appUserService,
+		clientService,
+		tenantLocationService,
 		appContext
 	);
 
@@ -65,6 +83,7 @@ const createServices = (appContext: AppContext) => {
 		appUserService,
 		loginVerificationCodeService,
 		authService,
+		clientService,
 	};
 };
 
@@ -72,6 +91,54 @@ const createAuthApi = () => {
 	const authApp = new OpenAPIHono<Environment>({
 		strict: true,
 		defaultHook: defaultValidationHook,
+	});
+
+	authApp.openapi(startClientAuthenticationWithSecretRoute, async (ctx) => {
+		const {client_id: clientId, client_secret: clientSecret} =
+			ctx.req.valid('json');
+
+		const {authService, clientService} = createServices(ctx.get('appContext'));
+
+		console.log('Client ID:', clientId);
+		console.log('Client Secret:', clientSecret);
+
+		const isVerifiedSecret = await authService.verifyClientSecret(
+			clientId,
+			clientSecret
+		);
+
+		if (!isVerifiedSecret) {
+			throw new UnauthorizedError(
+				'Either client not found or invalid credentials'
+			);
+		}
+
+		const {
+			client,
+			accessToken,
+			accessTokenExpiration,
+			refreshToken,
+			refreshTokenExpiration,
+		} = await authService.getJwtTokensByClientId(clientId);
+
+		await clientService.updateClientLastLogin(client.id);
+
+		const timeBetweenNowAndAccessTokenExpiration = dayjs(
+			accessTokenExpiration
+		).diff(dayjs(), 'milliseconds');
+		const timeBetweenNowAndRefreshTokenExpiration = dayjs(
+			refreshTokenExpiration
+		).diff(dayjs(), 'milliseconds');
+
+		return ctx.json(
+			{
+				access_token: accessToken,
+				expires_in: timeBetweenNowAndAccessTokenExpiration,
+				refresh_token: refreshToken,
+				refresh_expires_in: timeBetweenNowAndRefreshTokenExpiration,
+			},
+			200
+		);
 	});
 
 	authApp.openapi(startAuthenticationWithCodeRoute, async (ctx) => {
@@ -114,7 +181,7 @@ const createAuthApi = () => {
 				accessTokenExpiration,
 				refreshToken,
 				refreshTokenExpiration,
-			} = await authService.getJwtTokens(email);
+			} = await authService.getJwtTokensByEmail(email);
 
 			await loginVerificationCodeService.deleteUserLoginVerificationCodes(
 				email
@@ -210,7 +277,7 @@ const createAuthApi = () => {
 
 		const tokenUser = appContext.auth;
 
-		if (!tokenUser) {
+		if (!tokenUser || !tokenUser.userId) {
 			throw new UnauthorizedError('No user');
 		}
 

@@ -29,6 +29,49 @@ const cookieAuthRegistry = app.openAPIRegistry.registerComponent(
 	}
 );
 
+const oauth2Registry = app.openAPIRegistry.registerComponent(
+	'securitySchemes',
+	'oauth2',
+	{
+		type: 'oauth2',
+		description: 'OAuth2 authentication',
+		flows: {
+			clientCredentials: {
+				// authorizationUrl: '/auth/oauth/authorize',
+				tokenUrl: '/auth/oauth/token',
+				scopes: {
+					'read:machines': 'Read machines',
+					'write:machines': 'Write machines',
+				},
+			},
+		},
+	}
+);
+
+const bearerAuthRegistry = app.openAPIRegistry.registerComponent(
+	'securitySchemes',
+	'bearerAuth',
+	{
+		type: 'http',
+		scheme: 'bearer',
+		bearerFormat: 'JWT',
+		name: 'Authorization',
+		in: 'header',
+		description: 'Bearer token authentication',
+		flows: {
+			clientCredentials: {
+				// authorizationUrl: '/auth/oauth/authorize',
+				tokenUrl: '/auth/oauth/token',
+				scopes: {
+					'read:machines': 'Read machines',
+					'write:machines': 'Write machines',
+					'read:gametype': 'Read game types',
+				},
+			},
+		},
+	}
+);
+
 app.use(
 	cors({
 		origin: ['http://localhost:3000', 'http://localhost:3001'],
@@ -48,4 +91,4 @@ app.use(httpLogger);
 // const machineRepository = new MachineRepository(db);
 // const machineService = new MachineService(machineRepository);
 
-export {app, cookieAuthRegistry};
+export {app, cookieAuthRegistry, oauth2Registry, bearerAuthRegistry};

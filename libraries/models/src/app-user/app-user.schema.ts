@@ -1,6 +1,7 @@
 import {z} from '@hono/zod-openapi';
 
-enum AppUserRole {
+enum AppSecurityGroup {
+	// User roles
 	ELAUT_ADMIN = 'ELAUT_ADMIN',
 	ELAUT_SERVICE = 'ELAUT_SERVICE',
 	ELAUT_DEVELOPER = 'ELAUT_DEVELOPER',
@@ -13,6 +14,10 @@ enum AppUserRole {
 	TENANT_ARCADE_MANAGER = 'TENANT_ARCADE_MANAGER',
 	TENANT_ARCADE_TECHNICIAN = 'TENANT_ARCADE_TECHNICIAN',
 	TENANT_ARCADE_EMPLOYEE = 'TENANT_ARCADE_EMPLOYEE',
+
+	// Client security groups
+	'MACHINE' = 'MACHINE_SECURITY_GROUP',
+	'INITIALIZE_GAMESESSION' = 'INITIALIZE_GAMESESSION',
 }
 
 const AppUserDTOSchema = z
@@ -24,7 +29,7 @@ const AppUserDTOSchema = z
 			id: z.string(),
 			name: z.string(),
 		}),
-		role: z.nativeEnum(AppUserRole),
+		role: z.nativeEnum(AppSecurityGroup),
 		locationIds: z.array(z.string()),
 		isBlocked: z.boolean(),
 		isActive: z.boolean(),
@@ -39,7 +44,7 @@ const AppUserDBSchema = z.object({
 	tenant_id: z.string(),
 	tenant_name: z.string(),
 	username: z.string(),
-	role: z.nativeEnum(AppUserRole),
+	role: z.nativeEnum(AppSecurityGroup),
 	location_ids: z.string(),
 	is_blocked: z.boolean(),
 	is_active: z.boolean(),
@@ -51,7 +56,7 @@ const AppUserCreateDTOSchema = z.object({
 	email: z.string().email(),
 	username: z.string(),
 	tenantId: z.string(),
-	role: z.nativeEnum(AppUserRole),
+	securityGroup: z.nativeEnum(AppSecurityGroup),
 	locationIds: z.array(z.string()).optional(),
 });
 // .refine(
@@ -82,13 +87,13 @@ const AppUserInsertDBSchema = z.object({
 	email: z.string().email(),
 	tenant_id: z.string(),
 	username: z.string(),
-	role: z.nativeEnum(AppUserRole),
+	role: z.nativeEnum(AppSecurityGroup),
 });
 
 const AppUserUpdateDTOSchema = z.object({
 	email: z.string().email().optional(),
 	username: z.string().optional(),
-	role: z.nativeEnum(AppUserRole).optional(),
+	securityGroup: z.nativeEnum(AppSecurityGroup).optional(),
 	isBlocked: z.boolean().optional(),
 	locationIds: z.array(z.string()).optional(),
 });
@@ -96,7 +101,7 @@ const AppUserUpdateDTOSchema = z.object({
 const AppUserUpdateDBSchema = z.object({
 	email: z.string().email().optional(),
 	username: z.string().optional(),
-	role: z.nativeEnum(AppUserRole).optional(),
+	role: z.nativeEnum(AppSecurityGroup).optional(),
 	is_blocked: z.boolean().optional(),
 	last_login: z.string().optional(),
 	last_seen: z.string().optional(),
@@ -111,7 +116,7 @@ type AppUserUpdateDTOType = z.infer<typeof AppUserUpdateDTOSchema>;
 type AppUserUpdateDBType = z.infer<typeof AppUserUpdateDBSchema>;
 
 export {
-	AppUserRole,
+	AppSecurityGroup,
 	AppUserDTOSchema,
 	AppUserDBSchema,
 	AppUserCreateDTOSchema,

@@ -54,10 +54,12 @@ class GametypeRepository extends KnexRepository implements IGametypeRepository {
 
 	async countGametypes(filters: DatabaseQueryFilters): Promise<number> {
 		try {
-			const query = KnexFilterAdapter.applyFilters(
-				this.db('gametype'),
-				filters
-			);
+			const query = KnexFilterAdapter.applyFilters(this.db('gametype'), {
+				...filters,
+				limit: undefined,
+				offset: undefined,
+				orderBy: undefined,
+			});
 
 			const result = await query.count('*').first();
 

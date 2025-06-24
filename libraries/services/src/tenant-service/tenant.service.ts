@@ -35,7 +35,7 @@ class TenantService implements ITenantService {
 
 	private checkIfUserIsAllowedToAccessTenant(tenantId: string) {
 		const isTenantBound = AuthorizationService.isTenantBound(
-			this.context.auth.role
+			this.context.auth.securityGroup
 		);
 
 		if (isTenantBound && this.context.auth.tenantId !== tenantId) {
@@ -50,7 +50,7 @@ class TenantService implements ITenantService {
 
 	async findTenants(filters: DatabaseQueryFilters) {
 		const isTenantBound = AuthorizationService.isTenantBound(
-			this.context.auth.role
+			this.context.auth.securityGroup
 		);
 
 		if (isTenantBound) {
@@ -62,7 +62,7 @@ class TenantService implements ITenantService {
 
 	async findPaginatedTenants(filters: PaginatedDatabaseQueryFilters) {
 		const isTenantBound = AuthorizationService.isTenantBound(
-			this.context.auth.role
+			this.context.auth.securityGroup
 		);
 
 		if (isTenantBound) {
@@ -86,7 +86,7 @@ class TenantService implements ITenantService {
 
 	async createTenant(tenant: TenantCreateDTOType) {
 		const isTenantBound = AuthorizationService.isTenantBound(
-			this.context.auth.role
+			this.context.auth.securityGroup
 		);
 
 		if (isTenantBound) {

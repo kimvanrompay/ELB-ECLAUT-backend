@@ -44,6 +44,7 @@ const findTenantsRoute = createPrivateAppRoute(
 			limit: z.coerce.number().min(1).max(1000),
 			offset: z.coerce.number().min(0),
 			order_by: z.string().optional(),
+			'name[like]': z.string().optional(),
 		}),
 	},
 	responses: {

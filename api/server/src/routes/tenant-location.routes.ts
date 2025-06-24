@@ -4,7 +4,8 @@ import {NotFoundError} from '@lib/errors';
 import {TenantLocationRepository} from '@lib/repositories/tenant-location';
 import {TenantLocationService} from '@lib/services/tenant-location';
 import {defaultValidationHook} from '@lib/utils';
-import {renameProperties, renameProperty} from '@lib/utils/object';
+import type {PaginatedDatabaseQueryFilters} from '@lib/utils/db/filters';
+import {renameProperties} from '@lib/utils/object';
 import {parseQueryParamsToDatabaseFilters} from '@lib/utils/query-params';
 
 import {db} from '../database';
@@ -38,16 +39,26 @@ const createTenantLocationApi = () => {
 
 		const renamedQueryParams = renameProperties(queryParams, {
 			'location_name[like]': 'tenant_location.name[like]',
+			'name[like]': 'tenant_location.name[like]',
 			'is_active[eq]': 'tenant_location.is_active[eq]',
 		}) as typeof queryParams;
 
-		const filters = parseQueryParamsToDatabaseFilters(renamedQueryParams);
+		const filters = parseQueryParamsToDatabaseFilters(
+			renamedQueryParams
+		) as PaginatedDatabaseQueryFilters;
 
-		const locations = await tenantLocationService.findTenantLocations(filters);
+		const locations =
+			await tenantLocationService.findPaginatedTenantLocations(filters);
 
-		const locationDTOs = locations.map((location) => location.toJSON());
+		const locationDTOs = locations.entries.map((location) => location.toJSON());
 
-		return ctx.json(locationDTOs, 200);
+		return ctx.json(
+			{
+				entries: locationDTOs,
+				totalEntries: locations.totalEntries,
+			},
+			200
+		);
 	});
 
 	app.openapi(getTenantLocationRoute, async (ctx) => {

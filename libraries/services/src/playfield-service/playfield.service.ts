@@ -27,32 +27,18 @@ class PlayfieldService implements IPlayfieldService {
 		);
 	}
 
-	private getTenantAndLocationFromContext() {
-		const auth = this.context.auth;
-
-		if (!auth) {
-			return [undefined, undefined] as const;
-		}
-
-		return [
-			AuthorizationService.isTenantBound(auth.role) ? auth.tenantId : undefined,
-			AuthorizationService.isLocationBound(auth.role)
-				? auth.locationIds
-				: undefined,
-		] as const;
-	}
-
 	async findPlayfields(filters?: DatabaseQueryFilters): Promise<Playfield[]> {
 		return this.playfieldRepository.findPlayfields(
 			filters,
-			...this.getTenantAndLocationFromContext()
+			...AuthorizationService.getTenantAndLocationFromContext(this.context)
 		);
 	}
 
 	async findPaginatedPlayfields(
 		filters?: PaginatedDatabaseQueryFilters
 	): Promise<{entries: Playfield[]; totalEntries: number}> {
-		const [tenantId, locationIds] = this.getTenantAndLocationFromContext();
+		const [tenantId, locationIds] =
+			AuthorizationService.getTenantAndLocationFromContext(this.context);
 
 		const playfields = await this.playfieldRepository.findPlayfields(
 			filters,
@@ -75,14 +61,14 @@ class PlayfieldService implements IPlayfieldService {
 	async getPlayfieldById(id: string): Promise<Playfield | undefined> {
 		return this.playfieldRepository.getPlayfieldById(
 			id,
-			...this.getTenantAndLocationFromContext()
+			...AuthorizationService.getTenantAndLocationFromContext(this.context)
 		);
 	}
 
 	async findPlayfieldsBySerial(serial: string): Promise<Playfield[]> {
 		return this.playfieldRepository.findPlayfieldsByCabinetId(
 			serial,
-			...this.getTenantAndLocationFromContext()
+			...AuthorizationService.getTenantAndLocationFromContext(this.context)
 		);
 	}
 }

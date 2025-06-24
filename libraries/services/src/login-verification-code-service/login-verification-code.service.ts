@@ -1,5 +1,6 @@
 import {compare, hash} from 'bcrypt';
 
+import {ForbiddenError} from '@lib/errors';
 import {LoginVerificationCode} from '@lib/models/login-verification-code';
 import type {ILoginVerificationCodeRepository} from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
@@ -55,6 +56,10 @@ class LoginVerificationCodeService implements ILoginVerificationCodeService {
 	): Promise<LoginVerificationCode> {
 		const user = await this.appUserService.getUserByEmail(email);
 		await this.deleteUserLoginVerificationCodes(email);
+
+		if (user?.isBlocked) {
+			throw new ForbiddenError('User is blocked');
+		}
 
 		// Return a code for security reasons. We don't want to expose whether an account exists.
 		// But don't save the code if the user doesn't exist.

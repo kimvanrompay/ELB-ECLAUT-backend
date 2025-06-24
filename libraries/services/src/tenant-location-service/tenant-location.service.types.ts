@@ -3,12 +3,21 @@ import type {
 	TenantLocationCreateDTOType,
 	TenantLocationUpdateDTOType,
 } from '@lib/models/tenant-location';
-import type {DatabaseQueryFilters} from '@lib/utils/db/filters';
+import type {
+	DatabaseQueryFilters,
+	PaginatedDatabaseQueryFilters,
+} from '@lib/utils/db/filters';
 
 interface ITenantLocationService {
 	findTenantLocations(filters: DatabaseQueryFilters): Promise<TenantLocation[]>;
 
+	findPaginatedTenantLocations(
+		filters: PaginatedDatabaseQueryFilters
+	): Promise<PaginatedResult<TenantLocation>>;
+
 	findTenantLocationsByUserId(userId: string): Promise<TenantLocation[]>;
+
+	findTenantLocationsByClientId(clientId: string): Promise<TenantLocation[]>;
 
 	getTenantLocationById(
 		locationId: string

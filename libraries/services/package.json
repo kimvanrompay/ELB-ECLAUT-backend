@@ -7,6 +7,7 @@
     "./types": "./src/types.ts",
     "./app-user": "./src/app-user-service/app-user.service.ts",
     "./authorization": "./src/authorization-service/authorization.service.ts",
+    "./client": "./src/client-service/client.service.ts",
     "./jwt": "./src/jwt-service/jwt.service.ts",
     "./auth": "./src/auth-service/auth.service.ts",
     "./login-verification-code": "./src/login-verification-code-service/login-verification-code.service.ts",

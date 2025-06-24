@@ -52,8 +52,10 @@ class AppUserService implements IAppUserService {
 		}
 
 		return [
-			AuthorizationService.isTenantBound(auth.role) ? auth.tenantId : undefined,
-			AuthorizationService.isLocationBound(auth.role)
+			AuthorizationService.isTenantBound(auth.securityGroup)
+				? auth.tenantId
+				: undefined,
+			AuthorizationService.isLocationBound(auth.securityGroup)
 				? auth.locationIds
 				: undefined,
 		] as const;
@@ -79,6 +81,25 @@ class AppUserService implements IAppUserService {
 			this.logger.error(e);
 			return Promise.resolve([]);
 		}
+	}
+
+	async findPaginatedUsers(
+		filters?: DatabaseQueryFilters
+	): Promise<PaginatedResult<AppUser>> {
+		const entries = await this.appUserRepository.findUsersByFilters(
+			filters,
+			...this.getTenantAndLocationFromContext()
+		);
+
+		const totalEntries = await this.appUserRepository.countUsersByFilters(
+			filters,
+			...this.getTenantAndLocationFromContext()
+		);
+
+		return {
+			entries,
+			totalEntries,
+		};
 	}
 
 	getUserById(id: string): Promise<AppUser | undefined> {
@@ -156,8 +177,8 @@ class AppUserService implements IAppUserService {
 		const [loggedInTenantId] = this.getTenantAndLocationFromContext();
 
 		const isAllowedToCreateRole = AuthorizationService.isAllowedToEditUserRole(
-			this.context.auth.role,
-			userDTO.role
+			this.context.auth.securityGroup,
+			userDTO.securityGroup
 		);
 
 		if (!isAllowedToCreateRole) {
@@ -177,7 +198,7 @@ class AppUserService implements IAppUserService {
 		}
 
 		const shouldAddUserToLocations = AuthorizationService.isLocationBound(
-			userDTO.role
+			userDTO.securityGroup
 		);
 
 		let userExists = await this.getUserByEmail(userDTO.email);
@@ -215,7 +236,7 @@ class AppUserService implements IAppUserService {
 			throw new UserAlreadyExistsError();
 		}
 
-		if (userExists.role !== userDTO.role) {
+		if (userExists.securityGroup !== userDTO.securityGroup) {
 			throw new UserAlreadyExistsError();
 		}
 
@@ -255,12 +276,14 @@ class AppUserService implements IAppUserService {
 			throw new NotFoundError('User not found');
 		}
 
-		const isSelf = this.context.auth.userId === currentUserBeingUpdated.id;
+		const isSelf =
+			this.context.auth.type === 'USER' &&
+			this.context.auth.userId === currentUserBeingUpdated.id;
 
 		const isAllowedToEditUserRole =
 			AuthorizationService.isAllowedToEditUserRole(
-				this.context.auth.role,
-				userBeingUpdated.role ?? currentUserBeingUpdated.role
+				this.context.auth.securityGroup,
+				userBeingUpdated.securityGroup ?? currentUserBeingUpdated.securityGroup
 			);
 
 		const isAllowedToAccessTenant =
@@ -270,11 +293,11 @@ class AppUserService implements IAppUserService {
 			);
 
 		const isUserRoleChanged =
-			userBeingUpdated.role &&
-			userBeingUpdated.role !== currentUserBeingUpdated.role;
+			userBeingUpdated.securityGroup &&
+			userBeingUpdated.securityGroup !== currentUserBeingUpdated.securityGroup;
 
 		const isUserLocationBound = AuthorizationService.isLocationBound(
-			userBeingUpdated.role ?? currentUserBeingUpdated.role
+			userBeingUpdated.securityGroup ?? currentUserBeingUpdated.securityGroup
 		);
 
 		if (

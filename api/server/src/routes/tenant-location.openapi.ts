@@ -18,7 +18,7 @@ const findTenantLocationsRoute = createPrivateAppRoute(
 	request: {
 		query: z.object({
 			'tenant_id[eq]': z.string().optional(),
-			'location_name[like]': z.string().optional(),
+			'name[like]': z.string().optional(),
 			'is_active[eq]': z
 				.string()
 				.optional()
@@ -29,8 +29,8 @@ const findTenantLocationsRoute = createPrivateAppRoute(
 
 					return !!value && value !== 'false' && value !== '0';
 				}),
-			limit: z.string().optional(),
-			offset: z.string().optional(),
+			limit: z.coerce.number().min(1).max(1000),
+			offset: z.coerce.number().min(0),
 			order_by: z.string().optional(),
 		}),
 	},
@@ -39,7 +39,10 @@ const findTenantLocationsRoute = createPrivateAppRoute(
 			description: 'Successful response',
 			content: {
 				'application/json': {
-					schema: z.array(TenantLocation.schemas.TenantLocationDTOSchema),
+					schema: z.object({
+						entries: z.array(TenantLocation.schemas.TenantLocationDTOSchema),
+						totalEntries: z.number(),
+					}),
 				},
 			},
 		},
