@@ -2,6 +2,7 @@ import {OpenAPIHono} from '@hono/zod-openapi';
 
 import {BadRequestError} from '@lib/errors';
 import type {GameTypeStatsReport} from '@lib/models/gametype-stats-report';
+import type {PlayfieldCategoryStatsReport} from '@lib/models/playfield-category-stats-report';
 import type {PlayfieldStatsReportModel} from '@lib/models/playfield-stats-report';
 import type {PrizeStatsReport} from '@lib/models/prize-stats-report';
 import type {TenantLocationStatsReport} from '@lib/models/tenant-location-stats-report';
@@ -17,6 +18,7 @@ import type {AuthenticatedEnvironment} from '../types';
 import {
 	getGameTypeStatisticsRoute,
 	getGlobalStatisticsRoute,
+	getPlayfieldCategoryStatisticsRoute,
 	getPlayfieldStatisticsRoute,
 	getPrizeStatisticsRoute,
 	getTenantLocationStatisticsRoute,
@@ -176,6 +178,27 @@ const createStatisticsApi = () => {
 			range,
 			unit
 		)) as PrizeStatsReport;
+
+		return ctx.json(statistics.toJSON(), 200);
+	});
+
+	app.openapi(getPlayfieldCategoryStatisticsRoute, async (ctx) => {
+		const appContext = ctx.get('appContext');
+		const {statisticsService} = createServices(appContext);
+
+		const {id} = ctx.req.valid('param');
+		const {start_date, end_date, range, unit} = ctx.req.valid('query');
+
+		validateDatesAndRange(start_date, end_date, range);
+
+		const statistics = (await statisticsService.getStatisticsReport(
+			id,
+			'playfield_category',
+			start_date,
+			end_date,
+			range,
+			unit
+		)) as PlayfieldCategoryStatsReport;
 
 		return ctx.json(statistics.toJSON(), 200);
 	});
