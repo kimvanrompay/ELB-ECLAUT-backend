@@ -6,6 +6,7 @@ import {
 import type {
 	IGameSessionRepository,
 	IMachineLogRepository,
+	IPlayfieldRepository,
 	IPlayfieldStatsRepository,
 } from '@lib/repositories/types';
 import {PinoLogger} from '@lib/utils';
@@ -16,6 +17,7 @@ class GameMessagesService {
 
 	constructor(
 		private gameSessionRepository: IGameSessionRepository,
+		private playfieldRepository: IPlayfieldRepository,
 		private machineLogRepository: IMachineLogRepository,
 		private playfieldStatsRepository: IPlayfieldStatsRepository,
 		context: {logger: PinoLogger}
@@ -90,6 +92,18 @@ class GameMessagesService {
 					this.gameSessionRepository.withTransaction(trx);
 				const scopedMachineLogRepository =
 					this.machineLogRepository.withTransaction(trx);
+				const scopedPlayfieldRepository =
+					this.playfieldRepository.withTransaction(trx);
+
+				const playfield =
+					await scopedPlayfieldRepository.getPlayfieldById(playfieldId);
+
+				if (!playfield) {
+					this.logger.error(
+						`Playfield not found for money in event: ${playfieldId}`
+					);
+					return false;
+				}
 
 				await scopedGameSessionRepository.createOrUpdateGameSession({
 					id: validatedData.i,
@@ -101,6 +115,7 @@ class GameMessagesService {
 					amount_credits: validatedData.c,
 					amount_money_in: validatedData.m, // Money in is always in cents so no need to adjust for float
 					updated_at: new Date(),
+					prize_id: playfield.prize?.id,
 				});
 
 				await scopedMachineLogRepository.createMachineLog({
@@ -161,8 +176,20 @@ class GameMessagesService {
 					this.gameSessionRepository.withTransaction(trx);
 				const scopedMachineLogRepository =
 					this.machineLogRepository.withTransaction(trx);
+				const scopedPlayfieldRepository =
+					this.playfieldRepository.withTransaction(trx);
 
 				const {i: gameSessionId, ...result} = validatedData;
+
+				const playfield =
+					await scopedPlayfieldRepository.getPlayfieldById(playfieldId);
+
+				if (!playfield) {
+					this.logger.error(
+						`Playfield not found for session end event: ${playfieldId}`
+					);
+					return false;
+				}
 
 				await scopedGameSessionRepository.createOrUpdateGameSession({
 					id: gameSessionId,
@@ -175,6 +202,7 @@ class GameMessagesService {
 					result: {
 						...result,
 					},
+					prize_id: playfield.prize?.id,
 				});
 
 				await scopedMachineLogRepository.createMachineLog({

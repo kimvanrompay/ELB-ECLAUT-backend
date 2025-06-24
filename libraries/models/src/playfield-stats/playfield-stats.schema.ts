@@ -26,7 +26,7 @@ const StatisticsDataDBSchema = z.object({
 	max_credits: z.number(),
 
 	game_sessions_per_hour: z
-		.record(z.number().min(0).max(23), z.number())
+		.record(z.coerce.number().min(0).max(23), z.number())
 		.optional(),
 	payment_methods: z
 		.record(
@@ -86,11 +86,12 @@ const PlayfieldStatsDBSchema = StatisticsDataDBSchema.extend({
 	start_date: z.date(),
 	end_date: z.date(),
 
-	tenant_id: z.string(),
-	tenant_location_id: z.string(),
-	serial_number: z.string(),
-	playfield_id: z.string(),
-	gametype_id: z.string(),
+	tenant_id: z.string().optional(),
+	tenant_location_id: z.string().optional(),
+	serial_number: z.string().optional(),
+	playfield_id: z.string().optional(),
+	gametype_id: z.string().optional(),
+	prize_id: z.string().optional(),
 });
 
 const PlayfieldStatsSchema = StatisticsDataSchema.extend({
@@ -99,17 +100,64 @@ const PlayfieldStatsSchema = StatisticsDataSchema.extend({
 	startDate: z.date(),
 	endDate: z.date(),
 
-	tenantId: z.string(),
-	tenantLocationId: z.string(),
-	serialNumber: z.string(),
-	playfieldId: z.string(),
-	gametypeId: z.string(),
+	tenantId: z.string().optional(),
+	tenantLocationId: z.string().optional(),
+	serialNumber: z.string().optional(),
+	playfieldId: z.string().optional(),
+	gametypeId: z.string().optional(),
+	prizeId: z.string().optional(),
 });
 
 type StatisticsDataDBType = z.infer<typeof StatisticsDataDBSchema>;
 type StatisticsDataType = z.infer<typeof StatisticsDataSchema>;
 type PlayfieldStatsDBType = z.infer<typeof PlayfieldStatsDBSchema>;
 type PlayfieldStatsType = z.infer<typeof PlayfieldStatsSchema>;
+
+type PopularPrizeStats = {
+	prizeId: string;
+	prizeName: string;
+	sumMoneyIn: number;
+	sumMoneyOut: number;
+	sumProfit: number;
+	sumPlayTime: number;
+	avgPlayTime: number;
+};
+
+type PopularPlayfieldStats = {
+	playfieldId: string;
+	playfieldName: string;
+	serialNumber: string;
+	cabinetName: string;
+	gametypeId: string;
+	gametypeName: string;
+	sumMoneyIn: number;
+	sumMoneyOut: number;
+	sumProfit: number;
+	sumPlayTime: number;
+	avgPlayTime: number;
+};
+
+type PopularGametypeStats = {
+	gametypeId: string;
+	gametypeName: string;
+	sumMoneyIn: number;
+	sumMoneyOut: number;
+	sumProfit: number;
+	sumPlayTime: number;
+	avgPlayTime: number;
+};
+
+type PopularLocationStats = {
+	tenantLocationId: string;
+	tenantLocationName: string;
+	tenantId: string;
+	tenantName: string;
+	sumMoneyIn: number;
+	sumMoneyOut: number;
+	sumProfit: number;
+	sumPlayTime: number;
+	avgPlayTime: number;
+};
 
 export {
 	PlayfieldStatsDBSchema,
@@ -122,4 +170,8 @@ export type {
 	StatisticsDataDBType,
 	StatisticsDataType,
 	PlayfieldStatsType,
+	PopularPrizeStats,
+	PopularPlayfieldStats,
+	PopularGametypeStats,
+	PopularLocationStats,
 };

@@ -1,9 +1,9 @@
 import {z} from '@hono/zod-openapi';
 
-import {StatisticsDataSchema} from '../playfield-stats/playfield-stats.schema';
+import {PlayfieldPrizeDTOSchema} from '../playfield-prize/playfield-prize.schema';
 
 const PlayfieldStatsReportDBSchema = z.object({
-	range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
+	// range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
 	unit: z.enum(['HOUR', 'DAY']),
 	start_date: z.date(),
 	end_date: z.date(),
@@ -12,27 +12,76 @@ const PlayfieldStatsReportDBSchema = z.object({
 	gametype_id: z.string(),
 	tenant_id: z.string(),
 	tenant_location_id: z.string(),
+	prize_id: z.string().optional(),
 
 	data: z.array(z.any()).optional(),
 });
 
 const PlayfieldStatsReportDTOSchema = z.object({
-	range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
-	unit: z.enum(['HOUR', 'DAY']),
+	// range: z.enum(['WEEK', 'MONTH', 'YEAR', 'DAY']),
+	unit: z.enum(['HOUR', 'DAY', 'WEEK', 'MONTH']),
 	startDate: z.date(),
 	endDate: z.date(),
-	serialNumber: z.string(),
 	playfieldId: z.string(),
-	gametypeId: z.string(),
-	tenantId: z.string(),
-	tenantLocationId: z.string(),
+	prizeId: z.string().optional(),
 
-	aggregatedData: StatisticsDataSchema.optional(),
+	countGameSessions: z.number(),
+	sumMoneyIn: z.number(),
+	sumMoneyOut: z.number(),
+	sumProfit: z.number(),
+	sumCredits: z.number(),
+	returnToPlayer: z.number(),
+	avgPlayTime: z.number(),
+	sumPlayTime: z.number(),
+	avgMoneyIn: z.number(),
+	avgMoneyOut: z.number(),
+	avgCredits: z.number(),
+	maxPlayTime: z.number(),
+	minPlayTime: z.number(),
+	maxMoneyIn: z.number(),
+	minMoneyIn: z.number(),
+	minMoneyOut: z.number(),
+	maxMoneyOut: z.number(),
+	maxCredits: z.number(),
+	minCredits: z.number(),
 
-	data: z
+	gameSessionsOverTime: z.array(
+		z.object({
+			date: z.date(),
+			countGameSessions: z.number(),
+			sumMoneyIn: z.number(),
+			sumMoneyOut: z.number(),
+			sumProfit: z.number(),
+			sumCredits: z.number(),
+		})
+	),
+
+	gameSessionsPerHourOfDay: z
+		.record(z.number().min(0).max(23), z.number())
+		.optional(),
+
+	popularPrizes: z
 		.array(
-			StatisticsDataSchema.extend({
-				date: z.date(),
+			z.object({
+				prizeId: z.string(),
+				prizeName: z.string(),
+				sumMoneyIn: z.number(),
+				sumMoneyOut: z.number(),
+				sumProfit: z.number(),
+				sumPlayTime: z.number(),
+				avgPlayTime: z.number(),
+			})
+		)
+		.optional(),
+
+	prizeHistory: z.array(PlayfieldPrizeDTOSchema),
+
+	paymentMethods: z
+		.record(
+			z.string(),
+			z.object({
+				moneyIn: z.number(),
+				countGameSessions: z.number(),
 			})
 		)
 		.optional(),

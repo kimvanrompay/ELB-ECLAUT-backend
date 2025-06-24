@@ -18,7 +18,8 @@
     "./tenant-location": "./src/tenant-location/tenant-location.repository.ts",
     "./tenant": "./src/tenant/tenant.repository.ts",
     "./types": "./src/types.ts",
-    "./playfield-stats": "./src/playfield-stats/playfield-stats.repository.ts"
+    "./playfield-stats": "./src/playfield-stats/playfield-stats.repository.ts",
+    "./prize": "./src/prize/prize.repository.ts"
   },
   "scripts": {
     "test": "yarn test:integration",

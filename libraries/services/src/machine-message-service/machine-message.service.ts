@@ -46,6 +46,7 @@ class MachineMessageService implements IMachineMessageService {
 
 		this.gameMessagesService = new GameMessagesService(
 			this.gameSessionRepository,
+			this.playfieldRepository,
 			this.machineLogRepository,
 			this.playfieldStatsRepository,
 			context
