@@ -35,7 +35,8 @@
   "include": [
     "api/**/*.ts",
     "infrastructure/**/*.ts",
-    "libraries/**/*.ts"
+    "libraries/**/*.ts",
+    "src/**/*"
   ],
     "exclude": [
       "node_modules",

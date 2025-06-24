@@ -5,6 +5,7 @@ import {serve} from '@hono/node-server';
 import {app} from './app';
 import './app-routes';
 import {startScheduler} from './cron/scheduler';
+
 startScheduler();
 
 serve(

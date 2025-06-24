@@ -39,16 +39,16 @@
     "@lib/models": "workspace:^",
     "@lib/repositories": "workspace:^",
     "@lib/utils": "workspace:^",
-    "@sendgrid/client": "^8.1.5",
-    "@sendgrid/mail": "^8.1.5",
-    "bcrypt": "^5.1.1",
-    "handlebars": "^4.7.8",
-    "uuid": "^11.0.3",
-    "zod": "^3.24.1"
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
+    "@sendgrid/client": "^8.1.5",
+    "@sendgrid/mail": "^8.1.5",
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.12.0",
-    "typescript": "^5.7.3"
+    "handlebars": "^4.7.8",
+    "typescript": "^5.7.3",
+    "uuid": "^11.0.3",
+    "zod": "^3.24.1"
   }
 }

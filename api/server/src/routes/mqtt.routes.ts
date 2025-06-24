@@ -40,7 +40,6 @@ const createMqttApi = () => {
 		}>(MQTT_CREDENTIALS_KEY);
 
 		return new STSClient({
-			profile: process.env.AWS_PROFILE,
 			region: process.env.AWS_REGION,
 			credentials: {
 				accessKeyId: secret.AWS_ACCESS_KEY_ID,

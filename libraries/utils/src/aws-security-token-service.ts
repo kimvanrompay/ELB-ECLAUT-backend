@@ -10,7 +10,6 @@ const getAwsStsClient = (credentials: {
 }) => {
 	return new STSClient({
 		region: process.env.AWS_REGION,
-		profile: process.env.AWS_PROFILE,
 		credentials: {
 			accessKeyId: credentials.accessKeyId,
 			secretAccessKey: credentials.secretAccessKey,

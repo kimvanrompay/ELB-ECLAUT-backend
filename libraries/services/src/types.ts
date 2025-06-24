@@ -17,7 +17,6 @@ export type {IPlayerZoneService} from './player-zone-service/player-zone.service
 // export type {IPrizeService} from './prize-service/prize.service.types';
 export type {IClientService} from './client-service/client.service.types';
 export type {IPasswordResetTokenService} from './password-reset-token-service/password-reset-token.service.types';
-export type {IPlayfieldCategoryService} from './playfield-category-service/playfield-category.service.types';
 
 type AppContextPlayerAuth = {
 	userId: string;

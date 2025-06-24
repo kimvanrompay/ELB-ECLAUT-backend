@@ -33,15 +33,13 @@
     "./tenant-stats-report": "./src/tenant-stats-report/tenant-stats-report.model.ts",
     "./prize-stats-report": "./src/prize-stats-report/prize-stats-report.model.ts"
   },
-  "dependencies": {
+  "devDependencies": {
     "@asteasolutions/zod-to-openapi": "^7.3.0",
     "@hono/zod-openapi": "^0.18.3",
     "hono": "^4.6.19",
-    "uuid": "^11.0.5",
-    "zod": "^3.24.1"
-  },
-  "devDependencies": {
     "typescript": "^5.7.3",
-    "vitest": "^3.0.4"
+    "uuid": "^11.0.5",
+    "vitest": "^3.0.4",
+    "zod": "^3.24.1"
   }
 }
