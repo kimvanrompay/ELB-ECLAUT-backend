@@ -21,6 +21,8 @@ interface IPlayfieldService {
 	): Promise<Playfield>;
 
 	updatePlayfieldPrize(id: string, prize: string): Promise<Playfield>;
+
+	updatePlayfieldCategory(id: string, category: string): Promise<Playfield>;
 }
 
 export type {IPlayfieldService};

@@ -4,6 +4,7 @@ import {NotFoundError} from '@lib/errors';
 import {Playfield, type PlayfieldUpdateDTOType} from '@lib/models/playfield';
 import type {
 	IMachineLogRepository,
+	IPlayfieldCategoryRepository,
 	IPlayfieldRepository,
 	IPrizeRepository,
 } from '@lib/repositories/types';
@@ -23,6 +24,7 @@ class PlayfieldService implements IPlayfieldService {
 	constructor(
 		private playfieldRepository: IPlayfieldRepository,
 		private prizeRepository: IPrizeRepository,
+		private playfieldCategoryRepository: IPlayfieldCategoryRepository,
 		private machineLogRepository: IMachineLogRepository,
 		private context: AuthenticatedAppContext
 	) {
@@ -143,6 +145,59 @@ class PlayfieldService implements IPlayfieldService {
 					data: {
 						prizeId: prizeId,
 						prizeName: prize?.name,
+					},
+				}),
+			]);
+		});
+
+		return this.getPlayfieldById(id) as Promise<Playfield>;
+	}
+
+	async updatePlayfieldCategory(
+		id: string,
+		categoryId: string | null
+	): Promise<Playfield> {
+		const playfield = await this.playfieldRepository.getPlayfieldById(
+			id,
+			...AuthorizationService.getTenantAndLocationFromContext(this.context)
+		);
+
+		if (!playfield) {
+			throw new NotFoundError('Playfield not found');
+		}
+
+		await this.playfieldRepository.transaction(async (trx) => {
+			const scopedPlayfieldCategoryRepository =
+				this.playfieldCategoryRepository.withTransaction(trx);
+			const scopedMachineLogRepository =
+				this.machineLogRepository.withTransaction(trx);
+
+			const category = categoryId
+				? await scopedPlayfieldCategoryRepository.getPlayfieldCategoryById(
+						categoryId,
+						AuthorizationService.getTenantAndLocationFromContext(
+							this.context
+						)[0]
+					)
+				: null;
+
+			await Promise.all([
+				scopedPlayfieldCategoryRepository.addPlayfieldToCategory(
+					id,
+					categoryId,
+					AuthorizationService.getTenantAndLocationFromContext(this.context)[0]
+				),
+				scopedMachineLogRepository.createMachineLog({
+					id: uuid(),
+					playfield_id: id,
+					serial_number: playfield.cabinet.serialNumber,
+					level: 'INFO',
+					timestamp: new Date(),
+					app_user_id: this.context.auth.userId,
+					type: 'CATEGORY_UPDATE',
+					data: {
+						categoryId: categoryId,
+						categoryName: category?.name || null,
 					},
 				}),
 			]);
