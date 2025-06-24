@@ -3,11 +3,11 @@ import {describe} from 'vitest';
 import {
 	GameTypeStats,
 	GameTypeStatsReport,
-} from '../../src/gametype-stats-report/gametype-stats-report.model';
+} from '../../src/stats-report/gametype-stats-report/gametype-stats-report.model';
 import {
 	PlayfieldStats,
 	StatisticsData,
-} from '../../src/playfield-stats/playfield-stats.model';
+} from '../../src/stats-report/playfield-stats/playfield-stats.model';
 
 describe('GametypeStatsReport', () => {
 	describe('fromPlayfieldStats', () => {

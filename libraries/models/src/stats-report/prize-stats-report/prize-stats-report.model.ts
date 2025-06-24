@@ -1,10 +1,5 @@
-import type {
-	PlayfieldStats,
-	PopularGametypeStats,
-	PopularPlayfieldStats,
-	PopularPrizeStats,
-} from '../playfield-stats/playfield-stats.model';
-import type {PopularLocationStats} from '../playfield-stats/playfield-stats.schema';
+import type {PopularLocationStats, PopularPlayfieldStats} from '../helpers';
+import type {PlayfieldStats} from '../playfield-stats/playfield-stats.model';
 import {StatisticsData} from '../playfield-stats/statistics-data';
 import {
 	PrizeStatsReportDTOSchema,
@@ -112,6 +107,8 @@ class PrizeStatsReport {
 				sumProfit: item.stats.sumProfit,
 				sumCredits: item.stats.sumCredits,
 			})),
+
+			gameSessionsPerHourOfDay: this.aggregatedData.gameSessionsPerHour,
 		};
 	}
 

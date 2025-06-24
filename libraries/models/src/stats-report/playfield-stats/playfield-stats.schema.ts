@@ -92,6 +92,7 @@ const PlayfieldStatsDBSchema = StatisticsDataDBSchema.extend({
 	playfield_id: z.string().optional(),
 	gametype_id: z.string().optional(),
 	prize_id: z.string().optional(),
+	playfield_category_id: z.string().optional(),
 });
 
 const PlayfieldStatsSchema = StatisticsDataSchema.extend({
@@ -106,58 +107,13 @@ const PlayfieldStatsSchema = StatisticsDataSchema.extend({
 	playfieldId: z.string().optional(),
 	gametypeId: z.string().optional(),
 	prizeId: z.string().optional(),
+	playfieldCategoryId: z.string().optional(),
 });
 
 type StatisticsDataDBType = z.infer<typeof StatisticsDataDBSchema>;
 type StatisticsDataType = z.infer<typeof StatisticsDataSchema>;
 type PlayfieldStatsDBType = z.infer<typeof PlayfieldStatsDBSchema>;
 type PlayfieldStatsType = z.infer<typeof PlayfieldStatsSchema>;
-
-type PopularPrizeStats = {
-	prizeId: string;
-	prizeName: string;
-	sumMoneyIn: number;
-	sumMoneyOut: number;
-	sumProfit: number;
-	sumPlayTime: number;
-	avgPlayTime: number;
-};
-
-type PopularPlayfieldStats = {
-	playfieldId: string;
-	playfieldName: string;
-	serialNumber: string;
-	cabinetName: string;
-	gametypeId: string;
-	gametypeName: string;
-	sumMoneyIn: number;
-	sumMoneyOut: number;
-	sumProfit: number;
-	sumPlayTime: number;
-	avgPlayTime: number;
-};
-
-type PopularGametypeStats = {
-	gametypeId: string;
-	gametypeName: string;
-	sumMoneyIn: number;
-	sumMoneyOut: number;
-	sumProfit: number;
-	sumPlayTime: number;
-	avgPlayTime: number;
-};
-
-type PopularLocationStats = {
-	tenantLocationId: string;
-	tenantLocationName: string;
-	tenantId: string;
-	tenantName: string;
-	sumMoneyIn: number;
-	sumMoneyOut: number;
-	sumProfit: number;
-	sumPlayTime: number;
-	avgPlayTime: number;
-};
 
 export {
 	PlayfieldStatsDBSchema,
@@ -170,8 +126,4 @@ export type {
 	StatisticsDataDBType,
 	StatisticsDataType,
 	PlayfieldStatsType,
-	PopularPrizeStats,
-	PopularPlayfieldStats,
-	PopularGametypeStats,
-	PopularLocationStats,
 };

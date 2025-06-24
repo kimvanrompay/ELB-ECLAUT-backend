@@ -1,7 +1,7 @@
 import {describe} from 'vitest';
 
-import type {StatisticsDataDBType} from '../../src/playfield-stats/playfield-stats.schema';
-import {StatisticsData} from '../../src/playfield-stats/statistics-data';
+import type {StatisticsDataDBType} from '../../src/stats-report/playfield-stats/playfield-stats.schema';
+import {StatisticsData} from '../../src/stats-report/playfield-stats/statistics-data';
 
 describe('StatisticsData', () => {
 	describe('fromDBType', () => {
