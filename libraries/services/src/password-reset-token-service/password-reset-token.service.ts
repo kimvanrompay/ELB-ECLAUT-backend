@@ -78,7 +78,7 @@ class PasswordResetTokenService implements IPasswordResetTokenService {
 			this.logger.debug(`Sending password reset mail to ${user.email}`);
 
 			const resetUrl = new URL(
-				`${process.env.APP_URL}/${user.settings.language}/reset-password`
+				`${process.env.APP_URL}/${user.settings.language}/reset-password/update`
 			);
 			resetUrl.searchParams.set('token', plainCode);
 			resetUrl.searchParams.set('email', email);
