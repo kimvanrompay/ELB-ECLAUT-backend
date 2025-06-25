@@ -1,6 +1,6 @@
 services:
   db-test:
-    image: postgres:17.2-alpine
+    image: postgres:16.6-alpine
     restart: always
     environment:
       POSTGRES_USER: app
