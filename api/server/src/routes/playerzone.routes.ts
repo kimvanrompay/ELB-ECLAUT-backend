@@ -59,14 +59,13 @@ const createPlayerZoneApi = () => {
 	app.openapi(initializeGameOnPlayfieldRoute, async (ctx) => {
 		const {playerZoneService} = getServices(ctx.get('appContext'));
 
-		const {playfieldId, gameSessionId, playerId, progress} =
-			ctx.req.valid('json');
+		const {playfieldId, gameSessionId, playerId, data} = ctx.req.valid('json');
 
 		await playerZoneService.initialiseSessionOnPlayfield(
 			playfieldId,
 			playerId,
 			gameSessionId,
-			progress
+			data
 		);
 
 		return ctx.newResponse(null, 204);
