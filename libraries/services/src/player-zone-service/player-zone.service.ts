@@ -161,9 +161,9 @@ class PlayerZoneService implements IPlayerZoneService {
 			throw new NotFoundError('Game session not found');
 		}
 
-		if (gameSession.playerId) {
-			throw new Error('Game session already has a player assigned');
-		}
+		// if (gameSession.playerId) {
+		// 	throw new Error('Game session already has a player assigned');
+		// }
 
 		const updatedGameSession = await this.assignPlayerToGameSession(
 			gameSession,
@@ -175,15 +175,15 @@ class PlayerZoneService implements IPlayerZoneService {
 			return;
 		}
 
-		const hasActiveSessions =
-			await this.hasPlayerGotActiveGameSessions(playerId);
-
-		// TODO: Do we either end the previous session or prevent the player from starting a new one?
-		if (hasActiveSessions) {
-			throw new Error(
-				`Player with ID ${playerId} already has an active game session`
-			);
-		}
+		// const hasActiveSessions =
+		// 	await this.hasPlayerGotActiveGameSessions(playerId);
+		//
+		// // TODO: Do we either end the previous session or prevent the player from starting a new one?
+		// if (hasActiveSessions) {
+		// 	throw new Error(
+		// 		`Player with ID ${playerId} already has an active game session`
+		// 	);
+		// }
 
 		// TODO: check if the stat + leaderboard exists for the playfield's cabinet?
 
