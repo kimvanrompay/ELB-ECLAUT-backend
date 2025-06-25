@@ -301,7 +301,6 @@ class Playfield {
 	): PlayfieldUpdateDBType {
 		return {
 			name: data.name,
-			tenant_location_id: data.tenantLocationId,
 			external_id: data.externalId,
 		};
 	}

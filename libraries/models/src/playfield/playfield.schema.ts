@@ -110,8 +110,8 @@ const PlayfieldInsertDBSchema = z.object({
 
 const PlayfieldUpdateDBSchema = z.object({
 	name: z.string().optional(),
-	tenant_id: z.string().optional(),
-	tenant_location_id: z.string().optional(),
+	// tenant_id: z.string().optional(),
+	// tenant_location_id: z.string().optional(),
 	last_machine_message: z.date().optional(),
 	status: z.string().optional(),
 	prize_id: z.string().optional(),
