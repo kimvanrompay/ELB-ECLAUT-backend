@@ -19,11 +19,16 @@ const initializeGameOnPlayfieldRoute = createPrivateAppRoute(
 			content: {
 				'application/json': {
 					schema: z.object({
-						tenantId: z.string(),
+						// tenantId: z.string(),
 						playfieldId: z.string(),
 						gameSessionId: z.string(),
 						playerId: z.string(),
-						progress: z.object({}).passthrough(),
+						data: z
+							.object({
+								seasonIndex: z.number().optional(),
+								charsCollectedInSeason: z.number().optional(),
+							})
+							.passthrough(),
 					}),
 				},
 			},
