@@ -7,14 +7,12 @@
     "./types": "./src/types.ts",
     "./app-user": "./src/app-user-service/app-user.service.ts",
     "./authorization": "./src/authorization-service/authorization.service.ts",
-    "./client": "./src/client-service/client.service.ts",
     "./jwt": "./src/jwt-service/jwt.service.ts",
     "./auth": "./src/auth-service/auth.service.ts",
     "./login-verification-code": "./src/login-verification-code-service/login-verification-code.service.ts",
     "./gametype": "./src/gametype-service/gametype.service.ts",
     "./machine": "./src/machine-service/machine.service.ts",
     "./playfield": "./src/playfield-service/playfield.service.ts",
-    "./playfield-category": "./src/playfield-category-service/playfield-category.service.ts",
     "./cabinet": "./src/cabinet-service/cabinet.service.ts",
     "./email": "./src/email-service/email.service.ts",
     "./machine-message": "./src/machine-message-service/machine-message.service.ts",
@@ -26,8 +24,7 @@
     "./mqtt": "./src/mqtt-service/mqtt.service.ts",
     "./mqtt-credentials": "./src/mqtt-service/mqtt-credentials.service.ts",
     "./player-zone": "./src/player-zone-service/player-zone.service.ts",
-    "./statistics-report": "./src/statistics-report-service/statistics-report.service.ts",
-    "./prize": "./src/prize-service/prize.service.ts"
+    "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts"
   },
   "scripts": {
     "test": "yarn test:unit",
@@ -39,13 +36,13 @@
     "@lib/models": "workspace:^",
     "@lib/repositories": "workspace:^",
     "@lib/utils": "workspace:^",
-    "bcrypt": "^5.1.1",
-    "uuid": "^11.0.3",
-    "zod": "^3.24.1"
+    "bcrypt": "^5.1.1"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.12.0",
-    "typescript": "^5.7.3"
+    "typescript": "^5.7.3",
+    "uuid": "^11.0.3",
+    "zod": "^3.24.1"
   }
 }
