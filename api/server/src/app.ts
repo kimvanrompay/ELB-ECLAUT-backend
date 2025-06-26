@@ -1,4 +1,4 @@
-import {OpenAPIHono, z} from '@hono/zod-openapi';
+import {OpenAPIHono} from '@hono/zod-openapi';
 import {cors} from 'hono/cors';
 import {csrf} from 'hono/csrf';
 import {requestId} from 'hono/request-id';
@@ -74,7 +74,11 @@ const bearerAuthRegistry = app.openAPIRegistry.registerComponent(
 
 app.use(
 	cors({
-		origin: ['http://localhost:3000', 'http://localhost:3001'],
+		origin: [
+			'http://localhost:3000',
+			'http://localhost:3001',
+			'https://eclaut.com',
+		],
 		credentials: true,
 		// maxAge: 600,
 	})

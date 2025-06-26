@@ -24,7 +24,12 @@
     "./mqtt": "./src/mqtt-service/mqtt.service.ts",
     "./mqtt-credentials": "./src/mqtt-service/mqtt-credentials.service.ts",
     "./player-zone": "./src/player-zone-service/player-zone.service.ts",
-    "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts"
+    "./playfield-stats-report": "./src/playfield-stats-report-service/playfield-stats-report.service.ts",
+    "./password-reset-token": "./src/password-reset-token-service/password-reset-token.service.ts",
+    "./statistics-report": "./src/statistics-report-service/statistics-report.service.ts",
+    "./client": "./src/client-service/client.service.ts",
+    "./playfield-category": "./src/playfield-category-service/playfield-category.service.ts",
+    "./prize": "./src/prize-service/prize.service.ts"
   },
   "scripts": {
     "test": "yarn test:unit",
@@ -41,6 +46,7 @@
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
     "@types/node": "^22.12.0",
+    "handlebars": "4.7.8",
     "typescript": "^5.7.3",
     "uuid": "^11.0.3",
     "zod": "^3.24.1"

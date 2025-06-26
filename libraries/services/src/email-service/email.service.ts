@@ -138,9 +138,8 @@ class EmailService implements IEmailService {
 				subjectsByTemplateName[options.template]['en']) as string;
 
 			console.log(`Email subject: ${subject}`);
-			console.log(`Email content: ${htmlContent}`);
 
-			// await this.sendgrid.sendEmail(options.to, subject, htmlContent);
+			await this.sendgrid.sendEmail(options.to, subject, htmlContent);
 		} catch (error) {
 			this.logger.error(`Failed to send email: ${error}`);
 			throw new Error(`Failed to send email: ${error}`);
