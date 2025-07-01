@@ -35,7 +35,6 @@ class SqsMessagePoller {
 	private acknowledgeTimeout: null | NodeJS.Timeout = null;
 
 	private processedMessages: Message[] = [];
-	private failedMessages: Message[] = [];
 	private readonly messageHandler: (message: Message) => Promise<boolean>;
 	private readonly failedMessageHandler: (message: Message) => Promise<void>;
 
@@ -58,7 +57,6 @@ class SqsMessagePoller {
 
 		this.client = new SQSClient({
 			region: 'eu-west-1',
-			profile: 'elaut',
 			// endpoint: 'https://sqs.eu-west-1.amazonaws.com/084828585414/claire-test-queue',
 		});
 
