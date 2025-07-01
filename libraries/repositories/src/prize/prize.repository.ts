@@ -232,9 +232,14 @@ class PrizeRepository extends KnexRepository implements IPrizeRepository {
 
 		const callback = async (trx: Knex.Transaction) => {
 			// Remove the current prize from the playfield
-			await trx('playfield_prize').update({
-				removed_at: new Date(),
-			});
+			await trx('playfield_prize')
+				.update({
+					removed_at: new Date(),
+				})
+				.where({
+					playfield_id: playfieldId,
+				})
+				.whereNull('removed_at');
 
 			if (!prizeId) {
 				return;
