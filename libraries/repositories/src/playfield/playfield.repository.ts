@@ -223,11 +223,11 @@ class PlayfieldRepository
 						'machine_log.code as error_code',
 						'machine_log.event_data as error_event_data'
 					)
-					.leftJoin(
-						'playfield_prize',
-						'playfield.id',
-						'playfield_prize.playfield_id'
-					)
+					.leftJoin('playfield_prize', (join) => {
+						join
+							.on('playfield_prize.playfield_id', 'playfield.id')
+							.andOnNull('playfield_prize.removed_at');
+					})
 					.leftJoin('prize', 'playfield_prize.prize_id', 'prize.id')
 					.leftJoin(
 						this.db('machine_log')
